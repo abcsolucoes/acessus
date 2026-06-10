@@ -3,8 +3,9 @@
    Todas as chamadas ao backend passam por aqui.
    ============================================================ */
 
-// Usa o mesmo hostname do frontend — funciona tanto em localhost quanto na rede local
-export const API_URL = `http://${window.location.hostname}:8080`
+// VITE_API_URL para deploy em domínios distintos (ex: Render, VPS com proxy reverso)
+// Fallback: mesmo hostname do frontend — funciona em localhost e na rede local
+export const API_URL = import.meta.env.VITE_API_URL ?? `http://${window.location.hostname}:8080`
 
 // ── Token ─────────────────────────────────────────────────
 export function getToken(): string | null {
