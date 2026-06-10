@@ -1,0 +1,37 @@
+# ── Segredos — NUNCA commitar ─────────────────────────────────
+.env
+*.env.local
+application-test.properties
+
+# ── Backend (Java / Maven) ────────────────────────────────────
+backend/target/
+backend/uploads/
+backend/tokens/
+backend/.mvn/wrapper/maven-wrapper.jar
+!backend/**/src/main/**/target/
+!backend/**/src/test/**/target/
+!backend/**/src/main/**/build/
+!backend/**/src/test/**/build/
+
+# ── Frontend (Node / Vite) ────────────────────────────────────
+frontend/node_modules/
+frontend/dist/
+frontend/.env*.local
+
+# ── IDEs ──────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.classpath
+.project
+.settings/
+.factorypath
+.apt_generated
+.springBeans
+.sts4-cache
+
+# ── OS ────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db

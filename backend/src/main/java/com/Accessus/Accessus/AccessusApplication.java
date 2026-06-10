@@ -1,0 +1,13 @@
+package com.Accessus.Accessus;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class AccessusApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(AccessusApplication.class, args);
+	}
+
+}

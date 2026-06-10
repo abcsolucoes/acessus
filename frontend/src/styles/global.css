@@ -1,0 +1,141 @@
+/* ============================================================
+   Inter — Google Fonts
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* ============================================================
+   Reset
+   ============================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+img, svg {
+  display: block;
+}
+
+/* ============================================================
+   Design tokens — Tema Claro (ABC Soluções) — padrão
+   ============================================================ */
+:root {
+
+  /* Backgrounds */
+  --bg-primary:   #F5F5F5;
+  --bg-secondary: #FFFFFF;
+  --bg-tertiary:  #EFEFEF;
+  --bg-card:      #FFFFFF;
+  --bg-hover:     #FFF3E8;
+
+  /* Primary (laranja ABC) */
+  --primary:       #FF8000;
+  --primary-hover: #E67200;
+  --primary-dark:  #A64200;
+  --primary-light: #FF9933;
+
+  /* Text */
+  --text-primary:   #1A1A1A;
+  --text-secondary: #444444;
+  --text-muted:     #888888;
+
+  /* Borders */
+  --border-primary:   #E0E0E0;
+  --border-secondary: #C8C8C8;
+
+  /* Status */
+  --success: #16A34A;
+  --warning: #D97706;
+  --danger:  #DC2626;
+  --info:    #2563EB;
+
+  /* Shadows */
+  --shadow-sm: 0 2px 8px  rgba(0, 0, 0, 0.07);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.10);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.15);
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  /* Transitions */
+  --transition-fast:   0.15s ease;
+  --transition-normal: 0.25s ease;
+}
+
+/* ============================================================
+   Design tokens — Tema Escuro
+   ============================================================ */
+[data-theme="dark"] {
+
+  /* Backgrounds */
+  --bg-primary:   #0B0B0F;
+  --bg-secondary: #111118;
+  --bg-tertiary:  #1A1A23;
+  --bg-card:      #14141C;
+  --bg-hover:     #1F1F2B;
+
+  /* Primary (roxo) */
+  --primary:       #7C3AED;
+  --primary-hover: #6D28D9;
+  --primary-dark:  #4C1D95;
+  --primary-light: #A78BFA;
+
+  /* Text */
+  --text-primary:   #F5F5F5;
+  --text-secondary: #A1A1AA;
+  --text-muted:     #71717A;
+
+  /* Borders */
+  --border-primary:   #27272F;
+  --border-secondary: #32323D;
+
+  /* Status */
+  --success: #22C55E;
+  --warning: #F59E0B;
+  --danger:  #EF4444;
+  --info:    #3B82F6;
+
+  /* Shadows */
+  --shadow-sm: 0 2px 8px  rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.50);
+}
+
+/* ============================================================
+   Base
+   ============================================================ */
+body {
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================================
+   Scrollbar
+   ============================================================ */
+::-webkit-scrollbar       { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg-tertiary); }
+::-webkit-scrollbar-thumb { background: var(--border-secondary); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
