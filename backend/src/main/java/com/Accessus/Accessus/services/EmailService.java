@@ -1,24 +1,28 @@
 package com.Accessus.Accessus.services;
 
 import com.Accessus.Accessus.entities.User;
-import com.sendgrid.*;
-import com.sendgrid.helpers.mail.Mail;
-import com.sendgrid.helpers.mail.objects.Content;
-import com.sendgrid.helpers.mail.objects.Email;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.util.List;
 
 @Service
 public class EmailService {
 
+    private static final String LOGO_PATH = "static/images/ABC_solucoes3.png";
+    private static final String LOGO_CID = "logoAbc";
+
     @Value("${app.mail.from}")
     private String mailFrom;
 
-    @Value("${sendgrid.api-key}")
-    private String sendGridApiKey;
+    @Autowired
+    private JavaMailSender mailSender;
 
     public void sendUserActivation(String to, String activationLink) {
         String html = buildEmailTemplate(
@@ -30,6 +34,7 @@ public class EmailService {
                 activationLink,
                 null
         );
+
         sendHtml(new String[]{ to }, "Ative sua conta - Accessus", html);
     }
 
@@ -43,6 +48,7 @@ public class EmailService {
                 null,
                 code
         );
+
         sendHtml(new String[]{ to }, "Recuperação de senha - Accessus", html);
     }
 
@@ -56,6 +62,7 @@ public class EmailService {
                 formLink,
                 null
         );
+
         sendHtml(new String[]{ to }, "Formulário de Admissão - ABC Soluções", html);
     }
 
@@ -69,6 +76,7 @@ public class EmailService {
                 ticketLink,
                 null
         );
+
         sendHtml(new String[]{ to }, "Novo chamado aberto - Accessus", html);
     }
 
@@ -82,6 +90,7 @@ public class EmailService {
                 ticketLink,
                 null
         );
+
         sendHtml(new String[]{ to }, "Novo chamado atribuído a você - Accessus", html);
     }
 
@@ -95,6 +104,7 @@ public class EmailService {
                 ticketLink,
                 null
         );
+
         sendHtml(new String[]{ to }, "Status do chamado atualizado - Accessus", html);
     }
 
@@ -108,28 +118,32 @@ public class EmailService {
                 ticketLink,
                 null
         );
+
         sendHtml(recipients.toArray(String[]::new), "Novo chamado para o seu setor - Accessus", html);
     }
 
     private void sendHtml(String[] to, String subject, String html) {
-        Email from = new Email(mailFrom, "Accessus");
-        Content content = new Content("text/html", html);
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
 
-        for (String recipient : to) {
-            Mail mail = new Mail(from, subject, new Email(recipient), content);
-            SendGrid sg = new SendGrid(sendGridApiKey);
-            Request request = new Request();
-            try {
-                request.setMethod(Method.POST);
-                request.setEndpoint("mail/send");
-                request.setBody(mail.build());
-                Response response = sg.api(request);
-                if (response.getStatusCode() >= 400) {
-                    throw new RuntimeException("SendGrid erro " + response.getStatusCode() + ": " + response.getBody());
-                }
-            } catch (IOException e) {
-                throw new RuntimeException("Erro ao enviar e-mail via SendGrid", e);
-            }
+            MimeMessageHelper helper = new MimeMessageHelper(
+                    message,
+                    true,
+                    "UTF-8"
+            );
+
+            helper.setFrom(mailFrom);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(html, true);
+
+            ClassPathResource logo = new ClassPathResource(LOGO_PATH);
+            helper.addInline(LOGO_CID, logo);
+
+            mailSender.send(message);
+
+        } catch (MessagingException e) {
+            throw new RuntimeException("Erro ao enviar e-mail HTML", e);
         }
     }
 
@@ -216,7 +230,11 @@ public class EmailService {
                                             padding: 32px 36px;
                                             text-align: left;
                                         ">
-                                            <p style="margin:0;color:#ffffff;font-size:22px;font-weight:bold;">ABC Soluções</p>
+                                            <img src="cid:%s" alt="ABC Soluções" width="260" style="
+                                                display: block;
+                                                max-width: 260px;
+                                                height: auto;
+                                            ">
                                         </td>
                                     </tr>
 
@@ -304,6 +322,7 @@ public class EmailService {
                 </html>
                 """.formatted(
                 title,
+                LOGO_CID,
                 title,
                 greeting,
                 paragraphOne,
