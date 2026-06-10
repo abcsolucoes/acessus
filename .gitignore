@@ -32,6 +32,10 @@ frontend/.env*.local
 .springBeans
 .sts4-cache
 
+# ── Google OAuth (credenciais sensíveis) ──────────────────────
+backend/src/main/resources/credentials.json
+backend/src/main/resources/token.json
+
 # ── OS ────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
