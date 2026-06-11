@@ -8,6 +8,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -38,7 +39,20 @@ public class LinhasVivoSyncService {
         }
     }
 
-    // ── Execução manual (chamada pelo controller) ─────────────────────────────
+    // ── Execução manual assíncrona (chamada pelo controller) ──────────────────
+    @Async
+    public void sincronizarAsync(String emailUsuario) {
+        try {
+            int[] r = sincronizar();
+            String resultado = r[0] + " criados, " + r[1] + " atualizados, " + r[2] + " removidos";
+            log.info("Sync Linhas Vivo (manual por {}): {}", emailUsuario, resultado);
+            // Log interno registrado via thread de sistema — usa o agendado que não precisa de auth
+        } catch (Exception e) {
+            log.error("Erro no sync manual Linhas Vivo: {}", e.getMessage(), e);
+        }
+    }
+
+    // ── Execução principal ────────────────────────────────────────────────────
     public int[] sincronizar() throws Exception {
         Map<String, String> planilha = lerPlanilha();
         String grupoResourceName = encontrarOuCriarGrupo();

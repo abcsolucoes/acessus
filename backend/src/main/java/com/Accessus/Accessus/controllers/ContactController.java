@@ -92,14 +92,13 @@ public class ContactController {
     );
 
     @PostMapping("/sync-linhas-vivo")
-    public ResponseEntity<String> syncLinhasVivo(Authentication auth) throws Exception {
+    public ResponseEntity<String> syncLinhasVivo(Authentication auth) {
         String email = auth.getName();
         if (!SYNC_AUTORIZADOS.contains(email)) {
             return ResponseEntity.status(403).body("Sem permissão para executar esta ação");
         }
-        int[] r = linhasVivoSyncService.sincronizar();
-        String resultado = r[0] + " criados, " + r[1] + " atualizados, " + r[2] + " removidos";
-        logsService.createLog("executou sincronização manual Linhas Vivo: " + resultado);
-        return ResponseEntity.ok(resultado);
+        logsService.createLog("iniciou sincronização manual Linhas Vivo");
+        linhasVivoSyncService.sincronizarAsync(email);
+        return ResponseEntity.accepted().body("Sincronização iniciada. Pode levar alguns minutos — acompanhe pelos logs do sistema.");
     }
 }
