@@ -253,52 +253,77 @@ public class LinhasVivoSyncService {
         return resultado;
     }
 
-    // ── Limpeza de duplicatas no grupo ────────────────────────────────────────
+    // ── Limpeza de duplicatas do grupo Linhas Vivo ───────────────────────────
+    // Estratégia: coleta os nomes dos membros do grupo, busca TODOS os contatos
+    // com esse nome no Google, mantém o que está no grupo e deleta os extras.
     public int[] limparDuplicatasDoGrupo() throws Exception {
         String grupoResourceName = encontrarOuCriarGrupo();
-        Map<String, List<Person>> porNome = new LinkedHashMap<>();
 
+        // 1. Coleta membros do grupo (resourceName → nome)
         ContactGroup grupo = peopleService.contactGroups()
                 .get(grupoResourceName).setMaxMembers(2000).execute();
         if (grupo.getMemberResourceNames() == null) return new int[]{0, 0};
 
+        Map<String, String> resourceNameDoGrupo = new LinkedHashMap<>(); // nome → resourceName
         List<String> membros = grupo.getMemberResourceNames();
         for (int i = 0; i < membros.size(); i += 50) {
             List<String> lote = membros.subList(i, Math.min(i + 50, membros.size()));
             var resp = peopleService.people().getBatchGet()
-                    .setResourceNames(lote).setPersonFields("names,phoneNumbers").execute();
+                    .setResourceNames(lote).setPersonFields("names").execute();
             if (resp.getResponses() == null) continue;
             for (var pr : resp.getResponses()) {
                 Person p = pr.getPerson();
                 if (p == null || p.getNames() == null || p.getNames().isEmpty()) continue;
                 String nome = normalizeNome(p.getNames().get(0).getDisplayName());
-                porNome.computeIfAbsent(nome, k -> new ArrayList<>()).add(p);
+                resourceNameDoGrupo.put(nome, p.getResourceName());
             }
         }
 
-        int removidosGrupo = 0, deletados = 0;
-        for (Map.Entry<String, List<Person>> entry : porNome.entrySet()) {
-            List<Person> duplicatas = entry.getValue();
-            if (duplicatas.size() <= 1) continue;
-            // Mantém o primeiro, remove os demais do grupo e deleta
-            List<String> paraRemover = duplicatas.subList(1, duplicatas.size())
-                    .stream().map(Person::getResourceName).toList();
-            peopleService.contactGroups().members()
-                    .modify(grupoResourceName, new ModifyContactGroupMembersRequest()
-                            .setResourceNamesToRemove(paraRemover)).execute();
-            for (String rn : paraRemover) {
+        // 2. Busca todos os contatos do Google e agrupa por nome
+        Map<String, List<Person>> todosPorNome = new LinkedHashMap<>();
+        Map<String, Person> todosContatos = buscarTodosContatos();
+        // buscarTodosContatos usa putIfAbsent, então reconstruímos com lista
+        String pageToken = null;
+        todosPorNome.clear();
+        do {
+            var req = peopleService.people().connections()
+                    .list("people/me")
+                    .setPersonFields("names")
+                    .setPageSize(1000);
+            if (pageToken != null) req.setPageToken(pageToken);
+            var resp = req.execute();
+            if (resp.getConnections() != null) {
+                for (Person p : resp.getConnections()) {
+                    if (p.getNames() == null || p.getNames().isEmpty()) continue;
+                    String nome = normalizeNome(p.getNames().get(0).getDisplayName());
+                    todosPorNome.computeIfAbsent(nome, k -> new ArrayList<>()).add(p);
+                }
+            }
+            pageToken = resp.getNextPageToken();
+        } while (pageToken != null);
+
+        // 3. Para cada nome que está no grupo, deleta os extras fora do grupo
+        int deletados = 0;
+        for (Map.Entry<String, String> entry : resourceNameDoGrupo.entrySet()) {
+            String nome = entry.getKey();
+            String rnDoGrupo = entry.getValue();
+            List<Person> todos = todosPorNome.getOrDefault(nome, List.of());
+            if (todos.size() <= 1) continue;
+
+            for (Person p : todos) {
+                if (p.getResourceName().equals(rnDoGrupo)) continue; // mantém o do grupo
                 try {
-                    peopleService.people().deleteContact(rn).execute();
+                    peopleService.people().deleteContact(p.getResourceName()).execute();
                     deletados++;
                     Thread.sleep(200);
                 } catch (Exception e) {
-                    log.warn("Não foi possível deletar {}: {}", rn, e.getMessage());
+                    log.warn("Não foi possível deletar {}: {}", p.getResourceName(), e.getMessage());
                 }
             }
-            removidosGrupo += paraRemover.size();
         }
-        log.info("Limpeza duplicatas: {} removidos do grupo, {} deletados", removidosGrupo, deletados);
-        return new int[]{removidosGrupo, deletados};
+
+        log.info("Limpeza duplicatas Linhas Vivo: {} contatos extras deletados", deletados);
+        return new int[]{0, deletados};
     }
 
     private Person criarContato(String nome, String telefone) throws Exception {
