@@ -57,10 +57,11 @@ public class LinhasVivoSyncService {
         Map<String, String> planilha = lerPlanilha();
         String grupoResourceName = encontrarOuCriarGrupo();
         Map<String, String> contatosGrupo = listarContatosDoGrupo(grupoResourceName);
+        // Todos os contatos existentes no Google (para evitar duplicatas)
+        Map<String, Person> todosContatos = buscarTodosContatos();
 
         int criados = 0, atualizados = 0, removidos = 0;
 
-        // Cria contatos novos (sem adicionar ao grupo ainda)
         List<String> novosResourceNames = new ArrayList<>();
         for (Map.Entry<String, String> entry : planilha.entrySet()) {
             String nome = entry.getKey();
@@ -73,7 +74,12 @@ public class LinhasVivoSyncService {
                     atualizados++;
                     Thread.sleep(200);
                 }
+            } else if (todosContatos.containsKey(nome)) {
+                // Contato já existe no Google mas não está no grupo — só adiciona
+                novosResourceNames.add(todosContatos.get(nome).getResourceName());
+                criados++;
             } else {
+                // Contato novo de verdade
                 Person criado = criarContato(nome, telefone);
                 novosResourceNames.add(criado.getResourceName());
                 criados++;
@@ -220,6 +226,79 @@ public class LinhasVivoSyncService {
         }
 
         return resultado;
+    }
+
+    // ── Busca todos os contatos do Google (para evitar criar duplicatas) ─────
+    @SuppressWarnings("unchecked")
+    private Map<String, Person> buscarTodosContatos() throws Exception {
+        Map<String, Person> resultado = new LinkedHashMap<>();
+        String pageToken = null;
+        do {
+            var req = peopleService.people().connections()
+                    .list("people/me")
+                    .setPersonFields("names,phoneNumbers")
+                    .setPageSize(1000);
+            if (pageToken != null) req.setPageToken(pageToken);
+            var resp = req.execute();
+            if (resp.getConnections() != null) {
+                for (Person p : resp.getConnections()) {
+                    if (p.getNames() != null && !p.getNames().isEmpty()) {
+                        String nome = normalizeNome(p.getNames().get(0).getDisplayName());
+                        resultado.putIfAbsent(nome, p);
+                    }
+                }
+            }
+            pageToken = resp.getNextPageToken();
+        } while (pageToken != null);
+        return resultado;
+    }
+
+    // ── Limpeza de duplicatas no grupo ────────────────────────────────────────
+    public int[] limparDuplicatasDoGrupo() throws Exception {
+        String grupoResourceName = encontrarOuCriarGrupo();
+        Map<String, List<Person>> porNome = new LinkedHashMap<>();
+
+        ContactGroup grupo = peopleService.contactGroups()
+                .get(grupoResourceName).setMaxMembers(2000).execute();
+        if (grupo.getMemberResourceNames() == null) return new int[]{0, 0};
+
+        List<String> membros = grupo.getMemberResourceNames();
+        for (int i = 0; i < membros.size(); i += 50) {
+            List<String> lote = membros.subList(i, Math.min(i + 50, membros.size()));
+            var resp = peopleService.people().getBatchGet()
+                    .setResourceNames(lote).setPersonFields("names,phoneNumbers").execute();
+            if (resp.getResponses() == null) continue;
+            for (var pr : resp.getResponses()) {
+                Person p = pr.getPerson();
+                if (p == null || p.getNames() == null || p.getNames().isEmpty()) continue;
+                String nome = normalizeNome(p.getNames().get(0).getDisplayName());
+                porNome.computeIfAbsent(nome, k -> new ArrayList<>()).add(p);
+            }
+        }
+
+        int removidosGrupo = 0, deletados = 0;
+        for (Map.Entry<String, List<Person>> entry : porNome.entrySet()) {
+            List<Person> duplicatas = entry.getValue();
+            if (duplicatas.size() <= 1) continue;
+            // Mantém o primeiro, remove os demais do grupo e deleta
+            List<String> paraRemover = duplicatas.subList(1, duplicatas.size())
+                    .stream().map(Person::getResourceName).toList();
+            peopleService.contactGroups().members()
+                    .modify(grupoResourceName, new ModifyContactGroupMembersRequest()
+                            .setResourceNamesToRemove(paraRemover)).execute();
+            for (String rn : paraRemover) {
+                try {
+                    peopleService.people().deleteContact(rn).execute();
+                    deletados++;
+                    Thread.sleep(200);
+                } catch (Exception e) {
+                    log.warn("Não foi possível deletar {}: {}", rn, e.getMessage());
+                }
+            }
+            removidosGrupo += paraRemover.size();
+        }
+        log.info("Limpeza duplicatas: {} removidos do grupo, {} deletados", removidosGrupo, deletados);
+        return new int[]{removidosGrupo, deletados};
     }
 
     private Person criarContato(String nome, String telefone) throws Exception {

@@ -101,4 +101,15 @@ public class ContactController {
         linhasVivoSyncService.sincronizarAsync(email);
         return ResponseEntity.accepted().body("Sincronização iniciada. Pode levar alguns minutos — acompanhe pelos logs do sistema.");
     }
+
+    @PostMapping("/sync-linhas-vivo/cleanup")
+    public ResponseEntity<String> cleanupDuplicatas(Authentication auth) throws Exception {
+        String email = auth.getName();
+        if (!SYNC_AUTORIZADOS.contains(email)) {
+            return ResponseEntity.status(403).body("Sem permissão para executar esta ação");
+        }
+        int[] r = linhasVivoSyncService.limparDuplicatasDoGrupo();
+        logsService.createLog("limpou duplicatas Linhas Vivo: " + r[0] + " removidos do grupo, " + r[1] + " deletados");
+        return ResponseEntity.ok(r[0] + " duplicatas removidas do grupo, " + r[1] + " contatos deletados");
+    }
 }
