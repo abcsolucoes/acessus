@@ -6,12 +6,6 @@ import { Header } from "../../components/Header"
 import { ContactModal } from "./ContactModal"
 import styles from './style.module.css'
 
-const SYNC_AUTORIZADOS = [
-  'guilherme.lima@solucoesabc.com.br',
-  'gabriel.silva@solucoesabc.com.br',
-  'gabriel.oliveira@solucoesabc.com.br',
-]
-
 function waNumero(telephone: string): string {
   const digits = telephone.replace(/\D/g, '')
   return digits.startsWith('55') ? digits : `55${digits}`
@@ -25,8 +19,6 @@ export function ContatosPage() {
   const [waContact, setWaContact] = useState<Contact | null>(null)
   const [showScrollTop, setShowScrollTop] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [syncing, setSyncing] = useState(false)
-  const [syncMsg, setSyncMsg] = useState<string | null>(null)
 
   useEffect(() => {
     function onScroll() { setShowScrollTop(window.scrollY > 300) }
@@ -53,25 +45,6 @@ export function ContatosPage() {
 
     load()
   }, [])
-
-  async function handleSync() {
-    setSyncing(true)
-    setSyncMsg(null)
-    try {
-      const msg = await apiFetch<string>('/contacts/sync-linhas-vivo', {
-        method: 'POST',
-        headers: authHeaders(),
-      })
-      setSyncMsg(msg)
-      // Recarrega contatos após sync
-      const data = await apiFetch<Contact[]>('/contacts', { headers: authHeaders() })
-      setContacts(data)
-    } catch (err) {
-      setSyncMsg(err instanceof Error ? err.message : 'Erro ao sincronizar')
-    } finally {
-      setSyncing(false)
-    }
-  }
 
   async function handleDelete(resourceName: string) {
     await apiFetch(`/contacts/${resourceName}`, {
@@ -106,25 +79,11 @@ export function ContatosPage() {
         <div className={styles.top}>
           <h1 className={styles.title}>Contatos</h1>
           <div className={styles.topActions}>
-            {user && SYNC_AUTORIZADOS.includes(user.sub) && (
-              <button
-                className={styles.syncBtn}
-                onClick={handleSync}
-                disabled={syncing}
-                title="Sincronizar contatos da planilha Linhas Vivo"
-              >
-                {syncing ? 'Sincronizando...' : '⟳ Sincronizar Linhas Vivo'}
-              </button>
-            )}
             <button className={styles.addBtn} onClick={() => setModalData('new')}>
               + Novo contato
             </button>
           </div>
         </div>
-
-        {syncMsg && (
-          <p className={styles.syncMsg}>{syncMsg}</p>
-        )}
 
         {/* ── Barra de busca ── */}
         <div className={styles.toolbar}>

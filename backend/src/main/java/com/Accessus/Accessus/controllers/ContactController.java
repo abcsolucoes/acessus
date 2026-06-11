@@ -2,7 +2,6 @@ package com.Accessus.Accessus.controllers;
 
 import com.Accessus.Accessus.dto.contact.ContactDTO;
 import com.Accessus.Accessus.services.GooglePeopleService;
-import com.Accessus.Accessus.services.LinhasVivoSyncService;
 import com.Accessus.Accessus.services.LogsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -18,9 +17,6 @@ import java.util.Set;
 public class ContactController {
 
     private final GooglePeopleService service;
-
-    @Autowired
-    private LinhasVivoSyncService linhasVivoSyncService;
 
     @Autowired
     private LogsService logsService;
@@ -83,33 +79,5 @@ public class ContactController {
     public ResponseEntity<String> normalizePhones() throws IOException {
         int total = service.normalizarTodosOsTelefones();
         return ResponseEntity.ok(total + " contatos atualizados");
-    }
-
-    private static final Set<String> SYNC_AUTORIZADOS = Set.of(
-            "guilherme.lima@solucoesabc.com.br",
-            "gabriel.silva@solucoesabc.com.br",
-            "gabriel.oliveira@solucoesabc.com.br"
-    );
-
-    @PostMapping("/sync-linhas-vivo")
-    public ResponseEntity<String> syncLinhasVivo(Authentication auth) {
-        String email = auth.getName();
-        if (!SYNC_AUTORIZADOS.contains(email)) {
-            return ResponseEntity.status(403).body("Sem permissão para executar esta ação");
-        }
-        logsService.createLog("iniciou sincronização manual Linhas Vivo");
-        linhasVivoSyncService.sincronizarAsync(email);
-        return ResponseEntity.accepted().body("Sincronização iniciada. Pode levar alguns minutos — acompanhe pelos logs do sistema.");
-    }
-
-    @PostMapping("/sync-linhas-vivo/cleanup")
-    public ResponseEntity<String> cleanupDuplicatas(Authentication auth) throws Exception {
-        String email = auth.getName();
-        if (!SYNC_AUTORIZADOS.contains(email)) {
-            return ResponseEntity.status(403).body("Sem permissão para executar esta ação");
-        }
-        int[] r = linhasVivoSyncService.limparDuplicatasDoGrupo();
-        logsService.createLog("limpou duplicatas Linhas Vivo: " + r[0] + " removidos do grupo, " + r[1] + " deletados");
-        return ResponseEntity.ok(r[0] + " duplicatas removidas do grupo, " + r[1] + " contatos deletados");
     }
 }
