@@ -63,7 +63,7 @@ public class LinhasVivoSyncService {
                 Person criado = criarContato(nome, telefone);
                 novosResourceNames.add(criado.getResourceName());
                 criados++;
-                Thread.sleep(200);
+                Thread.sleep(1000);
             }
         }
 
@@ -212,7 +212,22 @@ public class LinhasVivoSyncService {
         Person person = new Person()
                 .setNames(List.of(new Name().setGivenName(nome)))
                 .setPhoneNumbers(List.of(new PhoneNumber().setValue(telefone).setType("mobile")));
-        return peopleService.people().createContact(person).execute();
+
+        int tentativas = 0;
+        while (true) {
+            try {
+                return peopleService.people().createContact(person).execute();
+            } catch (com.google.api.client.googleapis.json.GoogleJsonResponseException e) {
+                if (e.getStatusCode() == 429 && tentativas < 5) {
+                    long espera = 10000L * (long) Math.pow(2, tentativas); // 10s, 20s, 40s, 80s, 160s
+                    log.warn("Rate limit ao criar contato '{}', aguardando {}s antes de tentar novamente", nome, espera / 1000);
+                    Thread.sleep(espera);
+                    tentativas++;
+                } else {
+                    throw e;
+                }
+            }
+        }
     }
 
     private void atualizarTelefone(String nome, String novoTelefone, String grupoResourceName) throws Exception {
