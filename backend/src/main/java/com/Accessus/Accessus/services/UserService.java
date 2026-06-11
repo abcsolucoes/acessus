@@ -87,13 +87,6 @@ public class UserService {
         user.setActivationToken(null);
 
         userRepository.save(user);
-
-        logsServiceProvider.getObject().createLog(
-                user.getName()
-                        + ", email "
-                        + user.getEmail()
-                        + ", ativou sua conta"
-        );
     }
 
     @Transactional(readOnly = true)
