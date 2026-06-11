@@ -46,24 +46,35 @@ public class LinhasVivoSyncService {
 
         int criados = 0, atualizados = 0, removidos = 0;
 
-        // Cria ou atualiza contatos da planilha
+        // Cria contatos novos (sem adicionar ao grupo ainda)
+        List<String> novosResourceNames = new ArrayList<>();
         for (Map.Entry<String, String> entry : planilha.entrySet()) {
             String nome = entry.getKey();
             String telefone = entry.getValue();
 
             if (contatosGrupo.containsKey(nome)) {
-                // Verifica se o número mudou
                 String telefoneSalvo = contatosGrupo.get(nome);
                 if (!telefone.equals(telefoneSalvo)) {
                     atualizarTelefone(nome, telefone, grupoResourceName);
                     atualizados++;
+                    Thread.sleep(200);
                 }
             } else {
-                // Novo funcionário
-                criarContatoNoGrupo(nome, telefone, grupoResourceName);
+                Person criado = criarContato(nome, telefone);
+                novosResourceNames.add(criado.getResourceName());
                 criados++;
-                Thread.sleep(300);
+                Thread.sleep(200);
             }
+        }
+
+        // Adiciona todos os novos ao grupo em lotes de 200
+        for (int i = 0; i < novosResourceNames.size(); i += 200) {
+            List<String> lote = novosResourceNames.subList(i, Math.min(i + 200, novosResourceNames.size()));
+            peopleService.contactGroups().members()
+                    .modify(grupoResourceName, new ModifyContactGroupMembersRequest()
+                            .setResourceNamesToAdd(lote))
+                    .execute();
+            Thread.sleep(500);
         }
 
         // Remove contatos que saíram da planilha
@@ -197,17 +208,11 @@ public class LinhasVivoSyncService {
         return resultado;
     }
 
-    private void criarContatoNoGrupo(String nome, String telefone, String grupoResourceName) throws Exception {
+    private Person criarContato(String nome, String telefone) throws Exception {
         Person person = new Person()
                 .setNames(List.of(new Name().setGivenName(nome)))
                 .setPhoneNumbers(List.of(new PhoneNumber().setValue(telefone).setType("mobile")));
-
-        Person criado = peopleService.people().createContact(person).execute();
-
-        peopleService.contactGroups().members()
-                .modify(grupoResourceName, new ModifyContactGroupMembersRequest()
-                        .setResourceNamesToAdd(List.of(criado.getResourceName())))
-                .execute();
+        return peopleService.people().createContact(person).execute();
     }
 
     private void atualizarTelefone(String nome, String novoTelefone, String grupoResourceName) throws Exception {
