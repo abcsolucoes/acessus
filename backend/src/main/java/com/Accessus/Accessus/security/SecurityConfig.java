@@ -68,6 +68,7 @@ public class SecurityConfig {
                                 "/users/login",
                                 "/h2-console/**",
                                 "/users/activate",
+
                                 "/users/forgot-password",
                                 "/users/reset-password",
                                 "/swagger-ui/**",

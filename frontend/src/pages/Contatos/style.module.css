@@ -18,6 +18,12 @@
   color: var(--text-primary);
 }
 
+.topActions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .addBtn {
   height: 36px;
   padding: 0 16px;
@@ -27,6 +33,39 @@
   font-weight: 600;
   border-radius: var(--radius-md);
   transition: background var(--transition-fast);
+}
+
+.syncBtn {
+  height: 36px;
+  padding: 0 16px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.syncBtn:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.syncBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.syncMsg {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--primary);
 }
 
 .addBtn:hover {

@@ -227,6 +227,14 @@ public class GooglePeopleService {
         return normalizar(atualizado);
     }
 
+    public ContactDTO buscarContato(String resourceName) throws IOException {
+        Person p = peopleService.people()
+                .get(resourceName)
+                .setPersonFields("names,phoneNumbers,emailAddresses")
+                .execute();
+        return normalizar(p);
+    }
+
     public void deletarContato(String resourceName) throws IOException {
 
         peopleService.people()
