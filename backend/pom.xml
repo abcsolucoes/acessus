@@ -96,12 +96,6 @@
 		</dependency>
 
 <dependency>
-			<groupId>org.apache.poi</groupId>
-			<artifactId>poi-ooxml</artifactId>
-			<version>5.4.0</version>
-		</dependency>
-
-		<dependency>
 			<groupId>com.bucket4j</groupId>
 			<artifactId>bucket4j-core</artifactId>
 			<version>8.10.1</version>
