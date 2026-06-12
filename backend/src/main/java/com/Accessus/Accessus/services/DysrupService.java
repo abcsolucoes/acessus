@@ -166,18 +166,27 @@ public class DysrupService {
                 ? filePath.substring(filePath.lastIndexOf('/') + 1)
                 : filePath.substring(filePath.lastIndexOf('\\') + 1);
 
-        Thread.sleep(2000);
-
-        // 3. Baixa o arquivo
+        // 3. Baixa o arquivo com retry (relatório pode não estar pronto imediatamente)
         String url = UriComponentsBuilder
                 .fromUriString(BASE_URL + "/download")
                 .queryParam("download_type", "itinerary-report")
                 .queryParam("file", filePath)
                 .toUriString();
 
-        ResponseEntity<byte[]> dl = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(headers), byte[].class);
+        byte[] conteudo = null;
+        for (int tentativa = 1; tentativa <= 5; tentativa++) {
+            Thread.sleep(3000);
+            ResponseEntity<byte[]> dl = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(headers), byte[].class);
+            if (dl.getBody() != null && dl.getBody().length > 0) {
+                conteudo = dl.getBody();
+                break;
+            }
+            logger.warn("[retry {}/5] arquivo ainda não pronto para {}", tentativa, nomeArquivo);
+        }
 
-        return new ResultadoDownload(dl.getBody(), nomeArquivo);
+        if (conteudo == null) throw new Exception("Download falhou após 5 tentativas: " + nomeArquivo);
+
+        return new ResultadoDownload(conteudo, nomeArquivo);
     }
 
     // ── Mergea dois arquivos Excel no formato do roteiro Dysrup ──────────────
