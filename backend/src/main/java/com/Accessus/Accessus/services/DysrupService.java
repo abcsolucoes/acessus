@@ -181,7 +181,7 @@ public class DysrupService {
                 conteudo = dl.getBody();
                 break;
             }
-            logger.warn("[retry {}/5] arquivo ainda não pronto para {}", tentativa, nomeArquivo);
+            log.warn("[retry {}/5] arquivo ainda não pronto para {}", tentativa, nomeArquivo);
         }
 
         if (conteudo == null) throw new Exception("Download falhou após 5 tentativas: " + nomeArquivo);
