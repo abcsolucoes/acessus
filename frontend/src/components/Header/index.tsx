@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { apiFetch, decodeToken, removeToken } from '../../services/api'
+import { apiFetch, authHeaders, decodeToken, removeToken } from '../../services/api'
 import styles from './Header.module.css'
 
 type HeaderProps = {
@@ -103,7 +103,7 @@ export function Header({ moduleName, userName }: HeaderProps) {
                     setOpen(false)
                     setJuncaoStatus('loading')
                     try {
-                      await apiFetch('/dysrup/gerar-juncao', { method: 'POST' })
+                      await apiFetch('/dysrup/gerar-juncao', { method: 'POST', headers: authHeaders() })
                       setJuncaoStatus('ok')
                     } catch {
                       setJuncaoStatus('erro')
