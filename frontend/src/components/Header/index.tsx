@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { removeToken } from '../../services/api'
+import { apiFetch, decodeToken, removeToken } from '../../services/api'
 import styles from './Header.module.css'
 
 type HeaderProps = {
@@ -10,10 +10,15 @@ type HeaderProps = {
 
 export function Header({ moduleName, userName }: HeaderProps) {
   const [open, setOpen] = useState(false)
+  const [juncaoStatus, setJuncaoStatus] = useState<'idle' | 'loading' | 'ok' | 'erro'>('idle')
   const dropdownRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
 
+  const [user, setUser] = useState<{ name: string; role: string; sub: string } | null>(null)
+
   useEffect(() => {
+    setUser(decodeToken())
+
     function handleClickOutside(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setOpen(false)
@@ -88,6 +93,35 @@ export function Header({ moduleName, userName }: HeaderProps) {
               </svg>
               Início
             </button>
+
+            {user?.sub === "gabriel.silva@solucoesabc.com.br" && (
+              <>
+                <button
+                  className={styles.menuItem}
+                  disabled={juncaoStatus === 'loading'}
+                  onClick={async () => {
+                    setOpen(false)
+                    setJuncaoStatus('loading')
+                    try {
+                      await apiFetch('/dysrup/gerar-juncao', { method: 'POST' })
+                      setJuncaoStatus('ok')
+                    } catch {
+                      setJuncaoStatus('erro')
+                    } finally {
+                      setTimeout(() => setJuncaoStatus('idle'), 5000)
+                    }
+                  }}
+                >
+                  {juncaoStatus === 'loading' ? 'Gerando...' : 'Realizar Junção'}
+                </button>
+                {juncaoStatus === 'ok' && (
+                  <p className={styles.juncaoMsg}>Geração iniciada! O arquivo será enviado por email.</p>
+                )}
+                {juncaoStatus === 'erro' && (
+                  <p className={styles.juncaoMsgErro}>Erro ao iniciar a geração. Tente novamente.</p>
+                )}
+              </>
+            )}
 
             <div className={styles.menuDivider} />
 

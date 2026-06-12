@@ -184,3 +184,15 @@
   background: rgba(239, 68, 68, 0.08);
   color: var(--danger);
 }
+
+.juncaoMsg {
+  margin: 4px 12px 8px;
+  font-size: 12px;
+  color: #16a34a;
+}
+
+.juncaoMsgErro {
+  margin: 4px 12px 8px;
+  font-size: 12px;
+  color: var(--danger);
+}

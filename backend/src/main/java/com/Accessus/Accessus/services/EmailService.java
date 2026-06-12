@@ -5,6 +5,7 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -120,6 +121,41 @@ public class EmailService {
         );
 
         sendHtml(recipients.toArray(String[]::new), "Novo chamado para o seu setor - Accessus", html);
+    }
+
+    public void sendConsolidadoDysrup(String to, byte[] anexo, String nomeArquivo) {
+        String html = buildEmailTemplate(
+                "Consolidado de Roteiros",
+                "Olá!",
+                "O consolidado de roteiros das equipes Dysrup foi gerado com sucesso.",
+                "Segue em anexo o arquivo <strong>" + nomeArquivo + "</strong> com todas as lojas e atendimentos.",
+                null,
+                null,
+                null
+        );
+
+        sendHtmlComAnexo(new String[]{ to }, "Consolidado de Roteiros - Dysrup", html, anexo, nomeArquivo);
+    }
+
+    private void sendHtmlComAnexo(String[] to, String subject, String html, byte[] anexo, String nomeAnexo) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(mailFrom);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(html, true);
+
+            ClassPathResource logo = new ClassPathResource(LOGO_PATH);
+            helper.addInline(LOGO_CID, logo);
+            helper.addAttachment(nomeAnexo, new ByteArrayResource(anexo));
+
+            mailSender.send(message);
+
+        } catch (MessagingException e) {
+            throw new RuntimeException("Erro ao enviar e-mail com anexo", e);
+        }
     }
 
     private void sendHtml(String[] to, String subject, String html) {

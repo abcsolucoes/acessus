@@ -191,7 +191,7 @@ export function TicketsPage() {
         </div>
 
         {/* ── Cards de indicadores ── */}
-        <div className={styles.statsGrid}>
+        {/* <div className={styles.statsGrid}>
 
           <div className={`${styles.statCard} ${styles.statCardOpen}`} data-status="OPEN">
             <div className={styles.statIcon}>
@@ -253,7 +253,7 @@ export function TicketsPage() {
             <div className={styles.statAccent} />
           </div>
 
-        </div>
+        </div> */}
 
         {/* ── Abas ── */}
         <div className={styles.tabs}>
