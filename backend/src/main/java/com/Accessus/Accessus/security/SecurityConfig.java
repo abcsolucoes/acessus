@@ -169,6 +169,11 @@ public class SecurityConfig {
                         .hasAnyRole("ADMIN", "RH")
 
                         // =========================================================
+                        // DYSRUP
+                        // =========================================================
+                        .requestMatchers(HttpMethod.POST, "/dysrup/**").authenticated()
+
+                        // =========================================================
                         // QUALQUER OUTRA ROTA
                         // =========================================================
                         .anyRequest().authenticated()
