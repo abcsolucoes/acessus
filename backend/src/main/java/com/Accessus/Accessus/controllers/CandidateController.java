@@ -47,6 +47,12 @@ public class    CandidateController {
         return ResponseEntity.ok(link);
     }
 
+    @PostMapping("/{id}/resend-form")
+    public ResponseEntity<Void> resendForm(@PathVariable Long id) {
+        candidateService.resendForm(id);
+        return ResponseEntity.ok().build();
+    }
+
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<String> delete(@PathVariable Long id) {
         candidateService.delete(id);

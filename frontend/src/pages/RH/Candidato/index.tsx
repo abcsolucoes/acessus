@@ -27,6 +27,12 @@ export function RHCandidatoPage() {
   const [ticketModalError, setTicketModalError] = useState('')
   const [ticketLoading, setTicketLoading] = useState(false)
   const [toast, setToast] = useState('')
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [editLoading, setEditLoading] = useState(false)
+  const [editError, setEditError] = useState('')
+  const [editForm, setEditForm] = useState({ name: '', email: '', cpf: '', telephone: '', position: '', admissionDate: '' })
 
   useEffect(() => {
     async function load() {
@@ -37,6 +43,14 @@ export function RHCandidatoPage() {
           headers: authHeaders(),
         })
         setCandidate(data)
+        setEditForm({
+          name: data.name,
+          email: data.email,
+          cpf: data.cpf,
+          telephone: data.telephone,
+          position: data.position,
+          admissionDate: data.admissionDate,
+        })
 
         const fieldsData = await apiFetch<Field[]>(`/field/${id}`, { headers: authHeaders() })
         setFields(fieldsData.filter(f => f.scope === 'CANDIDATE'))
@@ -62,6 +76,45 @@ export function RHCandidatoPage() {
       URL.revokeObjectURL(url)
     } catch (err) {
       console.error('Erro ao baixar arquivo:', err)
+    }
+  }
+
+  async function handleEdit(e: React.FormEvent) {
+    e.preventDefault()
+    setEditLoading(true)
+    setEditError('')
+    try {
+      const updated = await apiFetch<typeof candidate>(`/candidates/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify(editForm),
+      })
+      setCandidate(updated)
+      setShowEditModal(false)
+      setToast('Candidato atualizado com sucesso!')
+    } catch (e) {
+      setEditError(e instanceof Error ? e.message : 'Erro ao atualizar.')
+    } finally {
+      setEditLoading(false)
+    }
+  }
+
+  async function handleDelete() {
+    setDeleteLoading(true)
+    try {
+      await apiFetch(`/candidates/delete/${id}`, { method: 'DELETE', headers: authHeaders() })
+      navigate('/rh')
+    } catch {
+      setDeleteLoading(false)
+    }
+  }
+
+  async function handleResendForm() {
+    try {
+      await apiFetch(`/candidates/${id}/resend-form`, { method: 'POST', headers: authHeaders() })
+      setToast('Formulário reenviado por e-mail!')
+    } catch {
+      setToast('Erro ao reenviar formulário.')
     }
   }
 
@@ -139,6 +192,20 @@ export function RHCandidatoPage() {
             title={candidate?.formEnabled ? 'Abrir formulário do candidato' : 'Formulário bloqueado (status não é Pendente)'}
           >
             Ver formulário ↗
+          </button>
+          <button
+            className={styles.formBtn}
+            onClick={handleResendForm}
+            disabled={!candidate?.formEnabled}
+            title={candidate?.formEnabled ? 'Reenviar link do formulário por e-mail' : 'Reenvio bloqueado (status não é Pendente)'}
+          >
+            Reenviar formulário
+          </button>
+          <button className={styles.editBtn} onClick={() => setShowEditModal(true)}>
+            Editar
+          </button>
+          <button className={styles.deleteBtn} onClick={() => setShowDeleteModal(true)}>
+            Excluir
           </button>
           <span className={`${styles.badge} ${styles[`badge_${candidate?.candidateStatus}`]}`}>
             {STATUS_LABEL[candidate?.candidateStatus ?? '']}
@@ -269,6 +336,70 @@ export function RHCandidatoPage() {
         )}
 
       </main>
+
+      {showEditModal && (
+        <div className={styles.overlay}>
+          <div className={styles.modal}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>Editar candidato</h2>
+              <button className={styles.closeBtn} onClick={() => setShowEditModal(false)}>✕</button>
+            </div>
+            <form className={styles.form} onSubmit={handleEdit}>
+              <div className={styles.field}>
+                <label className={styles.label}>Nome <span className={styles.required}>*</span></label>
+                <input className={styles.input} value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} required />
+              </div>
+              <div className={styles.field}>
+                <label className={styles.label}>E-mail <span className={styles.required}>*</span></label>
+                <input className={styles.input} type="email" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} required />
+              </div>
+              <div className={styles.twoCol}>
+                <div className={styles.field}>
+                  <label className={styles.label}>CPF <span className={styles.required}>*</span></label>
+                  <input className={styles.input} value={editForm.cpf} onChange={e => setEditForm(f => ({ ...f, cpf: e.target.value }))} required />
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.label}>Telefone <span className={styles.required}>*</span></label>
+                  <input className={styles.input} value={editForm.telephone} onChange={e => setEditForm(f => ({ ...f, telephone: e.target.value }))} required />
+                </div>
+              </div>
+              <div className={styles.twoCol}>
+                <div className={styles.field}>
+                  <label className={styles.label}>Cargo <span className={styles.required}>*</span></label>
+                  <input className={styles.input} value={editForm.position} onChange={e => setEditForm(f => ({ ...f, position: e.target.value }))} required />
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.label}>Data de admissão <span className={styles.required}>*</span></label>
+                  <input className={styles.input} type="date" value={editForm.admissionDate} onChange={e => setEditForm(f => ({ ...f, admissionDate: e.target.value }))} required />
+                </div>
+              </div>
+              {editError && <p className={styles.error}>{editError}</p>}
+              <div className={styles.footer}>
+                <button type="button" className={styles.cancelBtn} onClick={() => setShowEditModal(false)} disabled={editLoading}>Cancelar</button>
+                <button type="submit" className={styles.submitBtn} disabled={editLoading}>{editLoading ? 'Salvando…' : 'Salvar'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showDeleteModal && (
+        <div className={styles.overlay}>
+          <div className={styles.modal}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>Excluir candidato</h2>
+              <button className={styles.closeBtn} onClick={() => setShowDeleteModal(false)}>✕</button>
+            </div>
+            <form className={styles.form}>
+              <div className={styles.sectionLabel}>Tem certeza que deseja excluir <strong>{candidate?.name}</strong>? Esta ação não pode ser desfeita.</div>
+              <div className={styles.footer}>
+                <button type="button" className={styles.cancelBtn} onClick={() => setShowDeleteModal(false)} disabled={deleteLoading}>Cancelar</button>
+                <button type="button" className={styles.deleteBtnModal} onClick={handleDelete} disabled={deleteLoading}>{deleteLoading ? 'Excluindo…' : 'Excluir'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {showTicketModal && (
         <div className={styles.overlay}>

@@ -135,6 +135,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/candidates/**")
                         .hasAnyRole("ADMIN", "RH")
 
+                        .requestMatchers(HttpMethod.DELETE, "/candidates/**")
+                        .hasAnyRole("ADMIN", "RH")
+
                         .requestMatchers(HttpMethod.PUT, "/candidates/**")
                         .hasAnyRole("ADMIN", "RH")
 

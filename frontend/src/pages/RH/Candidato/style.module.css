@@ -54,6 +54,65 @@
   cursor: not-allowed;
 }
 
+.editBtn {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-primary);
+  background: var(--bg-tertiary);
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.editBtn:hover {
+  border-color: var(--border-secondary);
+  color: var(--text-primary);
+}
+
+.deleteBtn {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--danger);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: transparent;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.deleteBtn:hover {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.deleteBtnModal {
+  height: 36px;
+  padding: 0 20px;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: inherit;
+  background: var(--danger);
+  color: #fff;
+  border: none;
+  transition: background var(--transition-fast);
+}
+
+.deleteBtnModal:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.deleteBtnModal:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .title {
   font-size: 1.25rem;
   font-weight: 700;

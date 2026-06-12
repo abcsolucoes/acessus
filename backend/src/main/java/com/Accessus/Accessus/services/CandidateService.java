@@ -78,7 +78,7 @@ public class CandidateService {
 
         candidateRepository.save(candidate);
 
-        String link = baseUrl + "/form.html?token=" + token;
+        String link = baseUrl + "/formulario/" + token;
         emailService.sendCandidateForm(candidate.getEmail(), link);
 
         logsService.createLog("criou o registro do candidato" + dto.name() + ", cpf " + dto.cpf());
@@ -89,6 +89,15 @@ public class CandidateService {
                 .orElseThrow(() -> new RuntimeException("Candidato não encontrado"));
 
         return baseUrl + "/formulario/" + candidate.getActivationToken();
+    }
+
+    public void resendForm(Long id) {
+        Candidate candidate = candidateRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Candidato não encontrado"));
+
+        String link = baseUrl + "/formulario/" + candidate.getActivationToken();
+        emailService.sendCandidateForm(candidate.getEmail(), link);
+        logsService.createLog("reenviou o formulário para o candidato " + candidate.getName());
     }
 
     @Transactional
