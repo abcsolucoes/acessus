@@ -14,6 +14,10 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -166,20 +170,29 @@ public class DysrupService {
                 ? filePath.substring(filePath.lastIndexOf('/') + 1)
                 : filePath.substring(filePath.lastIndexOf('\\') + 1);
 
-        // 3. Baixa o arquivo com retry (relatório pode não estar pronto imediatamente)
+        // 3. Baixa o arquivo com retry usando HttpClient nativo (lida melhor com chunked/streaming)
         String url = UriComponentsBuilder
                 .fromUriString(BASE_URL + "/download")
                 .queryParam("download_type", "itinerary-report")
                 .queryParam("file", filePath)
+                .encode()
                 .toUriString();
 
         log.info("URL download: {}", url);
+        HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).build();
+        HttpRequest dlRequest = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header("Authorization", headers.getFirst("Authorization"))
+                .header("Accept", "*/*")
+                .GET()
+                .build();
+
         byte[] conteudo = null;
         for (int tentativa = 1; tentativa <= 10; tentativa++) {
             Thread.sleep(5000);
-            ResponseEntity<byte[]> dl = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(headers), byte[].class);
-            byte[] body = dl.getBody();
-            log.info("[retry {}/10] status={} size={} para {}", tentativa, dl.getStatusCode(), body != null ? body.length : -1, nomeArquivo);
+            HttpResponse<byte[]> dl = httpClient.send(dlRequest, HttpResponse.BodyHandlers.ofByteArray());
+            byte[] body = dl.body();
+            log.info("[retry {}/10] status={} size={} para {}", tentativa, dl.statusCode(), body != null ? body.length : -1, nomeArquivo);
             if (body != null && body.length > 100) {
                 conteudo = body;
                 break;
