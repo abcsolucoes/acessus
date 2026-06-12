@@ -65,11 +65,19 @@ public class DysrupService {
 
     @Async
     public void gerarJuncaoAsync() {
+        Path destino = null;
         try {
-            Path destino = Files.createTempDirectory("dysrup-juncao");
+            destino = Files.createTempDirectory("dysrup-juncao");
             baixarRoteiros(destino);
         } catch (Exception e) {
             log.error("Erro ao gerar junção Dysrup: {}", e.getMessage(), e);
+        } finally {
+            if (destino != null) {
+                try (var walk = java.nio.file.Files.walk(destino)) {
+                    walk.sorted(Comparator.reverseOrder()).forEach(p -> { try { Files.delete(p); } catch (Exception ignored) {} });
+                } catch (Exception ignored) {}
+                log.info("Diretório temporário removido: {}", destino);
+            }
         }
     }
 
