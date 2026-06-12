@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 
@@ -107,7 +108,7 @@ public class TicketService {
         ticket.setTitle(dto.title());
         ticket.setDescription(dto.description());
         ticket.setStatus(TicketStatus.OPEN);
-        ticket.setCreatedAt(LocalDateTime.now());
+        ticket.setCreatedAt(LocalDateTime.now(ZoneId.of("America/Sao_Paulo")));
         ticket.setCreatedBy(createdBy);
 
         if (dto.department() != null) {

@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Service
 public class LogsService {
@@ -29,7 +30,7 @@ public class LogsService {
         Logs log = new Logs();
         log.setUser(user);
         log.setDescription(description);
-        log.setCreatedAt(LocalDateTime.now());
+        log.setCreatedAt(LocalDateTime.now(ZoneId.of("America/Sao_Paulo")));
 
         logsRepository.save(log);
     }

@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -129,7 +130,7 @@ public class UserService {
 
         user.setTokenPassword(passwordEncoder.encode(code));
 
-        user.setPasswordExpires(LocalDateTime.now().plusMinutes(10));
+        user.setPasswordExpires(LocalDateTime.now(ZoneId.of("America/Sao_Paulo")).plusMinutes(10));
 
         user.setPasswordAttempts(0);
 
@@ -252,7 +253,7 @@ public class UserService {
             throw new RuntimeException("Tentativas excedidas");
         }
 
-        if (user.getPasswordExpires().isBefore(LocalDateTime.now())) {
+        if (user.getPasswordExpires().isBefore(LocalDateTime.now(ZoneId.of("America/Sao_Paulo")))) {
             throw new RuntimeException("Código expirado");
         }
 

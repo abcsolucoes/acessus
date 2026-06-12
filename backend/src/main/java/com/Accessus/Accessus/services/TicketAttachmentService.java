@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.UUID;
 
 @Service
@@ -86,7 +87,7 @@ public class TicketAttachmentService {
         attachment.setFileName(original != null ? original : safeFileName); // nome legível para o usuário
         attachment.setFilePath(filePath.toString());                         // caminho real — só o backend usa
         attachment.setContentType(file.getContentType());
-        attachment.setUploadedAt(LocalDateTime.now());
+        attachment.setUploadedAt(LocalDateTime.now(ZoneId.of("America/Sao_Paulo")));
 
         attachmentRepository.save(attachment);
 
