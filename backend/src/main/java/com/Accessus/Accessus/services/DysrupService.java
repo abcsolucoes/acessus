@@ -173,18 +173,20 @@ public class DysrupService {
                 .queryParam("file", filePath)
                 .toUriString();
 
+        log.info("URL download: {}", url);
         byte[] conteudo = null;
-        for (int tentativa = 1; tentativa <= 5; tentativa++) {
-            Thread.sleep(3000);
+        for (int tentativa = 1; tentativa <= 10; tentativa++) {
+            Thread.sleep(5000);
             ResponseEntity<byte[]> dl = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(headers), byte[].class);
-            if (dl.getBody() != null && dl.getBody().length > 0) {
-                conteudo = dl.getBody();
+            byte[] body = dl.getBody();
+            log.info("[retry {}/10] status={} size={} para {}", tentativa, dl.getStatusCode(), body != null ? body.length : -1, nomeArquivo);
+            if (body != null && body.length > 100) {
+                conteudo = body;
                 break;
             }
-            log.warn("[retry {}/5] arquivo ainda não pronto para {}", tentativa, nomeArquivo);
         }
 
-        if (conteudo == null) throw new Exception("Download falhou após 5 tentativas: " + nomeArquivo);
+        if (conteudo == null) throw new Exception("Download falhou após 10 tentativas: " + nomeArquivo);
 
         return new ResultadoDownload(conteudo, nomeArquivo);
     }
