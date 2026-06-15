@@ -43,7 +43,6 @@ export function TicketsPage() {
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [allTickets, setAllTickets] = useState<Ticket[]>([])
   const [totalPages, setTotalPages] = useState(0)
-  const [totalElements, setTotalElements] = useState(0)
   const [page, setPage] = useState(0)
   const [loadingList, setLoadingList] = useState(false)
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null)
@@ -91,7 +90,6 @@ export function TicketsPage() {
       setTickets(data.content)
       setAllTickets(data.content)
       setTotalPages(data.totalPages)
-      setTotalElements(data.totalElements)
     } catch (err) {
       console.error(err)
     } finally {
