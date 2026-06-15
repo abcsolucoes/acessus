@@ -41,10 +41,14 @@ export function TicketsPage() {
   type Filter = 'mine' | 'sector' | 'created' | 'all'
   const [filter, setFilter] = useState<Filter>('mine')
   const [tickets, setTickets] = useState<Ticket[]>([])
+  const [allTickets, setAllTickets] = useState<Ticket[]>([])
   const [totalPages, setTotalPages] = useState(0)
   const [totalElements, setTotalElements] = useState(0)
   const [page, setPage] = useState(0)
   const [loadingList, setLoadingList] = useState(false)
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null)
+
+  const visibleTickets = selectedStatus ? allTickets.filter(t => t.status === selectedStatus) : tickets
 
   // ── Modal novo ticket ──
   const [openModal, setOpenModal] = useState(false)
@@ -73,7 +77,8 @@ export function TicketsPage() {
 
   function changeFilter(f: Filter) {
     setFilter(f)
-    setPage(0) // volta pra primeira página ao trocar de aba
+    setSelectedStatus(null)
+    setPage(0)
   }
 
   async function fetchTickets(p: number, f: Filter) {
@@ -84,6 +89,7 @@ export function TicketsPage() {
         { headers: authHeaders() }
       )
       setTickets(data.content)
+      setAllTickets(data.content)
       setTotalPages(data.totalPages)
       setTotalElements(data.totalElements)
     } catch (err) {
@@ -104,8 +110,8 @@ export function TicketsPage() {
     try {
       // 1 — Cria o ticket e recebe o id de volta
       let created;
-      
-      if(user?.role === "ADMIN") {
+
+      if (user?.role === "ADMIN") {
         created = await apiFetch<Ticket>('/tickets', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...authHeaders() },
@@ -177,6 +183,9 @@ export function TicketsPage() {
 
   // ── Render ────────────────────────────────────────────────────────────────
 
+  console.log(tickets)
+
+
   return (
     <>
       <Header moduleName="Tickets" userName={user?.name ?? ""} />
@@ -191,9 +200,13 @@ export function TicketsPage() {
         </div>
 
         {/* ── Cards de indicadores ── */}
-        {/* <div className={styles.statsGrid}>
+        <div className={styles.statsGrid}>
 
-          <div className={`${styles.statCard} ${styles.statCardOpen}`} data-status="OPEN">
+          <div
+            className={`${styles.statCard} ${styles.statCardOpen} ${selectedStatus === 'OPEN' ? styles.statCardSelected : ''}`}
+            data-status="OPEN"
+            onClick={() => setSelectedStatus(prev => prev === 'OPEN' ? null : 'OPEN')}
+          >
             <div className={styles.statIcon}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                 <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="1.6" />
@@ -203,13 +216,16 @@ export function TicketsPage() {
               </svg>
             </div>
             <div className={styles.statBody}>
-              <span className={styles.statValue}>0</span>
+              <span className={styles.statValue}>{tickets.filter(ticket => ticket.status === "OPEN").length}</span>
               <span className={styles.statLabel}>Abertos</span>
             </div>
             <div className={styles.statAccent} />
           </div>
 
-          <div className={`${styles.statCard} ${styles.statCardInProgress}`} data-status="IN_PROGRESS">
+          <div
+            className={`${styles.statCard} ${styles.statCardInProgress} ${selectedStatus === 'IN_PROGRESS' ? styles.statCardSelected : ''}`}
+            onClick={() => setSelectedStatus(prev => prev === 'IN_PROGRESS' ? null : 'IN_PROGRESS')}
+          >
             <div className={styles.statIcon}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                 <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6" />
@@ -218,13 +234,16 @@ export function TicketsPage() {
               </svg>
             </div>
             <div className={styles.statBody}>
-              <span className={styles.statValue}>0</span>
+              <span className={styles.statValue}>{allTickets.filter(t => t.status === 'IN_PROGRESS').length}</span>
               <span className={styles.statLabel}>Em andamento</span>
             </div>
             <div className={styles.statAccent} />
           </div>
 
-          <div className={`${styles.statCard} ${styles.statCardResolved}`} data-status="RESOLVED">
+          <div
+            className={`${styles.statCard} ${styles.statCardResolved} ${selectedStatus === 'RESOLVED' ? styles.statCardSelected : ''}`}
+            onClick={() => setSelectedStatus(prev => prev === 'RESOLVED' ? null : 'RESOLVED')}
+          >
             <div className={styles.statIcon}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                 <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6" />
@@ -232,13 +251,16 @@ export function TicketsPage() {
               </svg>
             </div>
             <div className={styles.statBody}>
-              <span className={styles.statValue}>0</span>
+              <span className={styles.statValue}>{allTickets.filter(t => t.status === 'RESOLVED').length}</span>
               <span className={styles.statLabel}>Resolvidos</span>
             </div>
             <div className={styles.statAccent} />
           </div>
 
-          <div className={`${styles.statCard} ${styles.statCardClosed}`} data-status="CLOSED">
+          <div
+            className={`${styles.statCard} ${styles.statCardClosed} ${selectedStatus === 'CLOSED' ? styles.statCardSelected : ''}`}
+            onClick={() => setSelectedStatus(prev => prev === 'CLOSED' ? null : 'CLOSED')}
+          >
             <div className={styles.statIcon}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                 <rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.6" />
@@ -247,13 +269,13 @@ export function TicketsPage() {
               </svg>
             </div>
             <div className={styles.statBody}>
-              <span className={styles.statValue}>0</span>
+              <span className={styles.statValue}>{allTickets.filter(t => t.status === 'CLOSED').length}</span>
               <span className={styles.statLabel}>Encerrados</span>
             </div>
             <div className={styles.statAccent} />
           </div>
 
-        </div> */}
+        </div>
 
         {/* ── Abas ── */}
         <div className={styles.tabs}>
@@ -270,14 +292,14 @@ export function TicketsPage() {
 
           {loadingList ? (
             <p className={styles.emptyMsg}>Carregando tickets…</p>
-          ) : tickets.length === 0 ? (
+          ) : visibleTickets.length === 0 ? (
             <p className={styles.emptyMsg}>Nenhum ticket encontrado.</p>
           ) : (
             <>
-              <p className={styles.countMsg}>{totalElements} ticket{totalElements !== 1 ? 's' : ''} encontrado{totalElements !== 1 ? 's' : ''}</p>
+              <p className={styles.countMsg}>{visibleTickets.length} ticket{visibleTickets.length !== 1 ? 's' : ''} encontrado{visibleTickets.length !== 1 ? 's' : ''}</p>
 
               <ul className={styles.list}>
-                {tickets.map(ticket => (
+                {visibleTickets.map(ticket => (
                   <li key={ticket.id} className={styles.card} onClick={() => navigate(`/tickets/ticketDetail/${ticket.id}`)}>
                     <div className={styles.cardTop}>
                       <span className={styles.cardTitle}>{ticket.title}</span>

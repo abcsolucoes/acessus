@@ -28,7 +28,7 @@ public class TicketController {
     TicketAttachmentService attachmentService;
 
     @GetMapping
-    public ResponseEntity<Page<ResponseTicketDto>> findAll(@RequestParam(defaultValue = "mine") String filter, @PageableDefault(size = 20, sort = "id") Pageable pageable) {
+    public ResponseEntity<Page<ResponseTicketDto>> findAll(@RequestParam(defaultValue = "mine") String filter, @PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(ticketService.findForCurrentUser(filter, pageable));
     }
 

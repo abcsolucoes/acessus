@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { apiFetch, authHeaders, decodeToken, removeToken } from '../../services/api'
+import { Toast } from '../Toast'
 import styles from './Header.module.css'
 
 type HeaderProps = {
@@ -10,7 +11,8 @@ type HeaderProps = {
 
 export function Header({ moduleName, userName }: HeaderProps) {
   const [open, setOpen] = useState(false)
-  const [juncaoStatus, setJuncaoStatus] = useState<'idle' | 'loading' | 'ok' | 'erro'>('idle')
+  const [juncaoStatus, setJuncaoStatus] = useState<'idle' | 'loading'>('idle')
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
 
@@ -34,6 +36,8 @@ export function Header({ moduleName, userName }: HeaderProps) {
   }
 
   return (
+    <>
+    {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} duration={6000} />}
     <header className={styles.header}>
 
       {/* Esquerda: logo + módulo */}
@@ -102,24 +106,18 @@ export function Header({ moduleName, userName }: HeaderProps) {
                   onClick={async () => {
                     setOpen(false)
                     setJuncaoStatus('loading')
+                    setToast({ message: 'Gerando junção, o arquivo será enviado no seu e-mail em alguns minutos...', type: 'success' })
                     try {
                       await apiFetch('/dysrup/gerar-juncao', { method: 'POST', headers: authHeaders() })
-                      setJuncaoStatus('ok')
                     } catch {
-                      setJuncaoStatus('erro')
+                      setToast({ message: 'Erro ao iniciar a geração. Tente novamente.', type: 'error' })
                     } finally {
-                      setTimeout(() => setJuncaoStatus('idle'), 5000)
+                      setJuncaoStatus('idle')
                     }
                   }}
                 >
                   {juncaoStatus === 'loading' ? 'Gerando...' : 'Realizar Junção'}
                 </button>
-                {juncaoStatus === 'ok' && (
-                  <p className={styles.juncaoMsg}>Geração iniciada! O arquivo será enviado por email.</p>
-                )}
-                {juncaoStatus === 'erro' && (
-                  <p className={styles.juncaoMsgErro}>Erro ao iniciar a geração. Tente novamente.</p>
-                )}
               </>
             )}
 
@@ -143,5 +141,6 @@ export function Header({ moduleName, userName }: HeaderProps) {
       </div>
 
     </header>
+    </>
   )
 }
