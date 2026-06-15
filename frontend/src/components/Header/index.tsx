@@ -94,7 +94,7 @@ export function Header({ moduleName, userName }: HeaderProps) {
               Início
             </button>
 
-            {(user?.sub === "gabriel.silva@solucoesabc.com.br" || user?.sub === "gabriel.oliveira@solucoesabc.com.br") && (
+            {(user?.sub === "gabriel.silva@solucoesabc.com.br" || user?.sub === "gabriel.oliveira@solucoesabc.com.br" || user?.sub === "guilherme.lima@solucoesabc.com.br") && (
               <>
                 <button
                   className={styles.menuItem}

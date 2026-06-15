@@ -148,7 +148,8 @@ public class DysrupService {
 
         // ── Envia por email ───────────────────────────────────────────────────
         emailService.sendConsolidadoDysrup("gabriel.silva@solucoesabc.com.br", consolidado, nomeConsolidado);
-        log.info("Consolidado enviado por email para gabriel.silva@solucoesabc.com.br");
+        emailService.sendConsolidadoDysrup("guilherme.lima@solucoesabc.com.br", consolidado, nomeConsolidado);
+        log.info("Consolidado enviado por email para gabriel.silva@solucoesabc.com.br e guilherme.lima@solucoesabc.com.br");
     }
 
     // ── Gera o relatório na API e baixa o arquivo ─────────────────────────────
