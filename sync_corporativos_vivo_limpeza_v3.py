@@ -167,7 +167,7 @@ def normalizar_classificacao(raw: Any) -> str:
         (("COMERCIAL",), "Comercial"),
         (("FINANCEIRO",), "Financeiro"),
         (("SUPORTE TECNICO", "SUPORTE"), "Suporte Técnico"),
-        (("OPERACIONAL", "ESCRITORIO"), "Escritório"),
+        (("OPERACIONAL", "ESCRITORIO"), "Operacional"),
         (("VENDEDOR", "VENDEDOR EXTERNO"), "Vendedor"),
         (("PROMOTOR",), "Promotor"),
         (("CLIENTE",), "Cliente"),
