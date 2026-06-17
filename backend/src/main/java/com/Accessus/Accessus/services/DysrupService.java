@@ -28,39 +28,13 @@ public class DysrupService {
     private static final Logger log = LoggerFactory.getLogger(DysrupService.class);
     private static final String BASE_URL = "https://app.dysrup.com.br/api/v1";
 
-    @Value("${dysrup.email}")
-    private String dysrupEmail;
-
-    @Value("${dysrup.password}")
-    private String dysrupPassword;
+    @Value("${dysrup.token}")
+    private String dysrupToken;
 
     @Autowired
     private EmailService emailService;
 
     private final RestTemplate restTemplate = new RestTemplate();
-
-    private String autenticar() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        Map<String, String> body = Map.of(
-                "accountCode", "84OCE",
-                "email", dysrupEmail,
-                "password", dysrupPassword
-        );
-
-        ResponseEntity<Map> response = restTemplate.exchange(
-                "https://api.dysrup.com.br/api/auth/auth",
-                HttpMethod.POST,
-                new HttpEntity<>(body, headers),
-                Map.class
-        );
-
-        String token = (String) response.getBody().get("token");
-        if (token == null) throw new RuntimeException("Token não retornado pelo Dysrup");
-        log.info("Autenticado no Dysrup com sucesso");
-        return token;
-    }
 
     // Equipes normais — B_FIXO (152) é tratado separadamente e mergeado com B (29)
     private static final List<Map.Entry<String, Integer>> EQUIPES = List.of(
@@ -94,8 +68,7 @@ public class DysrupService {
         Path destino = null;
         try {
             destino = Files.createTempDirectory("dysrup-juncao");
-            String token = autenticar();
-            baixarRoteiros(destino, token);
+            baixarRoteiros(destino, dysrupToken);
         } catch (Exception e) {
             log.error("Erro ao gerar junção Dysrup: {}", e.getMessage(), e);
         } finally {
