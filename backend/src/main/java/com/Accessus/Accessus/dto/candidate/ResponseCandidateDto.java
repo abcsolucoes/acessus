@@ -13,5 +13,7 @@ public record ResponseCandidateDto(
         String position,
         LocalDate admissionDate,
         CandidateStatus candidateStatus,
-        Boolean formEnabled
+        Boolean formEnabled,
+        String routeName,
+        String teamName
 ) {}

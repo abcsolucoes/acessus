@@ -35,9 +35,12 @@ public class    CandidateController {
         return ResponseEntity.ok(candidateService.findById(id));
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<Void> register(@RequestBody @Valid RegisterCandidateDto dto) {
-        candidateService.register(dto);
+    @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Void> register(
+            @RequestPart("data") @Valid RegisterCandidateDto dto,
+            @RequestParam(value = "routePhoto", required = false) MultipartFile routePhoto
+    ) {
+        candidateService.register(dto, routePhoto);
         return ResponseEntity.ok().build();
     }
 

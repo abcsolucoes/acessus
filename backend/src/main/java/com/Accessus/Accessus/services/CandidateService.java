@@ -41,6 +41,9 @@ public class CandidateService {
     @Autowired
     private LogsService logsService;
 
+    @Autowired
+    private ZApiService zApiService;
+
     @Value("${app.base-url}")
     private String baseUrl;
 
@@ -58,7 +61,7 @@ public class CandidateService {
     }
 
     @Transactional
-    public void register(RegisterCandidateDto dto) {
+    public void register(RegisterCandidateDto dto, MultipartFile routePhoto) {
         Candidate candidate = new Candidate();
 
         if (candidateRepository.findByEmail(dto.email()).isPresent() || candidateRepository.findByCpf(dto.cpf()).isPresent()) {
@@ -71,6 +74,8 @@ public class CandidateService {
         candidate.setPosition(dto.position());
         candidate.setTelephone(dto.telephone());
         candidate.setAdmissionDate(dto.admissionDate());
+        candidate.setRouteName(dto.routeName());
+        candidate.setTeamName(dto.teamName());
         candidate.setCandidateStatus(CandidateStatus.PENDING);
 
         String token = UUID.randomUUID().toString();
@@ -78,8 +83,16 @@ public class CandidateService {
 
         candidateRepository.save(candidate);
 
+        if (routePhoto != null && !routePhoto.isEmpty()) {
+            String path = fileStorageService.saveRoutePhoto(candidate.getId(), routePhoto);
+            candidate.setRoutePhotoPath(path);
+            candidateRepository.save(candidate);
+        }
+
         String link = baseUrl + "/formulario/" + token;
         emailService.sendCandidateForm(candidate.getEmail(), link);
+
+        zApiService.sendCandidateRouteNotification(candidate.getName(), candidate.getRouteName(), candidate.getRoutePhotoPath());
 
         logsService.createLog("criou o registro do candidato" + dto.name() + ", cpf " + dto.cpf());
     }
@@ -125,6 +138,8 @@ public class CandidateService {
         candidate.setTelephone(dto.telephone());
         candidate.setPosition(dto.position());
         candidate.setAdmissionDate(dto.admissionDate());
+        candidate.setRouteName(dto.routeName());
+        candidate.setTeamName(dto.teamName());
 
         candidateRepository.save(candidate);
 
@@ -183,7 +198,9 @@ public class CandidateService {
                 candidate.getPosition(),
                 candidate.getAdmissionDate(),
                 candidate.getCandidateStatus(),
-                candidate.getCandidateStatus() == CandidateStatus.PENDING
+                candidate.getCandidateStatus() == CandidateStatus.PENDING,
+                candidate.getRouteName(),
+                candidate.getTeamName()
         );
     }
 

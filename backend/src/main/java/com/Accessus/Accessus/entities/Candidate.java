@@ -22,9 +22,11 @@ public class Candidate {
     private String position;
     private LocalDate admissionDate;
     private String activationToken;
-
     @Enumerated(EnumType.STRING)
     private CandidateStatus candidateStatus;
+    private String routeName;
+    private String teamName;
+    private String routePhotoPath;
 
     public Candidate() {
     }
@@ -111,6 +113,30 @@ public class Candidate {
 
     public void setCandidateStatus(CandidateStatus candidateStatus) {
         this.candidateStatus = candidateStatus;
+    }
+
+    public String getRouteName() {
+        return routeName;
+    }
+
+    public void setRouteName(String routeName) {
+        this.routeName = routeName;
+    }
+
+    public String getTeamName() {
+        return teamName;
+    }
+
+    public void setTeamName(String teamName) {
+        this.teamName = teamName;
+    }
+
+    public String getRoutePhotoPath() {
+        return routePhotoPath;
+    }
+
+    public void setRoutePhotoPath(String routePhotoPath) {
+        this.routePhotoPath = routePhotoPath;
     }
 
     @Override

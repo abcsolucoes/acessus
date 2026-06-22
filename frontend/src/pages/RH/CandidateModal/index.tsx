@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { apiFetch, authHeaders } from "../../../services/api"
 import { isValidEmail, isValidCpf, formatCpf, formatPhone } from '../../../utils/format'
 
@@ -16,8 +16,18 @@ export function CandidateModal({ onClose, onSuccess }: Props) {
     const [telephone, setTelephone] = useState('')
     const [position, setPosition] = useState('')
     const [admissionDate, setAdmissionDate] = useState('')
+    const [routeName, setRouteName] = useState('')
+    const [teamName, setTeamName] = useState('')
+    const [itineraries, setItineraries] = useState<{ itinerary_id: number; itinerary_description: string }[]>([])
+    const [routePhoto, setRoutePhoto] = useState<File | null>(null)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
+
+    useEffect(() => {
+        apiFetch<{ itinerary_id: number; itinerary_description: string }[]>('/dysrup/itineraries', {
+            headers: authHeaders(),
+        }).then(setItineraries).catch(() => {})
+    }, [])
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -51,10 +61,14 @@ export function CandidateModal({ onClose, onSuccess }: Props) {
         }
 
         try {
+            const formData = new FormData()
+            formData.append('data', new Blob([JSON.stringify({ name, email, cpf, telephone, position, admissionDate, routeName, teamName })], { type: 'application/json' }))
+            if (routePhoto) formData.append('routePhoto', routePhoto)
+
             await apiFetch('/candidates/register', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', ...authHeaders() },
-                body: JSON.stringify({ name, email, cpf, telephone, position, admissionDate }),
+                headers: { ...authHeaders() },
+                body: formData,
             })
 
             onSuccess()   // avisa o RHPage que um candidato foi criado
@@ -128,12 +142,62 @@ export function CandidateModal({ onClose, onSuccess }: Props) {
                     </div>
 
                     <div>
+                        <label>Equipe</label>
+                        <select value={teamName} onChange={e => setTeamName(e.target.value)}>
+                            <option value="">Selecione uma equipe</option>
+                            {itineraries.map(i => (
+                                <option key={i.itinerary_id} value={i.itinerary_description}>
+                                    {i.itinerary_description}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label>Rota</label>
+                        <input
+                            placeholder="Ex: M - 020"
+                            value={routeName}
+                            onChange={e => setRouteName(e.target.value)}
+                        />
+                    </div>
+
+                    <div>
                         <label>Data de admissão</label>
                         <input
                             type="date"
                             value={admissionDate}
                             onChange={e => setAdmissionDate(e.target.value)}
                         />
+                    </div>
+
+                    <div>
+                        <label>Foto da rota</label>
+                        {routePhoto ? (
+                            <div className={styles.uploadedFile}>
+                                <span className={styles.uploadedIcon}>📄</span>
+                                <span className={styles.uploadedName}>{routePhoto.name}</span>
+                                <button
+                                    type="button"
+                                    className={styles.uploadedRemove}
+                                    onClick={() => setRoutePhoto(null)}
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                        ) : (
+                            <label className={styles.uploadArea}>
+                                <span className={styles.uploadIcon}>↑</span>
+                                <span className={styles.uploadTitle}>Selecionar arquivo</span>
+                                <span className={styles.uploadHint}>JPG, PNG ou WebP</span>
+                                <input
+                                    type="file"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    className={styles.fileInput}
+                                    onChange={e => setRoutePhoto(e.target.files?.[0] ?? null)}
+                                />
+                            </label>
+                        )}
                     </div>
 
                     {error && <p className={styles.error}>{error}</p>}

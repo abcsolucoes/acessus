@@ -20,6 +20,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.*;
 
 @Service
@@ -28,8 +29,24 @@ public class DysrupService {
     private static final Logger log = LoggerFactory.getLogger(DysrupService.class);
     private static final String BASE_URL = "https://app.dysrup.com.br/api/v1";
 
-    @Value("${dysrup.token}")
+    @Value("${dysrup.token:}")
     private String dysrupToken;
+
+    @Value("${dysrup.email:}")
+    private String dysrupEmail;
+
+    @Value("${dysrup.password:}")
+    private String dysrupPassword;
+
+    @Value("${dysrup.employer-code:}")
+    private String dysrupEmployerCode;
+
+    private String cachedToken;
+    private Instant tokenExpiresAt = Instant.EPOCH;
+
+    private List<Map<String, Object>> cachedItineraries;
+    private Instant itinerariesCachedAt = Instant.EPOCH;
+    private static final long ITINERARIES_CACHE_SECONDS = 3600;
 
     @Autowired
     private EmailService emailService;
@@ -63,12 +80,101 @@ public class DysrupService {
 
     // ── Chamado pelo controller — roda em background ──────────────────────────
 
+    @SuppressWarnings("unchecked")
+    public String login() {
+        log.info("Dysrup login — email='{}' employerCode='{}' passwordBlank={}", dysrupEmail, dysrupEmployerCode, dysrupPassword.isBlank());
+        Map<String, String> payload = Map.of(
+                "username", dysrupEmail,
+                "password", dysrupPassword,
+                "type", "web",
+                "access_type", "agency",
+                "employer_code", dysrupEmployerCode
+        );
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        ResponseEntity<Map> resp = restTemplate.exchange(
+                BASE_URL + "/login",
+                HttpMethod.POST,
+                new HttpEntity<>(payload, headers),
+                Map.class
+        );
+
+        Map<?, ?> body = resp.getBody();
+        if (body == null) throw new RuntimeException("Resposta vazia do login Dysrup");
+
+        try {
+            Map<?, ?> data  = (Map<?, ?>) body.get("data");
+            Map<?, ?> token = (Map<?, ?>) data.get("token");
+            String accessToken = (String) token.get("access_token");
+            if (accessToken == null || accessToken.isBlank()) throw new RuntimeException("access_token vazio");
+            Number expiresIn = (Number) token.get("expires_in");
+            long segundos = expiresIn != null ? expiresIn.longValue() : 3600;
+
+            cachedToken = accessToken;
+            // Renova com 5 minutos de antecedência para evitar usar token no limite
+            tokenExpiresAt = Instant.now().plusSeconds(segundos).minusSeconds(300);
+
+            log.info("Login Dysrup OK — token válido por {} segundos", segundos);
+            return accessToken;
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao extrair token do login Dysrup: " + e.getMessage(), e);
+        }
+    }
+
+    public synchronized String getToken() {
+        if (cachedToken != null && Instant.now().isBefore(tokenExpiresAt)) {
+            log.debug("Reutilizando token Dysrup em cache");
+            return cachedToken;
+        }
+        log.info("Token Dysrup ausente ou expirado — realizando login");
+        return login();
+    }
+
+    @SuppressWarnings("unchecked")
+    public synchronized List<Map<String, Object>> getActiveItineraries() {
+        if (cachedItineraries != null && Instant.now().isBefore(itinerariesCachedAt.plusSeconds(ITINERARIES_CACHE_SECONDS))) {
+            log.debug("Reutilizando lista de itinerários em cache");
+            return cachedItineraries;
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(getToken());
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        Map<String, Object> payload = Map.of(
+                "reset_filter", false,
+                "status", "active",
+                "sort_by", Map.of("sort_by", "itinerary_description", "sort_desc", "asc")
+        );
+
+        ResponseEntity<Map> resp = restTemplate.exchange(
+                BASE_URL + "/web/itinerary/filter?page=1&per_page=100",
+                HttpMethod.POST,
+                new HttpEntity<>(payload, headers),
+                Map.class
+        );
+
+        Map<?, ?> body = resp.getBody();
+        if (body == null) throw new RuntimeException("Resposta vazia da Dysrup");
+
+        Object data = body.get("data");
+        if (!(data instanceof List)) throw new RuntimeException("Formato inesperado da Dysrup");
+
+        cachedItineraries = (List<Map<String, Object>>) data;
+        itinerariesCachedAt = Instant.now();
+        log.info("Itinerários Dysrup atualizados — {} rotas em cache por {}min", cachedItineraries.size(), ITINERARIES_CACHE_SECONDS / 60);
+
+        return cachedItineraries;
+    }
+
     @Async
     public void gerarJuncaoAsync() {
         Path destino = null;
         try {
             destino = Files.createTempDirectory("dysrup-juncao");
-            baixarRoteiros(destino, dysrupToken);
+            baixarRoteiros(destino);
         } catch (Exception e) {
             log.error("Erro ao gerar junção Dysrup: {}", e.getMessage(), e);
         } finally {
@@ -83,10 +189,7 @@ public class DysrupService {
 
     // ── Ponto de entrada ─────────────────────────────────────────────────────
 
-    public void baixarRoteiros(Path destino, String token) throws Exception {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(token);
-        headers.setContentType(MediaType.APPLICATION_JSON);
+    public void baixarRoteiros(Path destino) throws Exception {
 
         byte[] bytesB = null;
         String nomeArquivoB = null;
@@ -98,7 +201,7 @@ public class DysrupService {
             log.info("[{}] Gerando relatório...", nome);
 
             try {
-                ResultadoDownload resultado = gerarEBaixar(itineraryId, headers);
+                ResultadoDownload resultado = gerarEBaixar(itineraryId);
 
                 if (nome.equals("B")) {
                     bytesB = resultado.conteudo();
@@ -124,7 +227,7 @@ public class DysrupService {
         if (bytesB != null) {
             log.info("[B_FIXO] Gerando relatório para merge...");
             try {
-                ResultadoDownload fixo = gerarEBaixar(152, headers);
+                ResultadoDownload fixo = gerarEBaixar(152);
                 byte[] mergeado = mergeExcel(bytesB, fixo.conteudo());
                 RoteiroParsed parsedB = parseRoteiro(mergeado);
                 Files.write(destino.resolve(nomeArquivoB), toFlat(parsedB));
@@ -155,7 +258,11 @@ public class DysrupService {
     // ── Gera o relatório na API e baixa o arquivo ─────────────────────────────
     // Retorna os bytes do Excel e o nome do arquivo original
 
-    private ResultadoDownload gerarEBaixar(int itineraryId, HttpHeaders headers) throws Exception {
+    private ResultadoDownload gerarEBaixar(int itineraryId) throws Exception {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(getToken());
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
         // 1. Pede para a API gerar o relatório
         Map<String, Object> payload = Map.of(
                 "report_entity", "itinerary",

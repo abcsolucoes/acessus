@@ -24,6 +24,8 @@ export type Candidate = {
   admissionDate: string
   candidateStatus: 'PENDING' | 'UNDER_ANALYSIS' | 'APPROVED' | 'REJECTED'
   formEnabled: boolean
+  routeName: string | null
+  teamName: string | null
 }
 
 export type Contact = {

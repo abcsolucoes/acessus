@@ -157,6 +157,64 @@ public class FileStorageService {
         fieldValueRepository.save(fv);
     }
 
+    public String saveRoutePhoto(Long candidateId, MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new RuntimeException("Arquivo vazio");
+        }
+
+        if (file.getSize() > MAX_FILE_SIZE) {
+            throw new RuntimeException("Arquivo muito grande. Máximo permitido: 10MB");
+        }
+
+        String original = file.getOriginalFilename();
+        String mime = file.getContentType() != null ? file.getContentType().toLowerCase() : "";
+
+        String extension = "";
+        if (original != null && original.contains(".")) {
+            extension = original.substring(original.lastIndexOf(".")).toLowerCase();
+        }
+
+        if (extension.isEmpty()) {
+            extension = switch (mime) {
+                case "image/jpeg", "image/jpg", "image/pjpeg" -> ".jpg";
+                case "image/png"  -> ".png";
+                case "image/heic" -> ".heic";
+                case "image/heif" -> ".heif";
+                case "image/webp" -> ".webp";
+                default -> mime.startsWith("image/") ? ".jpg" : "";
+            };
+        }
+
+        if (!ALLOWED_EXTENSIONS.contains(extension) || mime.equals("application/pdf")) {
+            throw new RuntimeException("Tipo de arquivo não permitido. Use JPG ou PNG");
+        }
+
+        if (!mime.startsWith("image/")) {
+            throw new RuntimeException("Tipo de arquivo não permitido. Use uma imagem");
+        }
+
+        String uploadDir = uploadBaseDir + "/candidates/" + candidateId;
+        File dir = new File(uploadDir);
+        if (!dir.exists()) dir.mkdirs();
+
+        String fileName = "rota_candidato" + extension;
+
+        Path uploadDirPath = Paths.get(uploadDir).toAbsolutePath();
+        Path filePath = uploadDirPath.resolve(fileName).normalize();
+
+        if (!filePath.startsWith(uploadDirPath)) {
+            throw new RuntimeException("Caminho de arquivo inválido");
+        }
+
+        try {
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new RuntimeException("Erro ao salvar foto da rota: " + e.getMessage(), e);
+        }
+
+        return filePath.toString();
+    }
+
     public byte[] zipCandidateFiles(Long candidateId) {
         Path candidateDir = Paths.get(uploadBaseDir, "candidates", candidateId.toString());
 

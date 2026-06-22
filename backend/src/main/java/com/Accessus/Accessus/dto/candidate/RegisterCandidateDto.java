@@ -25,5 +25,11 @@ public record RegisterCandidateDto(
         String position,
 
         @NotNull
-        LocalDate admissionDate
+        LocalDate admissionDate,
+
+        @Size(max = 100)
+        String routeName,
+
+        @Size(max = 150)
+        String teamName
 ) {}

@@ -3,13 +3,13 @@ package com.Accessus.Accessus.controllers;
 import com.Accessus.Accessus.services.DysrupService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/dysrup")
@@ -17,6 +17,11 @@ public class DysrupController {
 
     @Autowired
     private DysrupService dysrupService;
+
+    @GetMapping("/itineraries")
+    public ResponseEntity<List<Map<String, Object>>> getActiveItineraries() {
+        return ResponseEntity.ok(dysrupService.getActiveItineraries());
+    }
 
     @PostMapping("/gerar-juncao")
     public ResponseEntity<String> gerarJuncao() {

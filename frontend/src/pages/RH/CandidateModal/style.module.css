@@ -14,10 +14,14 @@
 .modal {
   width: 100%;
   max-width: 480px;
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
   border-radius: var(--radius-lg);
   padding: 28px;
+  overflow: hidden;
 }
 
 /* Cabeçalho: título + botão fechar */
@@ -26,6 +30,7 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: 24px;
+  flex-shrink: 0;
 }
 
 .modalTitle {
@@ -56,6 +61,8 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .form div {
@@ -87,6 +94,29 @@
   border-color: var(--primary);
 }
 
+.form select {
+  height: 40px;
+  padding: 0 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.form select:focus {
+  border-color: var(--primary);
+}
+
+.form select option {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
 .form input::placeholder {
   color: var(--text-muted);
 }
@@ -102,6 +132,7 @@
   font-weight: 600;
   font-family: inherit;
   transition: background var(--transition-fast);
+  padding: 10px;
 }
 
 .form button[type="submit"]:hover:not(:disabled) {
@@ -111,6 +142,85 @@
 .form button[type="submit"]:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Upload foto da rota */
+.uploadArea {
+  border: 2px dashed var(--border-primary);
+  border-radius: var(--radius-md);
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.uploadArea:hover {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 5%, transparent);
+}
+
+.uploadIcon {
+  font-size: 1.25rem;
+  color: var(--text-muted);
+}
+
+.uploadTitle {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.uploadHint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.fileInput {
+  display: none;
+}
+
+.uploadedFile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+}
+
+.uploadedIcon {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.uploadedName {
+  flex: 1;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.uploadedRemove {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.uploadedRemove:hover {
+  color: var(--danger);
+  background: rgba(239, 68, 68, 0.08);
 }
 
 /* Erro */
