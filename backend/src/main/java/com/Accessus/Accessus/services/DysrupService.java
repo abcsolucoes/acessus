@@ -4,6 +4,8 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.Accessus.Accessus.entities.Candidate;
+import com.Accessus.Accessus.repositories.CandidateRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
@@ -41,7 +43,8 @@ public class DysrupService {
     @Value("${dysrup.employer-code:}")
     private String dysrupEmployerCode;
 
-    private String cachedToken;
+    private String cachedControleToken;
+    private String cachedGestaoToken;
     private Instant tokenExpiresAt = Instant.EPOCH;
 
     private List<Map<String, Object>> cachedItineraries;
@@ -50,6 +53,9 @@ public class DysrupService {
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private CandidateRepository candidateRepository;
 
     private final RestTemplate restTemplate = new RestTemplate();
 
@@ -81,21 +87,19 @@ public class DysrupService {
     // ── Chamado pelo controller — roda em background ──────────────────────────
 
     @SuppressWarnings("unchecked")
-    public String login() {
-        log.info("Dysrup login — email='{}' employerCode='{}' passwordBlank={}", dysrupEmail, dysrupEmployerCode, dysrupPassword.isBlank());
+    public void login() {
+        log.info("Dysrup login — email='{}' accountCode='{}' passwordBlank={}", dysrupEmail, dysrupEmployerCode, dysrupPassword.isBlank());
         Map<String, String> payload = Map.of(
-                "username", dysrupEmail,
+                "email", dysrupEmail,
                 "password", dysrupPassword,
-                "type", "web",
-                "access_type", "agency",
-                "employer_code", dysrupEmployerCode
+                "accountCode", dysrupEmployerCode
         );
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         ResponseEntity<Map> resp = restTemplate.exchange(
-                BASE_URL + "/login",
+                "https://api.dysrup.com.br/api/auth/auth",
                 HttpMethod.POST,
                 new HttpEntity<>(payload, headers),
                 Map.class
@@ -105,31 +109,56 @@ public class DysrupService {
         if (body == null) throw new RuntimeException("Resposta vazia do login Dysrup");
 
         try {
-            Map<?, ?> data  = (Map<?, ?>) body.get("data");
-            Map<?, ?> token = (Map<?, ?>) data.get("token");
-            String accessToken = (String) token.get("access_token");
-            if (accessToken == null || accessToken.isBlank()) throw new RuntimeException("access_token vazio");
-            Number expiresIn = (Number) token.get("expires_in");
-            long segundos = expiresIn != null ? expiresIn.longValue() : 3600;
+            // Token do controle — campo "token" na raiz da resposta
+            String controleToken = (String) body.get("token");
+            if (controleToken == null || controleToken.isBlank()) throw new RuntimeException("token (controle) vazio");
 
-            cachedToken = accessToken;
-            // Renova com 5 minutos de antecedência para evitar usar token no limite
-            tokenExpiresAt = Instant.now().plusSeconds(segundos).minusSeconds(300);
+            // Token do gestão — aninhado em management.data.token.access_token
+            Map<?, ?> management = (Map<?, ?>) body.get("management");
+            Map<?, ?> mgmtData   = (Map<?, ?>) management.get("data");
+            Map<?, ?> mgmtToken  = (Map<?, ?>) mgmtData.get("token");
+            String gestaoToken   = (String) mgmtToken.get("access_token");
+            if (gestaoToken == null || gestaoToken.isBlank()) throw new RuntimeException("access_token (gestão) vazio");
 
-            log.info("Login Dysrup OK — token válido por {} segundos", segundos);
-            return accessToken;
+            Number expiresInRaw = (Number) body.get("expiresIn");
+            Instant controleExpiry = expiresInRaw != null
+                    ? Instant.now().plusSeconds(expiresInRaw.longValue()).minusSeconds(300)
+                    : Instant.now().plusSeconds(3600);
+
+            // expires_in do gestão são segundos relativos
+            Number gestaoExpiresIn = (Number) mgmtToken.get("expires_in");
+            Instant gestaoExpiry = gestaoExpiresIn != null
+                    ? Instant.now().plusSeconds(gestaoExpiresIn.longValue()).minusSeconds(300)
+                    : Instant.now().plusSeconds(3600);
+
+            cachedControleToken = controleToken;
+            cachedGestaoToken   = gestaoToken;
+            // Cache válido até o mais curto dos dois prazos
+            tokenExpiresAt = controleExpiry.isBefore(gestaoExpiry) ? controleExpiry : gestaoExpiry;
+
+            log.info("Login Dysrup OK — controle e gestão autenticados, cache válido até {}", tokenExpiresAt);
         } catch (Exception e) {
-            throw new RuntimeException("Erro ao extrair token do login Dysrup: " + e.getMessage(), e);
+            throw new RuntimeException("Erro ao extrair tokens do login Dysrup: " + e.getMessage(), e);
         }
     }
 
-    public synchronized String getToken() {
-        if (cachedToken != null && Instant.now().isBefore(tokenExpiresAt)) {
-            log.debug("Reutilizando token Dysrup em cache");
-            return cachedToken;
+    private synchronized void ensureTokens() {
+        if (cachedControleToken != null && cachedGestaoToken != null && Instant.now().isBefore(tokenExpiresAt)) {
+            log.debug("Reutilizando tokens Dysrup em cache");
+            return;
         }
-        log.info("Token Dysrup ausente ou expirado — realizando login");
-        return login();
+        log.info("Tokens Dysrup ausentes ou expirados — realizando login");
+        login();
+    }
+
+    public synchronized String getControleToken() {
+        ensureTokens();
+        return cachedControleToken;
+    }
+
+    public synchronized String getGestaoToken() {
+        ensureTokens();
+        return cachedGestaoToken;
     }
 
     @SuppressWarnings("unchecked")
@@ -140,7 +169,7 @@ public class DysrupService {
         }
 
         HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(getToken());
+        headers.setBearerAuth(getGestaoToken());
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         Map<String, Object> payload = Map.of(
@@ -260,7 +289,7 @@ public class DysrupService {
 
     private ResultadoDownload gerarEBaixar(int itineraryId) throws Exception {
         HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(getToken());
+        headers.setBearerAuth(getGestaoToken());
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         // 1. Pede para a API gerar o relatório
@@ -605,7 +634,107 @@ public class DysrupService {
         return null;
     }
 
+    @SuppressWarnings("unchecked")
+    public LatLng getLatLng(String zipcode) {
+        String url = UriComponentsBuilder
+                .fromUriString("https://api.dysrup.com.br/api/public/get-latitude-and-longitude-from-address")
+                .queryParam("zipcode", zipcode)
+                .encode()
+                .toUriString();
+
+        ResponseEntity<Map> resp = restTemplate.exchange(url, HttpMethod.GET, HttpEntity.EMPTY, Map.class);
+
+        Map<?, ?> body = resp.getBody();
+        if (body == null) throw new RuntimeException("Resposta vazia ao buscar coordenadas");
+
+        Number lat = (Number) body.get("lat");
+        Number lng = (Number) body.get("lng");
+        if (lat == null || lng == null) throw new RuntimeException("Coordenadas ausentes na resposta: " + body);
+
+        return new LatLng(lat.doubleValue(), lng.doubleValue());
+    }
+
     // ── Records internos ─────────────────────────────────────────────────────
+
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> registrarNaDysrup(Long candidateId) {
+        Candidate candidate = candidateRepository.findById(candidateId)
+                .orElseThrow(() -> new RuntimeException("Candidato não encontrado: " + candidateId));
+
+        String zipcode = candidate.getZipcode();
+        if (zipcode == null || zipcode.isBlank())
+            throw new RuntimeException("Candidato sem CEP cadastrado");
+        if (candidate.getBirthDate() == null)
+            throw new RuntimeException("Candidato sem data de nascimento cadastrada");
+        if (candidate.getAddressNumber() == null || candidate.getAddressNumber().isBlank())
+            throw new RuntimeException("Candidato sem número de endereço cadastrado");
+
+        Map<String, Object> endereco = getEnderecoPorCep(zipcode);
+        LatLng coords = getLatLng(zipcode);
+
+        String[] nomeParts = candidate.getName().trim().split(" ", 2);
+        String firstName = nomeParts[0];
+        String lastName  = nomeParts.length > 1 ? nomeParts[1] : "";
+
+        String zipcodeNumerico = zipcode.replaceAll("[^0-9]", "");
+        String telefone = candidate.getTelephone() != null
+                ? candidate.getTelephone().replaceAll("[^0-9]", "") : "";
+
+        Map<String, Object> profile = new LinkedHashMap<>();
+        profile.put("id",    "13");
+        profile.put("label", "AGENCY_PROMOTER");
+
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("profile",            profile);
+        payload.put("firstName",          firstName);
+        payload.put("lastName",           lastName);
+        payload.put("address",            endereco.getOrDefault("logradouro", "").toString());
+        payload.put("birthDate",          candidate.getBirthDate().atStartOfDay().toString() + "Z");
+        payload.put("city",               endereco.getOrDefault("localidade", "").toString());
+        payload.put("cityId",             Integer.parseInt(endereco.getOrDefault("ibge", "0").toString()));
+        payload.put("complement",         candidate.getComplement());
+        payload.put("district",           endereco.getOrDefault("bairro", "").toString());
+        payload.put("document",           candidate.getCpf() != null ? candidate.getCpf().replaceAll("[^0-9]", "") : "");
+        payload.put("email",              candidate.getEmail());
+        payload.put("enabled",            true);
+        payload.put("firstPhone",         telefone);
+        payload.put("isSelfRegistration", false);
+        payload.put("latitude",           coords.lat());
+        payload.put("longitude",          coords.lng());
+        payload.put("modules",            List.of("MANAGEMENT"));
+        payload.put("number",             candidate.getAddressNumber());
+        payload.put("profileName",        "AGENCY_PROMOTER");
+        payload.put("secondPhone",        "");
+        payload.put("state",              endereco.getOrDefault("uf", "").toString());
+        payload.put("zipcode",            zipcodeNumerico);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(getControleToken());
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        ResponseEntity<Map> resp = restTemplate.exchange(
+                "https://api.dysrup.com.br/api/user/user",
+                HttpMethod.POST,
+                new HttpEntity<>(payload, headers),
+                Map.class
+        );
+
+        log.info("Candidato {} registrado na Dysrup — status {}", candidateId, resp.getStatusCode());
+        return (Map<String, Object>) resp.getBody();
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getEnderecoPorCep(String cep) {
+        String cepLimpo = cep.replaceAll("[^0-9]", "");
+        ResponseEntity<Map> resp = restTemplate.exchange(
+                "https://viacep.com.br/ws/" + cepLimpo + "/json/",
+                HttpMethod.GET, HttpEntity.EMPTY, Map.class);
+        Map<String, Object> body = (Map<String, Object>) resp.getBody();
+        if (body == null || body.containsKey("erro")) throw new RuntimeException("CEP não encontrado: " + cep);
+        return body;
+    }
+
+    public record LatLng(double lat, double lng) {}
 
     private record ResultadoDownload(byte[] conteudo, String nomeArquivo) {}
 

@@ -47,7 +47,7 @@ public class ZApiService {
         }
     }
 
-    private void sendImage(String phone, String imagePath, String caption) throws IOException {
+    public void sendImage(String phone, String imagePath, String caption) throws IOException {
         byte[] imageBytes = Files.readAllBytes(Path.of(imagePath));
         String mimeType = detectMime(imagePath);
         String base64 = "data:" + mimeType + ";base64," + Base64.getEncoder().encodeToString(imageBytes);
@@ -61,7 +61,7 @@ public class ZApiService {
         log.info("Imagem WhatsApp enviada para {}", phone);
     }
 
-    private void sendText(String phone, String message) {
+    public void sendText(String phone, String message) {
         Map<String, Object> body = new HashMap<>();
         body.put("phone", phone);
         body.put("message", message);
@@ -70,7 +70,7 @@ public class ZApiService {
         log.info("Texto WhatsApp enviado para {}", phone);
     }
 
-    private void post(String endpoint, Map<String, Object> body) {
+    public void post(String endpoint, Map<String, Object> body) {
         String url = "https://api.z-api.io/instances/" + instanceId + "/token/" + token + endpoint;
 
         HttpHeaders headers = new HttpHeaders();
@@ -88,7 +88,7 @@ public class ZApiService {
         }
     }
 
-    private String detectMime(String path) {
+    public String detectMime(String path) {
         String lower = path.toLowerCase();
         if (lower.endsWith(".png"))  return "image/png";
         if (lower.endsWith(".webp")) return "image/webp";

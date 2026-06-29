@@ -62,9 +62,13 @@ public class    CandidateController {
         return ResponseEntity.ok("Usuário Deletado");
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<ResponseCandidateDto> update(@PathVariable Long id, @RequestBody @Valid RegisterCandidateDto dto) {
-        return ResponseEntity.ok(candidateService.update(id, dto));
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ResponseCandidateDto> update(
+            @PathVariable Long id,
+            @RequestPart("data") @Valid RegisterCandidateDto dto,
+            @RequestParam(value = "routePhoto", required = false) MultipartFile routePhoto
+    ) {
+        return ResponseEntity.ok(candidateService.update(id, dto, routePhoto));
     }
 
     @PostMapping("/changeStatus/{id}")

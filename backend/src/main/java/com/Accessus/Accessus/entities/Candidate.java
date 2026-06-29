@@ -24,6 +24,10 @@ public class Candidate {
     private String activationToken;
     @Enumerated(EnumType.STRING)
     private CandidateStatus candidateStatus;
+    private String zipcode;
+    private java.time.LocalDate birthDate;
+    private String addressNumber;
+    private String complement;
     private String routeName;
     private String teamName;
     private String routePhotoPath;
@@ -114,6 +118,23 @@ public class Candidate {
     public void setCandidateStatus(CandidateStatus candidateStatus) {
         this.candidateStatus = candidateStatus;
     }
+
+    public String getZipcode() {
+        return zipcode;
+    }
+
+    public void setZipcode(String zipcode) {
+        this.zipcode = zipcode;
+    }
+
+    public java.time.LocalDate getBirthDate() { return birthDate; }
+    public void setBirthDate(java.time.LocalDate birthDate) { this.birthDate = birthDate; }
+
+    public String getAddressNumber() { return addressNumber; }
+    public void setAddressNumber(String addressNumber) { this.addressNumber = addressNumber; }
+
+    public String getComplement() { return complement; }
+    public void setComplement(String complement) { this.complement = complement; }
 
     public String getRouteName() {
         return routeName;

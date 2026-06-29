@@ -1,63 +1,981 @@
-.main {
-  padding: 32px;
-  max-width: 1100px;
+.page {
+  width: min(1360px, calc(100% - 40px));
   margin: 0 auto;
+  padding: 28px 0 44px;
 }
 
-.grid {
+.shell {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 16px;
+  grid-template-columns: 250px minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
 }
 
-.card {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-primary);
+.content {
+  min-width: 0;
+}
+
+.intro {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 22px;
+}
+
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  color: var(--primary);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.kicker::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 99px;
+  background: var(--primary);
+  box-shadow: 0 0 0 6px rgba(255, 128, 0, 0.12);
+}
+
+.title {
+  color: var(--text-primary);
+  font-size: clamp(1.8rem, 3vw, 2.55rem);
+  font-weight: 800;
+  line-height: 1.05;
+}
+
+.subtitle {
+  max-width: 680px;
+  margin-top: 8px;
+  color: var(--text-secondary);
+  font-size: 0.98rem;
+}
+
+.hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(360px, 1fr);
+  min-height: 236px;
+  overflow: hidden;
+  border: 1px solid rgba(124, 58, 237, 0.28);
   border-radius: var(--radius-lg);
-  padding: 28px 24px;
-  cursor: pointer;
-  transition: border-color var(--transition-fast), transform var(--transition-fast);
+  background:
+    radial-gradient(circle at 66% 20%, rgba(124, 58, 237, 0.5), transparent 26%),
+    radial-gradient(circle at 88% 72%, rgba(255, 128, 0, 0.22), transparent 24%),
+    linear-gradient(135deg, #130b46 0%, #1a0f5d 46%, #39107f 100%);
+  box-shadow: 0 24px 70px rgba(31, 20, 91, 0.2);
 }
 
-.card:hover {
-  border-color: var(--primary);
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: linear-gradient(90deg, transparent, #000 35%, #000 75%, transparent);
+  opacity: 0.18;
+}
+
+.heroContent {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 30px 34px;
+  color: #fff;
+}
+
+.heroEyebrow {
+  width: fit-content;
+  margin-bottom: 12px;
+  padding: 6px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.hero h2 {
+  max-width: 470px;
+  font-size: clamp(1.9rem, 3.3vw, 3rem);
+  font-weight: 850;
+  line-height: 1.02;
+}
+
+.hero h2 span {
+  color: #ff8a24;
+}
+
+.hero p {
+  max-width: 500px;
+  margin-top: 14px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 1rem;
+}
+
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.primaryBtn,
+.secondaryBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: var(--radius-md);
+  font-size: 0.92rem;
+  font-weight: 800;
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal), background var(--transition-normal);
+}
+
+.primaryBtn {
+  padding: 0 22px;
+  background: linear-gradient(135deg, #ff8d2b, #ff650f);
+  color: #fff;
+  box-shadow: 0 14px 28px rgba(255, 101, 15, 0.3);
+}
+
+.primaryBtn:hover,
+.secondaryBtn:hover {
   transform: translateY(-2px);
 }
 
-.cardName {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 6px;
+.secondaryBtn {
+  gap: 10px;
+  padding: 0 10px;
+  color: rgba(255, 255, 255, 0.88);
 }
 
-.cardDesc {
-  font-size: 0.8125rem;
+.secondaryBtn svg,
+.tipBody button svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.heroVisual {
+  position: relative;
+  min-height: 236px;
+}
+
+.orbit {
+  position: absolute;
+  border: 1px solid rgba(167, 139, 250, 0.28);
+  border-radius: 999px;
+  animation: drift 8s ease-in-out infinite;
+}
+
+.orbit::before,
+.orbit::after {
+  content: '';
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border-radius: 99px;
+  background: #8b5cf6;
+  box-shadow: 0 0 18px rgba(139, 92, 246, 0.9);
+}
+
+.orbitOne {
+  right: 82px;
+  top: 18px;
+  width: 212px;
+  height: 212px;
+}
+
+.orbitOne::before {
+  left: 24px;
+  top: 64px;
+}
+
+.orbitOne::after {
+  right: 44px;
+  bottom: 42px;
+}
+
+.orbitTwo {
+  right: 252px;
+  top: 68px;
+  width: 140px;
+  height: 140px;
+  animation-delay: -3s;
+}
+
+.orbitTwo::before {
+  right: 18px;
+  top: 36px;
+}
+
+.orbitTwo::after {
+  left: 24px;
+  bottom: 28px;
+}
+
+.panelMock {
+  position: absolute;
+  right: 82px;
+  bottom: 24px;
+  width: min(350px, 72%);
+  height: 154px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 22px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(231, 220, 255, 0.76));
+  box-shadow: 0 28px 58px rgba(7, 4, 32, 0.32);
+  transform: perspective(900px) rotateX(7deg) rotateY(-10deg);
+  animation: floatPanel 6s ease-in-out infinite;
+}
+
+.panelTop {
+  display: flex;
+  gap: 7px;
+  padding: 13px;
+}
+
+.panelTop span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(124, 58, 237, 0.28);
+}
+
+.panelGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  padding: 4px 14px 14px;
+}
+
+.panelGrid span {
+  min-height: 43px;
+  border-radius: 14px;
+  background:
+    linear-gradient(90deg, rgba(255, 128, 0, 0.5), rgba(124, 58, 237, 0.35)),
+    linear-gradient(#fff, #fff);
+  box-shadow: inset 0 0 0 1px rgba(124, 58, 237, 0.08);
+  opacity: 0.75;
+}
+
+.floatCard {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  gap: 3px;
+  min-width: 164px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.54);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 18px 45px rgba(8, 4, 38, 0.22);
+  backdrop-filter: blur(12px);
+  animation: floatCard 5.6s ease-in-out infinite;
+}
+
+.floatCard strong {
+  color: #1b1638;
+  font-size: 0.86rem;
+}
+
+.floatCard small {
+  color: #6d6685;
+  font-size: 0.74rem;
+}
+
+.floatTicket {
+  left: 28px;
+  top: 76px;
+}
+
+.floatContact {
+  right: 34px;
+  bottom: 70px;
+  animation-delay: -2.2s;
+}
+
+.modules {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 22px;
+}
+
+.moduleCard,
+.cardPanel {
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.66)),
+    var(--bg-secondary);
+  box-shadow: 0 18px 50px rgba(20, 20, 36, 0.06);
+}
+
+.moduleCard {
+  position: relative;
+  display: grid;
+  gap: 18px;
+  min-height: 250px;
+  overflow: hidden;
+  padding: 24px;
+  text-align: left;
+  transition: transform var(--transition-normal), border-color var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.moduleCard::after {
+  content: '';
+  position: absolute;
+  right: -56px;
+  bottom: -70px;
+  width: 180px;
+  height: 180px;
+  border-radius: 999px;
+  background: rgba(124, 58, 237, 0.08);
+}
+
+.moduleCard:hover {
+  border-color: rgba(255, 128, 0, 0.42);
+  box-shadow: 0 22px 56px rgba(255, 128, 0, 0.1);
+  transform: translateY(-3px);
+}
+
+.moduleHeader {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+
+.moduleIcon,
+.actionIcon,
+.sectionIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.moduleIcon {
+  width: 76px;
+  height: 76px;
+  border-radius: 20px;
+}
+
+.ticketIcon {
+  background: #fff0e5;
+  color: #ff6a12;
+}
+
+.contactIcon {
+  background: #f0e8ff;
+  color: #7c3aed;
+}
+
+.moduleIcon svg,
+.actionIcon svg,
+.sectionIcon svg,
+.tipBadge svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.moduleIcon svg {
+  width: 34px;
+  height: 34px;
+}
+
+.moduleText {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 7px;
+}
+
+.moduleText strong {
+  color: var(--text-primary);
+  font-size: 1.08rem;
+}
+
+.moduleText small {
+  max-width: 440px;
   color: var(--text-secondary);
+  font-size: 0.9rem;
   line-height: 1.5;
 }
 
-.greeting {
-  margin-bottom: 32px;
-}
-
-.greetingTitle {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 4px;
-}
-
-.greetingSubtitle {
+.moduleLink {
+  width: fit-content;
+  color: var(--primary);
   font-size: 0.9rem;
-  color: var(--text-secondary);
+  font-weight: 800;
 }
 
-.sectionLabel {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-bottom: 12px;
+.moduleActions {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 10px;
+}
+
+.moduleAction {
+  display: grid;
+  grid-template-columns: 46px 1fr 18px;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 64px;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.055), rgba(255, 128, 0, 0.045));
+  color: var(--text-primary);
+  text-align: left;
+  transition: transform var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.moduleAction:hover {
+  border-color: rgba(255, 128, 0, 0.16);
+  background: linear-gradient(135deg, rgba(255, 128, 0, 0.1), rgba(124, 58, 237, 0.07));
+  transform: translateX(3px);
+}
+
+.moduleAction strong,
+.moduleAction small {
+  display: block;
+}
+
+.moduleAction strong {
+  margin-bottom: 2px;
+  font-size: 0.9rem;
+}
+
+.moduleAction small {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.cardPanel {
+  padding: 24px;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.panelHeader h2 {
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.sectionIcon {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  background: rgba(124, 58, 237, 0.1);
+  color: #7c3aed;
+}
+
+.sectionIcon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.actionRow {
+  display: grid;
+  grid-template-columns: 48px 1fr 18px;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 68px;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.06), rgba(255, 128, 0, 0.04));
+  color: var(--text-primary);
+  text-align: left;
+  transition: transform var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.actionRow:hover {
+  border-color: rgba(124, 58, 237, 0.16);
+  background: linear-gradient(135deg, rgba(255, 128, 0, 0.1), rgba(124, 58, 237, 0.07));
+  transform: translateX(3px);
+}
+
+.actionIcon {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: var(--bg-secondary);
+  color: var(--primary);
+  box-shadow: 0 10px 24px rgba(20, 20, 36, 0.06);
+}
+
+.actionIcon svg,
+.rowArrow {
+  width: 20px;
+  height: 20px;
+}
+
+.actionRow strong,
+.actionRow small {
+  display: block;
+}
+
+.actionRow strong {
+  margin-bottom: 2px;
+  font-size: 0.9rem;
+}
+
+.actionRow small {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.rowArrow {
+  fill: none;
+  stroke: var(--text-muted);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.flowPanel {
+  position: relative;
+  overflow: hidden;
+}
+
+.flowPanel::after {
+  content: '';
+  position: absolute;
+  right: -80px;
+  top: -110px;
+  width: 240px;
+  height: 240px;
+  border-radius: 999px;
+  background: rgba(255, 128, 0, 0.08);
+}
+
+.flowTrack {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.flowTrack::before {
+  content: '';
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  top: 32px;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(255, 128, 0, 0.3), rgba(124, 58, 237, 0.36), rgba(22, 163, 74, 0.26));
+}
+
+.flowStep {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-height: 166px;
+  padding: 18px;
+  border: 1px solid rgba(124, 58, 237, 0.1);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.flowStep span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 99px;
+  background: linear-gradient(135deg, #ffefe2, #efe7ff);
+  color: var(--primary);
+  font-weight: 850;
+  box-shadow: 0 10px 22px rgba(124, 58, 237, 0.12);
+}
+
+.flowStep strong {
+  margin-top: 8px;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.flowStep small {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.tipPanel {
+  grid-column: auto;
+}
+
+.tipBody {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 28px;
+  min-height: 240px;
+  padding: 26px;
+  border-radius: var(--radius-md);
+  background:
+    radial-gradient(circle at 18% 32%, rgba(124, 58, 237, 0.16), transparent 28%),
+    linear-gradient(135deg, rgba(124, 58, 237, 0.08), rgba(255, 128, 0, 0.06));
+}
+
+.tipIllustration {
+  position: relative;
+  min-height: 180px;
+}
+
+.tipCardOne,
+.tipCardTwo {
+  position: absolute;
+  display: block;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 22px 38px rgba(124, 58, 237, 0.16);
+}
+
+.tipCardOne {
+  left: 26%;
+  top: 18px;
+  width: 150px;
+  height: 118px;
+  transform: rotate(-4deg);
+}
+
+.tipCardTwo {
+  left: 38%;
+  top: 54px;
+  width: 142px;
+  height: 100px;
+  transform: rotate(5deg);
+}
+
+.tipCardOne::before,
+.tipCardTwo::before {
+  content: '';
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  top: 22px;
+  height: 10px;
+  border-radius: 99px;
+  background: rgba(124, 58, 237, 0.2);
+  box-shadow: 0 26px 0 rgba(124, 58, 237, 0.12), 0 52px 0 rgba(255, 128, 0, 0.14);
+}
+
+.tipBadge {
+  position: absolute;
+  right: 19%;
+  top: 68px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 68px;
+  height: 68px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #ff8a24, #ff6414);
+  color: #fff;
+  box-shadow: 0 18px 32px rgba(255, 100, 20, 0.26);
+}
+
+.tipBadge svg {
+  width: 34px;
+  height: 34px;
+}
+
+.tipBody strong {
+  color: var(--text-primary);
+  font-size: 1.25rem;
+}
+
+.tipBody p {
+  max-width: 540px;
+  margin-top: 10px;
+  color: var(--text-secondary);
+  line-height: 1.65;
+}
+
+.tipBody button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  color: #6d28d9;
+  font-weight: 850;
+}
+
+[data-theme="dark"] .moduleCard,
+[data-theme="dark"] .cardPanel {
+  background:
+    linear-gradient(145deg, rgba(24, 24, 34, 0.94), rgba(17, 17, 24, 0.92)),
+    var(--bg-secondary);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.32);
+}
+
+[data-theme="dark"] .actionIcon {
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: none;
+}
+
+[data-theme="dark"] .moduleCard::after {
+  background: rgba(124, 58, 237, 0.12);
+}
+
+[data-theme="dark"] .ticketIcon {
+  background: rgba(255, 128, 0, 0.14);
+  color: #ffb15c;
+}
+
+[data-theme="dark"] .contactIcon,
+[data-theme="dark"] .sectionIcon {
+  background: rgba(124, 58, 237, 0.18);
+  color: #c4b5fd;
+}
+
+[data-theme="dark"] .actionRow {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.12), rgba(255, 128, 0, 0.06));
+}
+
+[data-theme="dark"] .moduleAction {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.12), rgba(255, 128, 0, 0.06));
+}
+
+[data-theme="dark"] .actionRow:hover {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.18), rgba(255, 128, 0, 0.1));
+}
+
+[data-theme="dark"] .moduleAction:hover {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.18), rgba(255, 128, 0, 0.1));
+}
+
+[data-theme="dark"] .flowStep {
+  border-color: rgba(124, 58, 237, 0.22);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+[data-theme="dark"] .flowStep span {
+  background: linear-gradient(135deg, rgba(255, 128, 0, 0.18), rgba(124, 58, 237, 0.22));
+  color: #ffb15c;
+}
+
+[data-theme="dark"] .tipBody {
+  background:
+    radial-gradient(circle at 18% 32%, rgba(124, 58, 237, 0.18), transparent 28%),
+    linear-gradient(135deg, rgba(124, 58, 237, 0.12), rgba(255, 128, 0, 0.07));
+}
+
+[data-theme="dark"] .tipCardOne,
+[data-theme="dark"] .tipCardTwo {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 22px 38px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .tipBody button {
+  color: #c4b5fd;
+}
+
+@keyframes drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(8px, -10px, 0) rotate(6deg);
+  }
+}
+
+@keyframes floatPanel {
+  0%,
+  100% {
+    transform: perspective(900px) rotateX(7deg) rotateY(-10deg) translateY(0);
+  }
+  50% {
+    transform: perspective(900px) rotateX(7deg) rotateY(-10deg) translateY(-8px);
+  }
+}
+
+@keyframes floatCard {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@media (max-width: 980px) {
+  .page {
+    width: min(100% - 28px, 760px);
+    padding-top: 22px;
+  }
+
+  .shell {
+    grid-template-columns: 1fr;
+  }
+
+  .hero {
+    grid-template-columns: 1fr;
+  }
+
+  .heroVisual {
+    min-height: 230px;
+  }
+
+  .panelMock {
+    right: 50%;
+    width: min(440px, 82%);
+    transform: translateX(50%) perspective(900px) rotateX(7deg);
+  }
+
+  .floatTicket {
+    left: 8%;
+  }
+
+  .floatContact {
+    right: 8%;
+  }
+
+  .modules,
+  .workspace,
+  .flowTrack,
+  .tipBody {
+    grid-template-columns: 1fr;
+  }
+
+  .tipPanel {
+    grid-column: auto;
+  }
+
+  .flowTrack::before {
+    left: 32px;
+    right: auto;
+    top: 30px;
+    bottom: 30px;
+    width: 2px;
+    height: auto;
+  }
+
+  .flowStep {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 620px) {
+  .page {
+    width: min(100% - 20px, 520px);
+    padding-bottom: 28px;
+  }
+
+  .intro {
+    margin-bottom: 18px;
+  }
+
+  .heroContent {
+    padding: 30px 22px;
+  }
+
+  .hero h2 {
+    font-size: 2.2rem;
+  }
+
+  .heroActions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .secondaryBtn {
+    justify-content: center;
+    padding: 0 18px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+  }
+
+  .moduleCard {
+    align-items: flex-start;
+    padding: 20px;
+  }
+
+  .moduleHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .actionRow {
+    grid-template-columns: 42px 1fr 16px;
+    gap: 10px;
+  }
+
+  .actionIcon {
+    width: 42px;
+    height: 42px;
+  }
+
+  .moduleAction {
+    grid-template-columns: 42px 1fr 16px;
+    gap: 10px;
+  }
+
+  .cardPanel {
+    padding: 18px;
+  }
+
+  .tipBody {
+    padding: 18px;
+  }
+
+  .tipIllustration {
+    min-height: 150px;
+  }
+
+  .tipCardOne {
+    left: 10%;
+  }
+
+  .tipCardTwo {
+    left: 32%;
+  }
+
+  .tipBadge {
+    right: 12%;
+  }
 }

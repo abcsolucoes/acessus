@@ -1,88 +1,86 @@
-import { useEffect, useState } from "react";
-import { Header } from "../../components/Header";
-import { useNavigate } from "react-router-dom";
-import { apiFetch, authHeaders, decodeToken } from "../../services/api";
-
-
+import { DashboardModuleNav } from '../../components/DashboardModuleNav'
+import type { UserRole } from '../../components/DashboardModuleNav'
+import { Header } from '../../components/Header'
 import styles from './style.module.css'
-
-const MODULES = [
-  {
-    name: 'RH',
-    description: 'Candidatos e processos seletivos',
-    path: '/rh',
-    roles: ['ADMIN', 'RH'],
-  },
-  {
-    name: 'Contatos',
-    description: 'Agenda e contatos da empresa',
-    path: '/contatos',
-    roles: ['ADMIN', 'RH', 'OPERACIONAL', 'DP'],
-  },
-  {
-    name: 'Tickets',
-    description: 'Abertura e gerenciamento de tickets',
-    path: '/tickets',
-    roles: ['ADMIN', 'RH', 'OPERACIONAL', 'DP'],
-  },
-    {
-    name: 'Configurações',
-    description: 'Usuários e configurações do sistema',
-    path: '/configuracoes',
-    roles: ['ADMIN'],
-  },
-  {
-    name: 'Logs',
-    description: 'Auditoria de ações do sistema',
-    path: '/logs',
-    roles: ['ADMIN'],
-  }
-]
+import { DashboardHeaderPage } from '../../components/DashboardComponents/DashboardHeaderPage'
+import { DashboardBanner } from '../../components/DashboardComponents/DashboardBanner'
+import { DashboardModulesCards } from '../../components/DashboardComponents/DashboardModulesCards'
+import { DashboardDayFlow } from '../../components/DashboardComponents/DashboardDayFlow'
+import { TicketModal } from '../../components/TicketComponents/TicketModal'
+import { useState } from 'react'
+import { useTicketsPage } from '../../hooks/TicketHooks/useTicketsPage'
+import { Toast } from '../../components/Toast'
+import { ContactModal } from '../Contatos/ContactModal'
 
 export function DashboardPage() {
-  const [user, setUser] = useState<{ name: string; role: string; sub: string } | null>(null);
-  const navigate = useNavigate()
+  const {
+    user,
+    allUsers,
+    filter,
+    setPage,
+    fetchTickets,
+  } = useTicketsPage()
 
-  useEffect(() => {
-    const decoded = decodeToken()
-    if (!decoded) { navigate('/login'); return }
+  const userName = user?.name ?? 'Usuario'
+  const firstName = userName.split(' ')[0] || 'Usuario'
+  const role = (user?.role ?? 'OPERACIONAL') as UserRole
+  const [modalOpen, setModalOpen] = useState(false)
+  const [toast, setToast] = useState('')
+  const [contatoModalOpen, setContatoModalOpen] = useState(false)
 
-    // Mostra os módulos imediatamente pelo token — não depende da API
-    setUser(decoded)
 
-    // Valida a sessão e atualiza a role com o valor atual do banco
-    // (garante que mudanças de role reflitam sem precisar re-logar)
-    apiFetch<{ name: string; role: string; email: string }>('/users/me', { headers: authHeaders() })
-      .then(me => setUser({ name: me.name, role: me.role, sub: me.email }))
-      .catch(() => {}) // 401 já é tratado pelo apiFetch (redireciona para /login)
-  }, [])
-
-  const visibleModules = MODULES.filter(m => m.roles.includes(user?.role ?? ''))
+  async function handleTicketCreated() {
+    setPage(0)
+    await fetchTickets(0, filter)
+    setToast('Ticket aberto com sucesso!')
+  }
 
   return (
     <>
-      <Header
-        moduleName="Dashboard"
-        userName={user?.name ?? ''}
-      />
+      <Header moduleName="Dashboard" userName={userName} />
 
-      <main className={styles.main}>
-        <div className={styles.greeting}>
-          <h2 className={styles.greetingTitle}>Olá, {user?.name?.split(' ')[0]}</h2>
-          <p className={styles.greetingSubtitle}>O que vamos fazer hoje?</p>
-        </div>
+      {toast && (
+        <Toast message={toast} onClose={() => setToast('')} />
+      )}
 
-        <p className={styles.sectionLabel}>Módulos disponíveis</p>
+      <main className={styles.page}>
+        <div className={styles.shell}>
+          <DashboardModuleNav role={role} />
 
-        <div className={styles.grid}>
-          {visibleModules.map(module => (
-            <div key={module.path} className={styles.card} onClick={() => navigate(module.path)}>
-              <h2 className={styles.cardName}>{module.name}</h2>
-              <p className={styles.cardDesc}>{module.description}</p>
-            </div>
-          ))}
+          <div className={styles.content}>
+            <DashboardHeaderPage
+              firstName={firstName}
+            />
+
+            <DashboardBanner />
+
+            <DashboardModulesCards
+              onOpenTicketModal={() => setModalOpen(true)}
+              onOpenContatosModal={() => setContatoModalOpen(true)}
+            />
+
+            <DashboardDayFlow />
+          </div>
         </div>
       </main>
+
+      <TicketModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onCreated={handleTicketCreated}
+        allUsers={allUsers}
+        user={user}
+      />
+
+
+      {contatoModalOpen && (
+        <ContactModal
+          initial={null}
+          contacts={[]}
+          onClose={() => setContatoModalOpen(false)}
+          onSuccess={() => setContatoModalOpen(false)}
+        />
+      )}
     </>
   )
 }

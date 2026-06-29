@@ -33,6 +33,7 @@ import { ConfiguracoesPage } from './pages/Configuracoes'
 import { TicketsPage } from './pages/Tickets'
 import TicketDetail from './pages/Tickets/TicketDetail/TicketDetail'
 import { Logs } from './pages/Logs'
+import { AjudaPage } from './pages/Ajuda'
 
 export default function App() {
   return (
@@ -52,6 +53,7 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/contatos" element={<ContatosPage />} />
+          <Route path="/ajuda" element={<AjudaPage />} />
           <Route path="/tickets" element={<TicketsPage />} />
           <Route path="/tickets/ticketDetail/:id" element={<TicketDetail />} />
         </Route>

@@ -206,6 +206,11 @@ public class FileStorageService {
             throw new RuntimeException("Caminho de arquivo inválido");
         }
 
+        try (Stream<Path> existing = Files.list(uploadDirPath)) {
+            existing.filter(p -> p.getFileName().toString().startsWith("rota_candidato"))
+                    .forEach(p -> { try { Files.deleteIfExists(p); } catch (IOException ignored) {} });
+        } catch (IOException ignored) {}
+
         try {
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {

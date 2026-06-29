@@ -44,6 +44,9 @@ public class CandidateService {
     @Autowired
     private ZApiService zApiService;
 
+    @Autowired
+    private DysrupService dysrupService;
+
     @Value("${app.base-url}")
     private String baseUrl;
 
@@ -74,6 +77,10 @@ public class CandidateService {
         candidate.setPosition(dto.position());
         candidate.setTelephone(dto.telephone());
         candidate.setAdmissionDate(dto.admissionDate());
+        candidate.setBirthDate(dto.birthDate());
+        candidate.setZipcode(dto.zipcode() != null ? dto.zipcode().replaceAll("[^0-9]", "") : null);
+        candidate.setAddressNumber(dto.addressNumber());
+        candidate.setComplement(dto.complement());
         candidate.setRouteName(dto.routeName());
         candidate.setTeamName(dto.teamName());
         candidate.setCandidateStatus(CandidateStatus.PENDING);
@@ -92,7 +99,18 @@ public class CandidateService {
         String link = baseUrl + "/formulario/" + token;
         emailService.sendCandidateForm(candidate.getEmail(), link);
 
-        zApiService.sendCandidateRouteNotification(candidate.getName(), candidate.getRouteName(), candidate.getRoutePhotoPath());
+        String message = "Olá, " + candidate.getName().split(" ")[0] + "! Seja bem-vindo(a) à ABC! 🎉\n\n" +
+                "Estamos muito felizes em ter você no nosso time. Seu processo de admissão foi iniciado e precisamos que você preencha seus documentos.\n\n" +
+                "📋 *Para isso, acesse o link abaixo:*\n" +
+                link + "\n\n" +
+                "⚠️ *Importante:*\n" +
+                "• Preencha todas as informações com atenção\n" +
+                "• Tenha seus documentos em mãos (RG, CPF, comprovante de residência, etc.)\n" +
+                "• O link é pessoal e intransferível\n\n" +
+                "Qualquer dúvida é só me chamar por aqui. Estamos à disposição!\n" +
+                "Bem-vindo(a) à equipe! 💼";
+
+        zApiService.sendText("55" + candidate.getTelephone(), message);
 
         logsService.createLog("criou o registro do candidato" + dto.name() + ", cpf " + dto.cpf());
     }
@@ -128,7 +146,7 @@ public class CandidateService {
     }
 
     @Transactional
-    public ResponseCandidateDto update(Long id, RegisterCandidateDto dto) {
+    public ResponseCandidateDto update(Long id, RegisterCandidateDto dto, MultipartFile routePhoto) {
         Candidate candidate = candidateRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Candidato não encontrado"));
 
@@ -138,8 +156,17 @@ public class CandidateService {
         candidate.setTelephone(dto.telephone());
         candidate.setPosition(dto.position());
         candidate.setAdmissionDate(dto.admissionDate());
+        candidate.setBirthDate(dto.birthDate());
+        candidate.setZipcode(dto.zipcode() != null ? dto.zipcode().replaceAll("[^0-9]", "") : null);
+        candidate.setAddressNumber(dto.addressNumber());
+        candidate.setComplement(dto.complement());
         candidate.setRouteName(dto.routeName());
         candidate.setTeamName(dto.teamName());
+
+        if (routePhoto != null && !routePhoto.isEmpty()) {
+            String path = fileStorageService.saveRoutePhoto(candidate.getId(), routePhoto);
+            candidate.setRoutePhotoPath(path);
+        }
 
         candidateRepository.save(candidate);
 
@@ -154,6 +181,23 @@ public class CandidateService {
         candidate.setCandidateStatus(status);
 
         candidateRepository.save(candidate);
+
+        if (status == CandidateStatus.APPROVED) {
+            String message = "Olá, " + candidate.getName().split(" ")[0] + "! Tudo bem? 😊\n\n" +
+                    "Sou da ABC, e vou te passar as informações para acessar o nosso app de promotor, o Dysrup.\n\n" +
+                    "📱 *Link para download:*\n" +
+                    "https://play.google.com/store/apps/details?id=com.dysrup.repositor\n\n" +
+                    "🔑 *Acesso inicial:*\n" +
+                    "• Código do empregador: *84OCE* (atenção: é a letra \"O\", não o número zero)\n" +
+                    "• Login: " + candidate.getEmail() + "\n" +
+                    "• Senha: Você criará no primeiro acesso (anote para não esquecer!)\n\n" +
+                    "Qualquer dúvida ou se precisar de ajuda, é só me chamar por aqui.\n" +
+                    "Estou à disposição!";
+
+            zApiService.sendText("55" + candidate.getTelephone(), message);
+            zApiService.sendCandidateRouteNotification(candidate.getName(), candidate.getRouteName(), candidate.getRoutePhotoPath());
+            dysrupService.registrarNaDysrup(candidate.getId());
+        }
 
         Map<String, String> STATUS_MAP = Map.of(
                 "PENDING", "Pendente",
@@ -197,6 +241,10 @@ public class CandidateService {
                 candidate.getTelephone(),
                 candidate.getPosition(),
                 candidate.getAdmissionDate(),
+                candidate.getBirthDate(),
+                candidate.getZipcode(),
+                candidate.getAddressNumber(),
+                candidate.getComplement(),
                 candidate.getCandidateStatus(),
                 candidate.getCandidateStatus() == CandidateStatus.PENDING,
                 candidate.getRouteName(),

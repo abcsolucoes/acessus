@@ -56,3 +56,8 @@ export function isValidCpf(raw: string): boolean {
   if (rem === 10) rem = 0
   return rem === +cpf[10]
 }
+
+export function waNumero(telephone: string): string {
+    const digits = telephone.replace(/\D/g, '')
+    return digits.startsWith('55') ? digits : `55${digits}`
+}

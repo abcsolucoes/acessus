@@ -22,6 +22,10 @@ export type Candidate = {
   telephone: string
   position: string
   admissionDate: string
+  birthDate: string | null
+  zipcode: string | null
+  addressNumber: string | null
+  complement: string | null
   candidateStatus: 'PENDING' | 'UNDER_ANALYSIS' | 'APPROVED' | 'REJECTED'
   formEnabled: boolean
   routeName: string | null

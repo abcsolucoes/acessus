@@ -27,6 +27,18 @@ public record RegisterCandidateDto(
         @NotNull
         LocalDate admissionDate,
 
+        @NotNull
+        LocalDate birthDate,
+
+        @NotBlank @Size(max = 9)
+        String zipcode,
+
+        @NotBlank @Size(max = 20)
+        String addressNumber,
+
+        @Size(max = 100)
+        String complement,
+
         @Size(max = 100)
         String routeName,
 
