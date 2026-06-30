@@ -17,10 +17,10 @@ const STATUS_FILTERS = [
 ]
 
 const STATUS_META: Record<string, { label: string; color: string }> = {
-  PENDING:        { label: 'Pendente',    color: '#F59E0B' },
-  UNDER_ANALYSIS: { label: 'Em análise',  color: '#3B82F6' },
-  APPROVED:       { label: 'Aprovado',    color: '#22C55E' },
-  REJECTED:       { label: 'Rejeitado',   color: '#EF4444' },
+  PENDING: { label: 'Pendente', color: '#F59E0B' },
+  UNDER_ANALYSIS: { label: 'Em análise', color: '#3B82F6' },
+  APPROVED: { label: 'Aprovado', color: '#22C55E' },
+  REJECTED: { label: 'Rejeitado', color: '#EF4444' },
 }
 
 function initials(name: string) {
@@ -37,32 +37,34 @@ export function RHPage() {
   const [totalPages, setTotalPages] = useState(0)        // total de páginas
   const [showModal, setShowModal] = useState(false)
   const [refresh, setRefresh] = useState(0)
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     setUser(decodeToken())
   }, [])
 
   useEffect(() => {
+    setLoading(true)
     const timer = setTimeout(() => {
+      const statusParam = statusFilter !== 'ALL' ? `&status=${statusFilter}` : ''
       const endpoint = search.trim()
         ? `/candidates/search?term=${encodeURIComponent(search)}&page=${page}&size=20`
-        : `/candidates?page=${page}&size=20`
+        : `/candidates?page=${page}&size=20${statusParam}`
 
       apiFetch<Page<Candidate>>(endpoint, { headers: authHeaders() })
         .then(data => {
           setCandidates(data.content)
           setTotalPages(data.totalPages)
         })
-        .catch(() => {})
+        .catch(() => { })
+        .finally(() => setLoading(false))
     }, 500)
 
     return () => clearTimeout(timer)
-
-  }, [search, page, refresh])
+  }, [search, page, statusFilter, refresh])
 
   const filtered = candidates
-    .filter(c => statusFilter === 'ALL' || c.candidateStatus === statusFilter)
-
+  
   return (
     <>
       <Header moduleName="RH" userName={user?.name ?? ""} />
@@ -117,7 +119,12 @@ export function RHPage() {
         </div>
 
         <div className={styles.list}>
-          {filtered.length === 0 ? (
+          {loading ? (
+            <div className={styles.loadingBar}>
+              <div className={styles.loadingSpinner} />
+              <span>Carregando candidatos…</span>
+            </div>
+          ) : filtered.length === 0 ? (
             <div className={styles.empty}>
               <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />

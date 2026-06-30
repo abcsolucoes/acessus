@@ -255,6 +255,31 @@
   flex-shrink: 0;
 }
 
+/* ── Carregando ───────────────────────────────────────────── */
+.loadingBar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 48px 0;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.loadingSpinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border-primary);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* ── Estado vazio ─────────────────────────────────────────── */
 .empty {
   display: flex;

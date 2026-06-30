@@ -143,6 +143,108 @@
   justify-content: flex-end;
 }
 
+/* ── Dropdown Ações ───────────────────────────────────────── */
+.actionsWrap {
+  position: relative;
+}
+
+.actionsToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-primary);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.actionsToggle:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-secondary);
+}
+
+.actionsBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+}
+
+.actionsMenu {
+  position: fixed;
+  z-index: 1000;
+  min-width: 210px;
+  padding: 6px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  animation: menuIn 0.15s ease both;
+}
+
+.actionsGroup {
+  padding: 6px 10px 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+}
+
+.actionsItem {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.actionsItem:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.actionsItem:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.actionsItemEdit:hover:not(:disabled) {
+  background: rgba(124, 58, 237, 0.08);
+  color: #7c3aed;
+}
+
+.actionsItemDelete:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+}
+
+.actionsDivider {
+  height: 1px;
+  background: var(--border-primary);
+  margin: 4px 0;
+}
+
+@keyframes menuIn {
+  from { opacity: 0; transform: translateY(-6px) }
+  to   { opacity: 1; transform: translateY(0) }
+}
+
 /* ── Badge de status ──────────────────────────────────────── */
 .badge {
   padding: 4px 12px;
@@ -928,14 +1030,8 @@
 
 /* ── Animações ────────────────────────────────────────────── */
 @keyframes heroEnter {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0 }
+  to   { opacity: 1 }
 }
 
 @keyframes modalOverlayIn {

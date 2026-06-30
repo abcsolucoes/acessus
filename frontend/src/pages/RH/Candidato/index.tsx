@@ -5,6 +5,7 @@ import type { Candidate, Field } from "../../../types"
 import { FieldModal } from "../FieldModal"
 import { Header } from "../../../components/Header"
 import { Toast } from "../../../components/Toast"
+import { DysrupConfirmModal } from "../../../components/DysrupConfirmModal"
 import { formatCpf, formatPhone, formatDate } from "../../../utils/format"
 import styles from './style.module.css'
 
@@ -36,6 +37,11 @@ export function RHCandidatoPage() {
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
+  const [actionsOpen, setActionsOpen] = useState(false)
+  const [actionsPos, setActionsPos] = useState({ top: 0, right: 0 })
+  const [showDysrupModal, setShowDysrupModal] = useState(false)
+  const [dysrupLoading, setDysrupLoading] = useState(false)
+  const [dysrupError, setDysrupError] = useState<string | null>(null)
   const [editLoading, setEditLoading] = useState(false)
   const [editError, setEditError] = useState('')
   const [editForm, setEditForm] = useState({
@@ -182,7 +188,7 @@ export function RHCandidatoPage() {
   async function handleResendForm() {
     try {
       await apiFetch(`/candidates/${id}/resend-form`, { method: 'POST', headers: authHeaders() })
-      setToast('Formulário reenviado por e-mail!')
+      setToast('Formulário reenviado!')
     } catch {
       setToast('Erro ao reenviar formulário.')
     }
@@ -242,15 +248,47 @@ export function RHCandidatoPage() {
     }
   }
 
-  async function handleRegisterDysrup() {
-    setLoading(true)
+  function handleRegisterDysrup() {
+    setDysrupError(null)
+    setShowDysrupModal(true)
+  }
+
+  async function handleDysrupConfirm() {
+    setDysrupLoading(true)
     try {
-      await apiFetch(`/dysrup/register/${id}`, { method: 'POST', headers: authHeaders() })
+      await apiFetch(`/dysrup/registrar-candidato/${id}`, { method: 'POST', headers: authHeaders() })
+      setShowDysrupModal(false)
       setToast('Candidato cadastrado na Dysrup com sucesso!')
     } catch (e) {
-      setToast(e instanceof Error ? e.message : 'Erro ao cadastrar na Dysrup.')
+      const message = e instanceof Error ? e.message : ''
+      if (message.toLowerCase().includes('cpf') || message.toLowerCase().includes('existe') || message.toLowerCase().includes('conflict')) {
+        setDysrupError(message)
+      } else {
+        setShowDysrupModal(false)
+        setToast(message || 'Erro ao cadastrar na Dysrup.')
+      }
     } finally {
-      setLoading(false)
+      setDysrupLoading(false)
+    }
+  }
+
+  async function handleSendWelcome() {
+    setActionsOpen(false)
+    try {
+      await apiFetch(`/candidates/${id}/send-welcome`, { method: 'POST', headers: authHeaders() })
+      setToast('Mensagem de boas-vindas enviada!')
+    } catch (e) {
+      setToast(e instanceof Error ? e.message : 'Erro ao enviar mensagem.')
+    }
+  }
+
+  async function handleSendRoute() {
+    setActionsOpen(false)
+    try {
+      await apiFetch(`/candidates/${id}/send-route`, { method: 'POST', headers: authHeaders() })
+      setToast('Notificação de rota enviada!')
+    } catch (e) {
+      setToast(e instanceof Error ? e.message : 'Erro ao enviar notificação.')
     }
   }
 
@@ -310,47 +348,70 @@ export function RHCandidatoPage() {
             </div>
 
             <div className={styles.heroActions}>
-              <button
-                className={styles.formBtn}
-                onClick={handleOpenForm}
-                disabled={!candidate?.formEnabled}
-                title={candidate?.formEnabled ? 'Abrir formulário do candidato' : 'Formulário bloqueado'}
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                  <polyline points="15 3 21 3 21 9" />
-                  <line x1="10" y1="14" x2="21" y2="3" />
-                </svg>
-                Ver formulário
-              </button>
-              <button
-                className={styles.formBtn}
-                onClick={handleResendForm}
-                disabled={!candidate?.formEnabled}
-                title={candidate?.formEnabled ? 'Reenviar formulário por e-mail' : 'Reenvio bloqueado'}
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
-                  <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
-                </svg>
-                Reenviar formulário
-              </button>
-              <button className={styles.editBtn} onClick={() => setShowEditModal(true)}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                </svg>
-                Editar
-              </button>
-              <button className={styles.deleteBtn} onClick={() => setShowDeleteModal(true)}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="3 6 5 6 21 6" />
-                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                  <path d="M10 11v6M14 11v6" />
-                  <path d="M9 6V4h6v2" />
-                </svg>
-                Excluir
-              </button>
+              <div className={styles.actionsWrap}>
+                <button
+                  className={styles.actionsToggle}
+                  onClick={e => {
+                    const r = e.currentTarget.getBoundingClientRect()
+                    setActionsPos({ top: r.bottom + 6, right: window.innerWidth - r.right })
+                    setActionsOpen(o => !o)
+                  }}
+                >
+                  Ações
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+
+                {actionsOpen && (
+                  <>
+                    <div className={styles.actionsBackdrop} onClick={() => setActionsOpen(false)} />
+                    <div className={styles.actionsMenu} style={{ top: actionsPos.top, right: actionsPos.right }}>
+                      <p className={styles.actionsGroup}>Formulário</p>
+                      <button className={styles.actionsItem} onClick={() => { setActionsOpen(false); handleOpenForm() }} disabled={!candidate?.formEnabled}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
+                        </svg>
+                        Ver formulário
+                      </button>
+                      <button className={styles.actionsItem} onClick={() => { setActionsOpen(false); handleResendForm() }} disabled={!candidate?.formEnabled}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" /><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+                        </svg>
+                        Reenviar formulário
+                      </button>
+
+                      <p className={styles.actionsGroup}>WhatsApp</p>
+                      <button className={styles.actionsItem} onClick={handleSendWelcome}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        </svg>
+                        Enviar boas-vindas
+                      </button>
+                      <button className={styles.actionsItem} onClick={handleSendRoute}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="10" /><polyline points="12 8 12 12 14 14" />
+                        </svg>
+                        Enviar dados da rota
+                      </button>
+
+                      <div className={styles.actionsDivider} />
+                      <button className={`${styles.actionsItem} ${styles.actionsItemEdit}`} onClick={() => { setActionsOpen(false); setShowEditModal(true) }}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
+                        Editar
+                      </button>
+                      <button className={`${styles.actionsItem} ${styles.actionsItemDelete}`} onClick={() => { setActionsOpen(false); setShowDeleteModal(true) }}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" />
+                        </svg>
+                        Excluir
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -718,6 +779,16 @@ export function RHCandidatoPage() {
 
           </div>
         </div>
+      )}
+
+      {showDysrupModal && candidate && (
+        <DysrupConfirmModal
+          candidateName={candidate.name}
+          onConfirm={handleDysrupConfirm}
+          onSkip={() => { setShowDysrupModal(false); setDysrupError(null) }}
+          error={dysrupError}
+          loading={dysrupLoading}
+        />
       )}
     </>
   )

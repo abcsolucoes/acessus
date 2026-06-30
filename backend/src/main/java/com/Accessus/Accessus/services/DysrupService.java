@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -674,7 +675,7 @@ public class DysrupService {
 
         String[] nomeParts = candidate.getName().trim().split(" ", 2);
         String firstName = nomeParts[0];
-        String lastName  = nomeParts.length > 1 ? nomeParts[1] : "";
+        String lastName  = nomeParts.length > 1 && !nomeParts[1].isBlank() ? nomeParts[1] : firstName;
 
         String zipcodeNumerico = zipcode.replaceAll("[^0-9]", "");
         String telefone = candidate.getTelephone() != null
@@ -712,12 +713,18 @@ public class DysrupService {
         headers.setBearerAuth(getControleToken());
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        ResponseEntity<Map> resp = restTemplate.exchange(
-                "https://api.dysrup.com.br/api/user/user",
-                HttpMethod.POST,
-                new HttpEntity<>(payload, headers),
-                Map.class
-        );
+        ResponseEntity<Map> resp;
+        try {
+            resp = restTemplate.exchange(
+                    "https://api.dysrup.com.br/api/user/user",
+                    HttpMethod.POST,
+                    new HttpEntity<>(payload, headers),
+                    Map.class
+            );
+        } catch (HttpClientErrorException e) {
+            String body = e.getResponseBodyAsString();
+            throw new RuntimeException("Dysrup: " + body);
+        }
 
         log.info("Candidato {} registrado na Dysrup — status {}", candidateId, resp.getStatusCode());
         return (Map<String, Object>) resp.getBody();

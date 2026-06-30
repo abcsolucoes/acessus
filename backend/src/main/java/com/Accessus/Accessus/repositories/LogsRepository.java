@@ -11,6 +11,8 @@ import java.time.LocalDateTime;
 
 public interface LogsRepository extends JpaRepository<Logs, Long> {
 
+    Page<Logs> findByUserId(Long userId, Pageable pageable);
+
     @Query("SELECT l FROM Logs l WHERE LOWER(l.user.name) LIKE LOWER(CONCAT('%', :name, '%'))")
     Page<Logs> findByUserNameContaining(@Param("name") String name, Pageable pageable);
 

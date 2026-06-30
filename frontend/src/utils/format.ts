@@ -61,3 +61,7 @@ export function waNumero(telephone: string): string {
     const digits = telephone.replace(/\D/g, '')
     return digits.startsWith('55') ? digits : `55${digits}`
 }
+
+export function getInitials(name: string) {
+    return name.split(" ").slice(0, 2).map(n => n[0]).join("").toUpperCase()
+}

@@ -22,6 +22,11 @@ public class LogsController {
     @Autowired
     LogsService logsService;
 
+    @GetMapping("/me")
+    public ResponseEntity<Page<ResponseLogsDto>> findMyLogs(Pageable pageable) {
+        return ResponseEntity.ok(logsService.findMyLogs(pageable));
+    }
+
     @GetMapping
     public ResponseEntity<Page<ResponseLogsDto>> findAll(
             @RequestParam(required = false) String userName,

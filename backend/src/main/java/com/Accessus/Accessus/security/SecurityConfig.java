@@ -98,8 +98,8 @@ public class SecurityConfig {
                         // =========================================================
                         // ADMIN — logs
                         // =========================================================
-                        .requestMatchers(HttpMethod.GET, "/logs")
-                        .hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/logs/me").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/logs").hasRole("ADMIN")
 
                         // =========================================================
                         // ADMIN — gestão de usuários

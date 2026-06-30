@@ -1,13 +1,13 @@
 import styles from "../../pages/Logs/Logs.module.css"
-import type { Logs } from "../../types"
-import { formatDateTime } from "../../utils/format";
+import { formatDateTime, getInitials } from "../../utils/format";
+import type { Logs } from "../../types";
 
 type Props = {
     logs: Logs[]
-    getInitials: (name: string) => string
 }
 
-export function LogsTable({ logs, getInitials }: Props) {
+export function LogsTable({ logs }: Props) {
+
     return (
         <div className={styles.tableWrapper}>
             <table className={styles.table}>

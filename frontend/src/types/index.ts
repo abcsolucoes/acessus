@@ -96,3 +96,9 @@ export type Logs = {
   description: string
   createdAt: string
 }
+
+export type LogsFilter = {
+  userName: string
+  startDate: string
+  endDate: string
+}

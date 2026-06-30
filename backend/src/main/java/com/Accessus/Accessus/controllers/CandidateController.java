@@ -26,8 +26,11 @@ public class    CandidateController {
     FieldService fieldService;
 
     @GetMapping
-    public ResponseEntity<Page<ResponseCandidateDto>> findAll(@PageableDefault(size = 20, sort = "id") Pageable pageable) {
-        return ResponseEntity.ok(candidateService.findAll(pageable));
+    public ResponseEntity<Page<ResponseCandidateDto>> findAll(
+            @RequestParam(required = false) CandidateStatus status,
+            @PageableDefault(size = 20, sort = "id") Pageable pageable
+    ) {
+        return ResponseEntity.ok(candidateService.findAll(status, pageable));
     }
 
     @GetMapping("/{id}")
@@ -36,12 +39,11 @@ public class    CandidateController {
     }
 
     @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Void> register(
+    public ResponseEntity<ResponseCandidateDto> register(
             @RequestPart("data") @Valid RegisterCandidateDto dto,
             @RequestParam(value = "routePhoto", required = false) MultipartFile routePhoto
     ) {
-        candidateService.register(dto, routePhoto);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(candidateService.register(dto, routePhoto));
     }
 
     @GetMapping("/formCandidate/{id}")
@@ -53,6 +55,18 @@ public class    CandidateController {
     @PostMapping("/{id}/resend-form")
     public ResponseEntity<Void> resendForm(@PathVariable Long id) {
         candidateService.resendForm(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{id}/send-welcome")
+    public ResponseEntity<Void> sendWelcome(@PathVariable Long id) {
+        candidateService.sendWelcomeMessage(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{id}/send-route")
+    public ResponseEntity<Void> sendRoute(@PathVariable Long id) {
+        candidateService.sendRouteNotification(id);
         return ResponseEntity.ok().build();
     }
 

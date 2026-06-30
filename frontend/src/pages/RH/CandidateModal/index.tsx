@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react"
 import { apiFetch, authHeaders } from "../../../services/api"
 import { isValidEmail, isValidCpf, formatCpf, formatPhone } from '../../../utils/format'
+import { DysrupConfirmModal } from '../../../components/DysrupConfirmModal'
+import type { Candidate } from '../../../types'
 import styles from './style.module.css'
 
 type Props = {
@@ -40,11 +42,14 @@ export function CandidateModal({ onClose, onSuccess }: Props) {
     const [routePhoto, setRoutePhoto] = useState<File | null>(null)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
+    const [registered, setRegistered] = useState<{ id: number; name: string } | null>(null)
+    const [dysrupLoading, setDysrupLoading] = useState(false)
+    const [dysrupError, setDysrupError] = useState<string | null>(null)
 
     useEffect(() => {
         apiFetch<{ itinerary_id: number; itinerary_description: string }[]>('/dysrup/itineraries', {
             headers: authHeaders(),
-        }).then(setItineraries).catch(() => {})
+        }).then(setItineraries).catch(() => { })
     }, [])
 
     useEffect(() => {
@@ -91,19 +96,52 @@ export function CandidateModal({ onClose, onSuccess }: Props) {
             formData.append('data', new Blob([JSON.stringify(data)], { type: 'application/json' }))
             if (routePhoto) formData.append('routePhoto', routePhoto)
 
-            await apiFetch('/candidates/register', {
+            const candidate = await apiFetch<Candidate>('/candidates/register', {
                 method: 'POST',
                 headers: { ...authHeaders() },
                 body: formData,
             })
 
             onSuccess()
-            onClose()
+            setRegistered({ id: candidate.id, name: candidate.name })
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Erro ao cadastrar candidato')
         } finally {
             setLoading(false)
         }
+    }
+
+    async function handleDysrupConfirm() {
+        if (!registered) return
+        setDysrupLoading(true)
+        try {
+            await apiFetch(`/dysrup/registrar-candidato/${registered.id}`, {
+                method: 'POST',
+                headers: authHeaders(),
+            })
+            onClose()
+        } catch (err) {
+            const message = err instanceof Error ? err.message : ''
+            if (message.toLowerCase().includes('cpf') || message.toLowerCase().includes('existe') || message.toLowerCase().includes('conflict')) {
+                setDysrupError(message)
+            } else {
+                onClose()
+            }
+        } finally {
+            setDysrupLoading(false)
+        }
+    }
+
+    if (registered) {
+        return (
+            <DysrupConfirmModal
+                candidateName={registered.name}
+                onConfirm={handleDysrupConfirm}
+                onSkip={onClose}
+                error={dysrupError}
+                loading={dysrupLoading}
+            />
+        )
     }
 
     return (

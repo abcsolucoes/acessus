@@ -65,6 +65,12 @@ public class LogsService {
         return logsRepository.findAll(pageable).map(this::toDto);
     }
 
+    @Transactional(readOnly = true)
+    public Page<ResponseLogsDto> findMyLogs(Pageable pageable) {
+        User user = userService.getAuthenticatedUser();
+        return logsRepository.findByUserId(user.getId(), pageable).map(this::toDto);
+    }
+
     private ResponseLogsDto toDto(Logs log) {
         return new ResponseLogsDto(
                 log.getId(),

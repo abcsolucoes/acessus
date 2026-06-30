@@ -5,12 +5,14 @@ import styles from './style.module.css'
 import { DashboardHeaderPage } from '../../components/DashboardComponents/DashboardHeaderPage'
 import { DashboardBanner } from '../../components/DashboardComponents/DashboardBanner'
 import { DashboardModulesCards } from '../../components/DashboardComponents/DashboardModulesCards'
-import { DashboardDayFlow } from '../../components/DashboardComponents/DashboardDayFlow'
+import { DashboardRecentActions } from '../../components/DashboardComponents/DashboardRecentActions'
+import { DashboardTipCard } from '../../components/DashboardComponents/DashboardTipCard'
 import { TicketModal } from '../../components/TicketComponents/TicketModal'
 import { useState } from 'react'
 import { useTicketsPage } from '../../hooks/TicketHooks/useTicketsPage'
 import { Toast } from '../../components/Toast'
 import { ContactModal } from '../Contatos/ContactModal'
+import { useDashboardPage } from '../../hooks/DashboardHooks/useDashboardPage'
 
 export function DashboardPage() {
   const {
@@ -20,6 +22,10 @@ export function DashboardPage() {
     setPage,
     fetchTickets,
   } = useTicketsPage()
+
+
+  const { logs } = useDashboardPage();
+  console.log(logs)
 
   const userName = user?.name ?? 'Usuario'
   const firstName = userName.split(' ')[0] || 'Usuario'
@@ -59,7 +65,10 @@ export function DashboardPage() {
               onOpenContatosModal={() => setContatoModalOpen(true)}
             />
 
-            <DashboardDayFlow />
+            <div className={styles.bottomRow}>
+              <DashboardRecentActions />
+              <DashboardTipCard />
+            </div>
           </div>
         </div>
       </main>

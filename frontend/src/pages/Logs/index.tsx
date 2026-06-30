@@ -6,27 +6,18 @@ import { LogsFilter } from "../../components/LogsComponents/LogsFilter";
 import { LogsTable } from "../../components/LogsComponents/LogsTable";
 import { useLogsPage } from "../../hooks/LogsHooks/useLogsHooks";
 
-
-
-
 export function Logs() {
-
     const {
         user,
-        userName,
-        setUserName,
-        totalElements,
-        startDate,
-        setStartDate,
-        endDate,
-        setEndDate,
+        filter,
+        setFilter,
         handleSearch,
         handleClear,
         logs,
-        getInitials,
         page,
         totalPages,
-        setPage
+        totalElements,
+        setPage,
     } = useLogsPage()
 
     return (
@@ -42,21 +33,14 @@ export function Logs() {
 
                 {/* Filtros */}
                 <LogsFilter
-                    userName={userName}
-                    setUserName={setUserName}
-                    startDate={startDate}
-                    setStartDate={setStartDate}
-                    endDate={endDate}
-                    setEndDate={setEndDate}
+                    filter={filter}
+                    setFilter={setFilter}
                     onSearch={handleSearch}
                     onClear={handleClear}
                 />
 
                 {/* Tabela */}
-                <LogsTable
-                    logs={logs}
-                    getInitials={getInitials}
-                />
+                <LogsTable logs={logs} />
 
                 {/* Paginação */}
                 {totalPages > 1 && (

@@ -2,6 +2,7 @@ package com.Accessus.Accessus.repositories;
 
 import com.Accessus.Accessus.entities.Candidate;
 import com.Accessus.Accessus.entities.User;
+import com.Accessus.Accessus.enums.CandidateStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,4 +17,5 @@ public interface CandidateRepository extends JpaRepository<Candidate, Long> {
     Page<Candidate> findByCpfContaining(String cpf, Pageable pageable);
     Page<Candidate> findByEmailContainingIgnoreCase(String email, Pageable pageable);
     Page<Candidate> findByNameContainingIgnoreCase(String name, Pageable pageable);
+    Page<Candidate> findByCandidateStatus(CandidateStatus status, Pageable pageable);
 }
