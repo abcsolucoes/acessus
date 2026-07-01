@@ -34,6 +34,7 @@ export type Candidate = {
   routeDataSentAt: string | null
   dysrupRegisteredAt: string | null
   tiTicketCreatedAt: string | null
+  hasRoutePhoto: boolean
 }
 
 export type Contact = {

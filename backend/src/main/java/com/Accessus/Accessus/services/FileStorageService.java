@@ -181,16 +181,18 @@ public class FileStorageService {
                 case "image/heic" -> ".heic";
                 case "image/heif" -> ".heif";
                 case "image/webp" -> ".webp";
+                case "application/pdf" -> ".pdf";
                 default -> mime.startsWith("image/") ? ".jpg" : "";
             };
         }
 
-        if (!ALLOWED_EXTENSIONS.contains(extension) || mime.equals("application/pdf")) {
-            throw new RuntimeException("Tipo de arquivo não permitido. Use JPG ou PNG");
+        if (!ALLOWED_EXTENSIONS.contains(extension)) {
+            throw new RuntimeException("Tipo de arquivo não permitido. Use PDF, JPG ou PNG");
         }
 
-        if (!mime.startsWith("image/")) {
-            throw new RuntimeException("Tipo de arquivo não permitido. Use uma imagem");
+        boolean validMime = mime.startsWith("image/") || mime.equals("application/pdf");
+        if (!validMime) {
+            throw new RuntimeException("Tipo de arquivo não permitido. Use PDF ou uma imagem");
         }
 
         String uploadDir = uploadBaseDir + "/candidates/" + candidateId;
@@ -218,6 +220,27 @@ public class FileStorageService {
         }
 
         return filePath.toString();
+    }
+
+    public record StoredFile(byte[] content, String contentType) {}
+
+    public StoredFile readRoutePhoto(String path) {
+        if (path == null || path.isBlank()) {
+            throw new RuntimeException("Candidato sem foto de rota");
+        }
+
+        Path filePath = Paths.get(path);
+        if (!Files.exists(filePath)) {
+            throw new RuntimeException("Arquivo da foto de rota não encontrado");
+        }
+
+        try {
+            byte[] bytes = Files.readAllBytes(filePath);
+            String contentType = Files.probeContentType(filePath);
+            return new StoredFile(bytes, contentType != null ? contentType : "application/octet-stream");
+        } catch (IOException e) {
+            throw new RuntimeException("Erro ao ler foto da rota: " + e.getMessage(), e);
+        }
     }
 
     public byte[] zipCandidateFiles(Long candidateId) {

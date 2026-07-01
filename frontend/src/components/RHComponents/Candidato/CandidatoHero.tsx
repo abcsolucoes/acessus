@@ -34,6 +34,29 @@ export function CandidatoHero({
 
   const initials = getInitials(candidate?.name ?? '')
 
+  // Esses dados só existem depois que o candidato preenche o formulário de admissão —
+  // sem eles, a ação correspondente vai falhar no backend, então travamos antes.
+  const missingDysrupFields = [
+    !candidate?.zipcode && 'CEP',
+    !candidate?.addressNumber && 'número do endereço',
+    !candidate?.birthDate && 'data de nascimento',
+  ].filter(Boolean) as string[]
+  const dysrupBlocked = !candidate?.dysrupRegisteredAt && missingDysrupFields.length > 0
+
+  // "Enviar dados Dysrup" manda o login/senha de acesso ao Dysrup — só faz sentido
+  // depois que o candidato de fato existe lá.
+  const missingWelcomeFields = [
+    !candidate?.email && 'e-mail',
+    !candidate?.dysrupRegisteredAt && 'cadastro na Dysrup',
+  ].filter(Boolean) as string[]
+  const welcomeBlocked = !candidate?.welcomeMessageSentAt && missingWelcomeFields.length > 0
+
+  const missingRouteFields = [
+    !candidate?.routeName && 'nome da rota',
+    !candidate?.hasRoutePhoto && 'foto da rota',
+  ].filter(Boolean) as string[]
+  const routeBlocked = !candidate?.routeDataSentAt && missingRouteFields.length > 0
+
   return (
     <>
       <div className={styles.hero}>
@@ -53,12 +76,16 @@ export function CandidatoHero({
             <button
               className={styles.dysrupBtn}
               onClick={onRegisterDysrup}
-              disabled={loading}
-              title={candidate?.dysrupRegisteredAt ? `Cadastrado em ${new Date(candidate.dysrupRegisteredAt).toLocaleString('pt-BR')}` : 'Cadastrar na Dysrup'}
+              disabled={loading || dysrupBlocked}
+              title={
+                candidate?.dysrupRegisteredAt
+                  ? `Cadastrado em ${new Date(candidate.dysrupRegisteredAt).toLocaleString('pt-BR')}`
+                  : 'Cadastrar na Dysrup'
+              }
             >
               <img src="/dysrup_logo.png" alt="Dysrup" height="18" style={{ display: 'block' }} />
               <span style={{ width: 6 }} />
-              <p>{candidate?.dysrupRegisteredAt ? 'Já cadastrado' : 'Cadastrar na Dysrup'}</p>
+              <p>{candidate?.dysrupRegisteredAt ? 'Já cadastrado' : dysrupBlocked ? 'Aguardando dados' : 'Cadastrar na Dysrup'}</p>
               {candidate?.dysrupRegisteredAt && (
                 <svg style={{ marginLeft: 6, color: '#fff', flexShrink: 0 }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12" />
@@ -66,6 +93,12 @@ export function CandidatoHero({
               )}
             </button>
           </div>
+
+          {dysrupBlocked && (
+            <span className={styles.pendingHint}>
+              Pendente: {missingDysrupFields.join(', ')}
+            </span>
+          )}
 
           <div className={styles.heroActions}>
             <div className={styles.actionsWrap}>
@@ -106,26 +139,44 @@ export function CandidatoHero({
             </button>
 
             <p className={styles.actionsGroup}>WhatsApp</p>
-            <button className={styles.actionsItem} onClick={() => { setActionsOpen(false); onSendWelcome() }}>
+            <button
+              className={styles.actionsItem}
+              onClick={() => { setActionsOpen(false); onSendRoute() }}
+              disabled={routeBlocked}
+            >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                <circle cx="12" cy="12" r="10" /><polyline points="12 8 12 12 14 14" />
               </svg>
-              Enviar boas-vindas
-              {candidate?.welcomeMessageSentAt && (
+              <span className={styles.actionsItemLabelWrap}>
+                <span>Enviar dados da rota</span>
+                {routeBlocked && (
+                  <span className={styles.actionsItemHint}>Pendente: {missingRouteFields.join(', ')}</span>
+                )}
+              </span>
+              {candidate?.routeDataSentAt && (
                 <svg className={styles.actionsDoneIcon} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <title>Enviado em {new Date(candidate.welcomeMessageSentAt).toLocaleString('pt-BR')}</title>
+                  <title>Enviado em {new Date(candidate.routeDataSentAt).toLocaleString('pt-BR')}</title>
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
               )}
             </button>
-            <button className={styles.actionsItem} onClick={() => { setActionsOpen(false); onSendRoute() }}>
+            <button
+              className={styles.actionsItem}
+              onClick={() => { setActionsOpen(false); onSendWelcome() }}
+              disabled={welcomeBlocked}
+            >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" /><polyline points="12 8 12 12 14 14" />
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
               </svg>
-              Enviar dados da rota
-              {candidate?.routeDataSentAt && (
+              <span className={styles.actionsItemLabelWrap}>
+                <span>Enviar dados Dysrup</span>
+                {welcomeBlocked && (
+                  <span className={styles.actionsItemHint}>Pendente: {missingWelcomeFields.join(', ')}</span>
+                )}
+              </span>
+              {candidate?.welcomeMessageSentAt && (
                 <svg className={styles.actionsDoneIcon} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <title>Enviado em {new Date(candidate.routeDataSentAt).toLocaleString('pt-BR')}</title>
+                  <title>Enviado em {new Date(candidate.welcomeMessageSentAt).toLocaleString('pt-BR')}</title>
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
               )}

@@ -84,6 +84,18 @@
   color: var(--text-secondary);
 }
 
+.itemLabelWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.itemHint {
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
 .actionBtn {
   height: 28px;
   padding: 0 12px;

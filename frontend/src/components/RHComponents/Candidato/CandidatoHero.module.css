@@ -92,6 +92,13 @@
   gap: 10px;
 }
 
+.pendingHint {
+  font-size: 0.7rem;
+  color: #F59E0B;
+  font-weight: 500;
+  text-align: right;
+}
+
 .heroActions {
   display: flex;
   align-items: center;
@@ -201,6 +208,20 @@
   margin-left: auto;
   color: #22c55e;
   flex-shrink: 0;
+}
+
+.actionsItemLabelWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.actionsItemHint {
+  font-size: 0.68rem;
+  font-weight: 400;
+  color: #F59E0B;
+  white-space: normal;
 }
 
 /* ── Badge de status ──────────────────────────────────────── */

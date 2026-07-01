@@ -24,5 +24,6 @@ public record ResponseCandidateDto(
         LocalDateTime welcomeMessageSentAt,
         LocalDateTime routeDataSentAt,
         LocalDateTime dysrupRegisteredAt,
-        LocalDateTime tiTicketCreatedAt
+        LocalDateTime tiTicketCreatedAt,
+        Boolean hasRoutePhoto
 ) {}

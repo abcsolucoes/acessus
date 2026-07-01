@@ -175,18 +175,58 @@ export function useCandidato() {
   async function handleRunAllPending() {
     if (!candidate) return
     setChecklistLoading(true)
-    try {
-      if (!candidate.welcomeMessageSentAt) await apiFetch(`/candidates/${id}/send-welcome`, { method: 'POST', headers: authHeaders() })
-      if (!candidate.routeDataSentAt)      await apiFetch(`/candidates/${id}/send-route`,   { method: 'POST', headers: authHeaders() })
-      if (!candidate.dysrupRegisteredAt)   await apiFetch(`/dysrup/registrar-candidato/${id}`, { method: 'POST', headers: authHeaders() })
-      if (!candidate.tiTicketCreatedAt)    await apiFetch(`/candidates/${id}/create-ti-ticket`, { method: 'POST', headers: authHeaders() })
-      await refresh()
+
+    // "Enviar dados Dysrup" depende do cadastro na Dysrup já ter sido feito — como as
+    // duas podem rodar na mesma leva, usamos uma flag local em vez de só o candidate
+    // (que só atualiza depois do refresh) pra saber se o dysrup já foi concluído aqui.
+    let dysrupDone = !!candidate.dysrupRegisteredAt
+
+    // Cada etapa roda independente — se uma falhar (ou estiver bloqueada por falta de
+    // dado), as outras ainda são tentadas, em vez de travar a fila inteira num erro só.
+    const steps: { run: boolean; isBlocked: () => boolean; action: () => Promise<unknown> }[] = [
+      {
+        run: !candidate.dysrupRegisteredAt,
+        isBlocked: () => !candidate.zipcode || !candidate.addressNumber || !candidate.birthDate,
+        action: async () => {
+          await apiFetch(`/dysrup/registrar-candidato/${id}`, { method: 'POST', headers: authHeaders() })
+          dysrupDone = true
+        },
+      },
+      {
+        run: !candidate.welcomeMessageSentAt,
+        isBlocked: () => !candidate.email || !dysrupDone,
+        action: () => apiFetch(`/candidates/${id}/send-welcome`, { method: 'POST', headers: authHeaders() }),
+      },
+      {
+        run: !candidate.routeDataSentAt,
+        isBlocked: () => !candidate.routeName || !candidate.hasRoutePhoto,
+        action: () => apiFetch(`/candidates/${id}/send-route`, { method: 'POST', headers: authHeaders() }),
+      },
+      {
+        run: !candidate.tiTicketCreatedAt,
+        isBlocked: () => false,
+        action: () => apiFetch(`/candidates/${id}/create-ti-ticket`, { method: 'POST', headers: authHeaders() }),
+      },
+    ]
+
+    let hadError = false
+    for (const step of steps) {
+      if (!step.run || step.isBlocked()) continue
+      try {
+        await step.action()
+      } catch {
+        hadError = true
+      }
+    }
+
+    await refresh()
+    setChecklistLoading(false)
+
+    if (hadError) {
+      setToast('Algumas pendências não puderam ser concluídas.')
+    } else {
       setShowChecklistModal(false)
-      setToast('Todas as pendências foram concluídas!')
-    } catch (e) {
-      setToast(e instanceof Error ? e.message : 'Erro ao executar pendências.')
-    } finally {
-      setChecklistLoading(false)
+      setToast('Pendências concluídas!')
     }
   }
 

@@ -10,14 +10,44 @@ type Props = {
 }
 
 export function CandidatoChecklistModal({ candidate, checklistLoading, onClose, onAction, onRunAll }: Props) {
+  const missingDysrup = [
+    !candidate.zipcode && 'CEP',
+    !candidate.addressNumber && 'número do endereço',
+    !candidate.birthDate && 'data de nascimento',
+  ].filter(Boolean) as string[]
+
+  // "Enviar dados Dysrup" manda o login/senha de acesso — só faz sentido depois
+  // que o candidato de fato existe lá, por isso aparece só depois de cadastrado.
+  const missingWelcome = [
+    !candidate.email && 'e-mail',
+    !candidate.dysrupRegisteredAt && 'cadastro na Dysrup',
+  ].filter(Boolean) as string[]
+
+  const missingRoute = [
+    !candidate.routeName && 'nome da rota',
+    !candidate.hasRoutePhoto && 'foto da rota',
+  ].filter(Boolean) as string[]
+
   const items = [
-    { key: 'welcome', label: 'Enviar boas-vindas',   done: !!candidate.welcomeMessageSentAt },
-    { key: 'route',   label: 'Enviar dados da rota', done: !!candidate.routeDataSentAt },
-    { key: 'dysrup',  label: 'Cadastrar na Dysrup',  done: !!candidate.dysrupRegisteredAt },
-    { key: 'ticket',  label: 'Abrir chamado T.I',    done: !!candidate.tiTicketCreatedAt },
+    {
+      key: 'dysrup', label: 'Cadastrar na Dysrup', done: !!candidate.dysrupRegisteredAt,
+      blocked: missingDysrup.length > 0, hint: `Pendente: ${missingDysrup.join(', ')}`,
+    },
+    {
+      key: 'welcome', label: 'Enviar dados Dysrup', done: !!candidate.welcomeMessageSentAt,
+      blocked: missingWelcome.length > 0, hint: `Pendente: ${missingWelcome.join(', ')}`,
+    },
+    {
+      key: 'route', label: 'Enviar dados da rota', done: !!candidate.routeDataSentAt,
+      blocked: missingRoute.length > 0, hint: `Pendente: ${missingRoute.join(', ')}`,
+    },
+    {
+      key: 'ticket', label: 'Abrir chamado T.I', done: !!candidate.tiTicketCreatedAt,
+      blocked: false, hint: '',
+    },
   ] as const
 
-  const hasPending = items.some(i => !i.done)
+  const hasRunnablePending = items.some(i => !i.done && !i.blocked)
 
   return (
     <div className={styles.overlay}>
@@ -45,13 +75,19 @@ export function CandidatoChecklistModal({ candidate, checklistLoading, onClose, 
                     <circle cx="12" cy="12" r="10" />
                   </svg>
                 )}
-                <span>{item.label}</span>
+                <div className={styles.itemLabelWrap}>
+                  <span>{item.label}</span>
+                  {!item.done && item.blocked && (
+                    <span className={styles.itemHint}>{item.hint}</span>
+                  )}
+                </div>
               </div>
               {!item.done && (
                 <button
                   className={styles.actionBtn}
                   onClick={() => onAction(item.key)}
-                  disabled={checklistLoading}
+                  disabled={checklistLoading || item.blocked}
+                  title={item.blocked ? item.hint : undefined}
                 >
                   Executar
                 </button>
@@ -64,7 +100,7 @@ export function CandidatoChecklistModal({ candidate, checklistLoading, onClose, 
           <button className={styles.cancelBtn} onClick={onClose} disabled={checklistLoading}>
             Prosseguir assim
           </button>
-          {hasPending && (
+          {hasRunnablePending && (
             <button className={styles.submitBtn} onClick={onRunAll} disabled={checklistLoading}>
               {checklistLoading ? 'Executando…' : 'Realizar todas pendentes'}
             </button>

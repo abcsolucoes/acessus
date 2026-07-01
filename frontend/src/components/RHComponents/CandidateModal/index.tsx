@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react"
 import { apiFetch, authHeaders } from "../../../services/api"
-import { isValidEmail, isValidCpf, formatCpf, formatPhone } from '../../../utils/format'
+import { isValidCpf, formatCpf, formatPhone } from '../../../utils/format'
 import { DysrupConfirmModal } from '../DysrupConfirmModal'
 import type { Candidate } from '../../../types'
 import styles from './style.module.css'
-import { useCepLookup } from "../../../hooks/RHHooks/useCepLookup"
+import { useRoutePhoto } from "../../../hooks/RHHooks/useRoutePhoto"
 
 type Props = {
     onClose: () => void
@@ -12,24 +12,21 @@ type Props = {
     initialData?: Candidate
 }
 
-function formatCep(value: string) {
-    const digits = value.replace(/\D/g, '').slice(0, 8)
-    if (digits.length > 5) return digits.slice(0, 5) + '-' + digits.slice(5)
-    return digits
-}
-
 export function CandidateModal({ onClose, onSuccess, initialData }: Props) {
     const isEditing = !!initialData
 
     const [name, setName] = useState(initialData?.name ?? '')
-    const [email, setEmail] = useState(initialData?.email ?? '')
+    // E-mail, nascimento e endereço só são preenchidos pelo próprio candidato no
+    // formulário de admissão — esse modal nunca os edita, só carrega o valor atual
+    // pra reenviar sem alterar (o backend exige esses campos no payload do update).
+    const [email] = useState(initialData?.email ?? '')
     const [cpf, setCpf] = useState(initialData?.cpf ?? '')
     const [telephone, setTelephone] = useState(initialData?.telephone ?? '')
-    const [birthDate, setBirthDate] = useState(initialData?.birthDate ?? '')
+    const [birthDate] = useState(initialData?.birthDate ?? '')
 
-    const [zipcode, setZipcode] = useState(initialData?.zipcode ?? '')
-    const [addressNumber, setAddressNumber] = useState(initialData?.addressNumber ?? '')
-    const [complement, setComplement] = useState(initialData?.complement ?? '')
+    const [zipcode] = useState(initialData?.zipcode ?? '')
+    const [addressNumber] = useState(initialData?.addressNumber ?? '')
+    const [complement] = useState(initialData?.complement ?? '')
 
     const [position, setPosition] = useState(initialData?.position ?? '')
     const [admissionDate, setAdmissionDate] = useState(initialData?.admissionDate ?? '')
@@ -50,7 +47,7 @@ export function CandidateModal({ onClose, onSuccess, initialData }: Props) {
         }).then(setItineraries).catch(() => { })
     }, [])
 
-    const { address, district, city, addressState, loading: cepLoading, error: cepError } = useCepLookup(zipcode)
+    const { url: currentPhotoUrl, isImage: currentPhotoIsImage } = useRoutePhoto(initialData?.id, initialData?.hasRoutePhoto)
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
@@ -60,8 +57,6 @@ export function CandidateModal({ onClose, onSuccess, initialData }: Props) {
         if (name.trim().length < 3) { setError('Nome deve ter pelo menos 3 caracteres'); setLoading(false); return }
         if (!isValidCpf(cpf)) { setError('CPF inválido'); setLoading(false); return }
         if (telephone.length < 8) { setError('Telefone inválido'); setLoading(false); return }
-        if (email && !isValidEmail(email)) { setError('E-mail inválido'); setLoading(false); return }
-        if (zipcode && zipcode.replace(/\D/g, '').length !== 8) { setError('CEP inválido'); setLoading(false); return }
 
         try {
             const data = {
@@ -98,7 +93,16 @@ export function CandidateModal({ onClose, onSuccess, initialData }: Props) {
                     body: formData,
                 })
                 onSuccess()
-                setRegistered({ id: candidate.id, name: candidate.name })
+
+                // Só oferece cadastrar na Dysrup na hora se já tiver o que ela exige —
+                // no cadastro normal isso ainda não existe (vem depois, pelo formulário
+                // que o próprio candidato preenche).
+                const readyForDysrup = !!(candidate.zipcode && candidate.addressNumber && candidate.birthDate)
+                if (readyForDysrup) {
+                    setRegistered({ id: candidate.id, name: candidate.name })
+                } else {
+                    onClose()
+                }
             }
         } catch (err) {
             setError(err instanceof Error ? err.message : isEditing ? 'Erro ao atualizar candidato' : 'Erro ao cadastrar candidato')
@@ -154,7 +158,7 @@ export function CandidateModal({ onClose, onSuccess, initialData }: Props) {
                     <p className={styles.sectionTitle}>Dados pessoais</p>
 
                     <div className={styles.fullWidth}>
-                        <label>Nome completo</label>
+                        <label>Nome completo <span className={styles.required}>*</span></label>
                         <input
                             placeholder="Nome do candidato"
                             value={name}
@@ -164,7 +168,7 @@ export function CandidateModal({ onClose, onSuccess, initialData }: Props) {
 
                     <div className={styles.grid2}>
                         <div>
-                            <label>CPF</label>
+                            <label>CPF <span className={styles.required}>*</span></label>
                             <input
                                 placeholder="000.000.000-00"
                                 value={formatCpf(cpf)}
@@ -173,7 +177,7 @@ export function CandidateModal({ onClose, onSuccess, initialData }: Props) {
                             />
                         </div>
                         <div>
-                            <label>Telefone</label>
+                            <label>Telefone <span className={styles.required}>*</span></label>
                             <input
                                 placeholder="(11) 99999-0000"
                                 value={formatPhone(telephone)}
@@ -182,85 +186,6 @@ export function CandidateModal({ onClose, onSuccess, initialData }: Props) {
                             />
                         </div>
                     </div>
-
-                    {isEditing && (
-                        <>
-                            <div className={styles.grid2}>
-                                <div>
-                                    <label>E-mail <span className={styles.optional}>(opcional)</span></label>
-                                    <input
-                                        placeholder="email@email.com"
-                                        value={email}
-                                        onChange={e => setEmail(e.target.value)}
-                                    />
-                                </div>
-                                <div>
-                                    <label>Data de nascimento <span className={styles.optional}>(opcional)</span></label>
-                                    <input
-                                        type="date"
-                                        value={birthDate}
-                                        onChange={e => setBirthDate(e.target.value)}
-                                    />
-                                </div>
-                            </div>
-
-                            <p className={styles.sectionTitle}>Endereço</p>
-
-                            <div className={styles.grid2}>
-                                <div>
-                                    <label>
-                                        CEP{cepLoading && <span className={styles.cepSpinner}> buscando…</span>}
-                                    </label>
-                                    <input
-                                        placeholder="00000-000"
-                                        value={formatCep(zipcode)}
-                                        onChange={e => setZipcode(e.target.value.replace(/\D/g, ''))}
-                                        maxLength={9}
-                                    />
-                                    {cepError && <span className={styles.fieldError}>{cepError}</span>}
-                                </div>
-                                <div>
-                                    <label>Estado</label>
-                                    <input placeholder="UF" value={addressState} readOnly maxLength={2} />
-                                </div>
-                            </div>
-
-                            <div className={styles.fullWidth}>
-                                <label>Logradouro</label>
-                                <input placeholder="Preenchido automaticamente pelo CEP" value={address} readOnly />
-                            </div>
-
-                            <div className={styles.grid2}>
-                                <div>
-                                    <label>Número</label>
-                                    <input
-                                        placeholder="Ex: 950"
-                                        value={addressNumber}
-                                        onChange={e => setAddressNumber(e.target.value)}
-                                    />
-                                </div>
-                                <div>
-                                    <label>Complemento <span className={styles.optional}>(opcional)</span></label>
-                                    <input
-                                        placeholder="Apto, bloco..."
-                                        value={complement}
-                                        onChange={e => setComplement(e.target.value)}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className={styles.grid2}>
-                                <div>
-                                    <label>Bairro</label>
-                                    <input placeholder="Bairro" value={district} readOnly />
-                                </div>
-                                <div>
-                                    <label>Cidade</label>
-                                    <input placeholder="Cidade" value={city} readOnly />
-                                </div>
-                            </div>
-                        </>
-                    )}
 
                     <p className={styles.sectionTitle}>Cargo e equipe</p>
 
@@ -285,7 +210,7 @@ export function CandidateModal({ onClose, onSuccess, initialData }: Props) {
 
                     <div className={styles.grid2}>
                         <div>
-                            <label>Equipe</label>
+                            <label>Equipe <span className={styles.optional}>(opcional)</span></label>
                             <select value={teamName} onChange={e => setTeamName(e.target.value)}>
                                 <option value="">Selecione uma equipe</option>
                                 {itineraries.map(i => (
@@ -296,7 +221,7 @@ export function CandidateModal({ onClose, onSuccess, initialData }: Props) {
                             </select>
                         </div>
                         <div>
-                            <label>Rota</label>
+                            <label>Rota <span className={styles.optional}>(opcional)</span></label>
                             <input
                                 placeholder="Ex: M - 020"
                                 value={routeName}
@@ -305,9 +230,26 @@ export function CandidateModal({ onClose, onSuccess, initialData }: Props) {
                         </div>
                     </div>
 
-                    <p className={styles.sectionTitle}>Foto da rota</p>
+                    <p className={styles.sectionTitle}>Foto da rota <span className={styles.optional}>(opcional)</span></p>
 
                     <div className={styles.fullWidth}>
+                        {isEditing && initialData?.hasRoutePhoto && !routePhoto && (
+                            <div className={styles.currentFile}>
+                                {currentPhotoUrl && currentPhotoIsImage ? (
+                                    <img src={currentPhotoUrl} alt="Foto da rota atual" className={styles.currentFileThumb} />
+                                ) : (
+                                    <span className={styles.uploadedIcon}>📄</span>
+                                )}
+                                <div className={styles.currentFileInfo}>
+                                    <span className={styles.currentFileLabel}>Arquivo atual</span>
+                                    {currentPhotoUrl && (
+                                        <a href={currentPhotoUrl} target="_blank" rel="noreferrer" className={styles.currentFileView}>
+                                            Visualizar
+                                        </a>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                         {routePhoto ? (
                             <div className={styles.uploadedFile}>
                                 <span className={styles.uploadedIcon}>📄</span>
@@ -317,11 +259,11 @@ export function CandidateModal({ onClose, onSuccess, initialData }: Props) {
                         ) : (
                             <label className={styles.uploadArea}>
                                 <span className={styles.uploadIcon}>↑</span>
-                                <span className={styles.uploadTitle}>{isEditing ? 'Selecionar nova foto (substitui a atual)' : 'Selecionar arquivo'}</span>
-                                <span className={styles.uploadHint}>JPG, PNG ou WebP</span>
+                                <span className={styles.uploadTitle}>{isEditing && initialData?.hasRoutePhoto ? 'Selecionar novo arquivo (substitui o atual)' : 'Selecionar arquivo'}</span>
+                                <span className={styles.uploadHint}>JPG, PNG ou PDF</span>
                                 <input
                                     type="file"
-                                    accept="image/jpeg,image/png,image/webp"
+                                    accept="image/jpeg,image/png,image/webp,application/pdf"
                                     className={styles.fileInput}
                                     onChange={e => setRoutePhoto(e.target.files?.[0] ?? null)}
                                 />

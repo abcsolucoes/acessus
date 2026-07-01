@@ -134,6 +134,12 @@ public class CandidateService {
         Candidate candidate = candidateRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Candidato não encontrado"));
 
+        if (candidate.getEmail() == null || candidate.getEmail().isBlank())
+            throw new RuntimeException("Candidato sem e-mail cadastrado");
+
+        if (candidate.getDysrupRegisteredAt() == null)
+            throw new RuntimeException("Candidato ainda não foi cadastrado na Dysrup");
+
         String message = "Olá, " + candidate.getName().split(" ")[0] + "! Tudo bem? 😊\n\n" +
                 "Sou da ABC, e vou te passar as informações para acessar o nosso app de promotor, o Dysrup.\n\n" +
                 "📱 *Link para download:*\n" +
@@ -156,6 +162,12 @@ public class CandidateService {
     public void sendRouteNotification(Long id) {
         Candidate candidate = candidateRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Candidato não encontrado"));
+
+        if (candidate.getRouteName() == null || candidate.getRouteName().isBlank())
+            throw new RuntimeException("Candidato sem nome da rota cadastrado");
+
+        if (candidate.getRoutePhotoPath() == null || candidate.getRoutePhotoPath().isBlank())
+            throw new RuntimeException("Candidato sem foto da rota cadastrada");
 
         zApiService.sendCandidateRouteNotification(candidate.getName(), candidate.getRouteName(), candidate.getRoutePhotoPath());
 
@@ -322,7 +334,8 @@ public class CandidateService {
                 candidate.getWelcomeMessageSentAt(),
                 candidate.getRouteDataSentAt(),
                 candidate.getDysrupRegisteredAt(),
-                candidate.getTiTicketCreatedAt()
+                candidate.getTiTicketCreatedAt(),
+                candidate.getRoutePhotoPath() != null && !candidate.getRoutePhotoPath().isBlank()
         );
     }
 
@@ -341,6 +354,14 @@ public class CandidateService {
 
     public byte[] zipCandidateFiles(Long candidateId) {
         return fileStorageService.zipCandidateFiles(candidateId);
+    }
+
+    @Transactional(readOnly = true)
+    public FileStorageService.StoredFile getRoutePhoto(Long candidateId) {
+        Candidate candidate = candidateRepository.findById(candidateId)
+                .orElseThrow(() -> new RuntimeException("Candidato não encontrado"));
+
+        return fileStorageService.readRoutePhoto(candidate.getRoutePhotoPath());
     }
 
     public ResponseCandidateDto validateFormAccess(String token) {

@@ -117,6 +117,15 @@ public class    CandidateController {
                 .body(report);
     }
 
+    @GetMapping("/{id}/route-photo")
+    public ResponseEntity<byte[]> getRoutePhoto(@PathVariable Long id) {
+        var file = candidateService.getRoutePhoto(id);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(file.contentType()))
+                .body(file.content());
+    }
+
     @PostMapping("/{candidateId}/upload")
     public ResponseEntity<Void> upload(
             @PathVariable Long candidateId,
