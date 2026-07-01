@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react"
 import { apiFetch, authHeaders } from "../../../services/api"
 import { isValidEmail, isValidCpf, formatCpf, formatPhone } from '../../../utils/format'
-import { DysrupConfirmModal } from '../../../components/DysrupConfirmModal'
+import { DysrupConfirmModal } from '../DysrupConfirmModal'
 import type { Candidate } from '../../../types'
 import styles from './style.module.css'
+import { useCepLookup } from "../../../hooks/RHHooks/useCepLookup"
 
 type Props = {
     onClose: () => void
     onSuccess: () => void
+    initialData?: Candidate
 }
 
 function formatCep(value: string) {
@@ -16,27 +18,23 @@ function formatCep(value: string) {
     return digits
 }
 
-export function CandidateModal({ onClose, onSuccess }: Props) {
-    const [name, setName] = useState('')
-    const [email, setEmail] = useState('')
-    const [cpf, setCpf] = useState('')
-    const [telephone, setTelephone] = useState('')
-    const [birthDate, setBirthDate] = useState('')
+export function CandidateModal({ onClose, onSuccess, initialData }: Props) {
+    const isEditing = !!initialData
 
-    const [zipcode, setZipcode] = useState('')
-    const [address, setAddress] = useState('')
-    const [addressNumber, setAddressNumber] = useState('')
-    const [complement, setComplement] = useState('')
-    const [district, setDistrict] = useState('')
-    const [city, setCity] = useState('')
-    const [addressState, setAddressState] = useState('')
-    const [cepLoading, setCepLoading] = useState(false)
-    const [cepError, setCepError] = useState('')
+    const [name, setName] = useState(initialData?.name ?? '')
+    const [email, setEmail] = useState(initialData?.email ?? '')
+    const [cpf, setCpf] = useState(initialData?.cpf ?? '')
+    const [telephone, setTelephone] = useState(initialData?.telephone ?? '')
+    const [birthDate, setBirthDate] = useState(initialData?.birthDate ?? '')
 
-    const [position, setPosition] = useState('')
-    const [admissionDate, setAdmissionDate] = useState('')
-    const [routeName, setRouteName] = useState('')
-    const [teamName, setTeamName] = useState('')
+    const [zipcode, setZipcode] = useState(initialData?.zipcode ?? '')
+    const [addressNumber, setAddressNumber] = useState(initialData?.addressNumber ?? '')
+    const [complement, setComplement] = useState(initialData?.complement ?? '')
+
+    const [position, setPosition] = useState(initialData?.position ?? '')
+    const [admissionDate, setAdmissionDate] = useState(initialData?.admissionDate ?? '')
+    const [routeName, setRouteName] = useState(initialData?.routeName ?? '')
+    const [teamName, setTeamName] = useState(initialData?.teamName ?? '')
     const [itineraries, setItineraries] = useState<{ itinerary_id: number; itinerary_description: string }[]>([])
 
     const [routePhoto, setRoutePhoto] = useState<File | null>(null)
@@ -52,21 +50,7 @@ export function CandidateModal({ onClose, onSuccess }: Props) {
         }).then(setItineraries).catch(() => { })
     }, [])
 
-    useEffect(() => {
-        const digits = zipcode.replace(/\D/g, '')
-        if (digits.length !== 8) return
-        setCepLoading(true)
-        setCepError('')
-        apiFetch<Record<string, string>>(`/dysrup/cep?cep=${digits}`, { headers: authHeaders() })
-            .then(data => {
-                setAddress(data.logradouro || '')
-                setDistrict(data.bairro || '')
-                setCity(data.localidade || '')
-                setAddressState(data.uf || '')
-            })
-            .catch(() => setCepError('CEP não encontrado'))
-            .finally(() => setCepLoading(false))
-    }, [zipcode])
+    const { address, district, city, addressState, loading: cepLoading, error: cepError } = useCepLookup(zipcode)
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
@@ -84,7 +68,10 @@ export function CandidateModal({ onClose, onSuccess }: Props) {
 
         try {
             const data = {
-                name, email, cpf, telephone, position, admissionDate,
+                name, email,
+                cpf: cpf.replace(/\D/g, ''),
+                telephone: telephone.replace(/\D/g, ''),
+                position, admissionDate,
                 birthDate: birthDate || null,
                 zipcode: zipcode.replace(/\D/g, '') || null,
                 addressNumber: addressNumber || null,
@@ -96,16 +83,25 @@ export function CandidateModal({ onClose, onSuccess }: Props) {
             formData.append('data', new Blob([JSON.stringify(data)], { type: 'application/json' }))
             if (routePhoto) formData.append('routePhoto', routePhoto)
 
-            const candidate = await apiFetch<Candidate>('/candidates/register', {
-                method: 'POST',
-                headers: { ...authHeaders() },
-                body: formData,
-            })
-
-            onSuccess()
-            setRegistered({ id: candidate.id, name: candidate.name })
+            if (isEditing) {
+                await apiFetch<Candidate>(`/candidates/${initialData!.id}`, {
+                    method: 'PUT',
+                    headers: { ...authHeaders() },
+                    body: formData,
+                })
+                onSuccess()
+                onClose()
+            } else {
+                const candidate = await apiFetch<Candidate>('/candidates/register', {
+                    method: 'POST',
+                    headers: { ...authHeaders() },
+                    body: formData,
+                })
+                onSuccess()
+                setRegistered({ id: candidate.id, name: candidate.name })
+            }
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Erro ao cadastrar candidato')
+            setError(err instanceof Error ? err.message : isEditing ? 'Erro ao atualizar candidato' : 'Erro ao cadastrar candidato')
         } finally {
             setLoading(false)
         }
@@ -149,7 +145,7 @@ export function CandidateModal({ onClose, onSuccess }: Props) {
             <div className={styles.modal} onClick={e => e.stopPropagation()}>
 
                 <div className={styles.modalHeader}>
-                    <h2 className={styles.modalTitle}>Novo candidato</h2>
+                    <h2 className={styles.modalTitle}>{isEditing ? 'Editar candidato' : 'Novo candidato'}</h2>
                     <button className={styles.closeBtn} onClick={onClose}>✕</button>
                 </div>
 
@@ -223,22 +219,13 @@ export function CandidateModal({ onClose, onSuccess }: Props) {
                         </div>
                         <div>
                             <label>Estado</label>
-                            <input
-                                placeholder="UF"
-                                value={addressState}
-                                onChange={e => setAddressState(e.target.value)}
-                                maxLength={2}
-                            />
+                            <input placeholder="UF" value={addressState} readOnly maxLength={2} />
                         </div>
                     </div>
 
                     <div className={styles.fullWidth}>
                         <label>Logradouro</label>
-                        <input
-                            placeholder="Preenchido automaticamente pelo CEP"
-                            value={address}
-                            onChange={e => setAddress(e.target.value)}
-                        />
+                        <input placeholder="Preenchido automaticamente pelo CEP" value={address} readOnly />
                     </div>
 
                     <div className={styles.grid2}>
@@ -263,19 +250,11 @@ export function CandidateModal({ onClose, onSuccess }: Props) {
                     <div className={styles.grid2}>
                         <div>
                             <label>Bairro</label>
-                            <input
-                                placeholder="Bairro"
-                                value={district}
-                                onChange={e => setDistrict(e.target.value)}
-                            />
+                            <input placeholder="Bairro" value={district} readOnly />
                         </div>
                         <div>
                             <label>Cidade</label>
-                            <input
-                                placeholder="Cidade"
-                                value={city}
-                                onChange={e => setCity(e.target.value)}
-                            />
+                            <input placeholder="Cidade" value={city} readOnly />
                         </div>
                     </div>
 
@@ -334,7 +313,7 @@ export function CandidateModal({ onClose, onSuccess }: Props) {
                         ) : (
                             <label className={styles.uploadArea}>
                                 <span className={styles.uploadIcon}>↑</span>
-                                <span className={styles.uploadTitle}>Selecionar arquivo</span>
+                                <span className={styles.uploadTitle}>{isEditing ? 'Selecionar nova foto (substitui a atual)' : 'Selecionar arquivo'}</span>
                                 <span className={styles.uploadHint}>JPG, PNG ou WebP</span>
                                 <input
                                     type="file"
@@ -348,9 +327,14 @@ export function CandidateModal({ onClose, onSuccess }: Props) {
 
                     {error && <p className={styles.error}>{error}</p>}
 
-                    <button type="submit" className={styles.submitBtn} disabled={loading}>
-                        {loading ? 'Cadastrando…' : 'Cadastrar candidato'}
-                    </button>
+                    <div className={styles.footer}>
+                        <button type="button" className={styles.cancelBtn} onClick={onClose} disabled={loading}>
+                            Cancelar
+                        </button>
+                        <button type="submit" className={styles.submitBtn} disabled={loading}>
+                            {loading ? (isEditing ? 'Salvando…' : 'Cadastrando…') : (isEditing ? 'Salvar' : 'Cadastrar candidato')}
+                        </button>
+                    </div>
 
                 </form>
             </div>

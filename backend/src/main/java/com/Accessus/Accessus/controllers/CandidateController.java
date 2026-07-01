@@ -70,6 +70,12 @@ public class    CandidateController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/{id}/create-ti-ticket")
+    public ResponseEntity<Void> createTiTicket(@PathVariable Long id) {
+        candidateService.createTiTicket(id);
+        return ResponseEntity.ok().build();
+    }
+
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<String> delete(@PathVariable Long id) {
         candidateService.delete(id);

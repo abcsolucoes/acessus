@@ -4,9 +4,9 @@ import { apiFetch, authHeaders, decodeToken } from "../../../services/api";
 import type { Field } from "../../../types";
 import { useNavigate } from "react-router-dom";
 import { Header } from "../../../components/Header";
-import { FieldModal } from "../FieldModal";
 
 import styles from "./style.module.css"
+import { FieldModal } from "../../../components/RHComponents/FieldModal";
 
 const FIELD_TYPE_LABEL: Record<string, string> = {
   TEXT: 'Texto',

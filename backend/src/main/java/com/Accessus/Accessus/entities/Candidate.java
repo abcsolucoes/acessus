@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -31,6 +32,10 @@ public class Candidate {
     private String routeName;
     private String teamName;
     private String routePhotoPath;
+    private LocalDateTime welcomeMessageSentAt;
+    private LocalDateTime routeDataSentAt;
+    private LocalDateTime dysrupRegisteredAt;
+    private LocalDateTime tiTicketCreatedAt;
 
     public Candidate() {
     }
@@ -127,14 +132,53 @@ public class Candidate {
         this.zipcode = zipcode;
     }
 
-    public java.time.LocalDate getBirthDate() { return birthDate; }
-    public void setBirthDate(java.time.LocalDate birthDate) { this.birthDate = birthDate; }
+    public LocalDateTime getWelcomeMessageSentAt() {
+        return welcomeMessageSentAt;
+    }
 
-    public String getAddressNumber() { return addressNumber; }
-    public void setAddressNumber(String addressNumber) { this.addressNumber = addressNumber; }
+    public void setWelcomeMessageSentAt(LocalDateTime welcomeMessageSentAt) {
+        this.welcomeMessageSentAt = welcomeMessageSentAt;
+    }
 
-    public String getComplement() { return complement; }
-    public void setComplement(String complement) { this.complement = complement; }
+    public LocalDateTime getRouteDataSentAt() {
+        return routeDataSentAt;
+    }
+
+    public void setRouteDataSentAt(LocalDateTime routeDataSentAt) {
+        this.routeDataSentAt = routeDataSentAt;
+    }
+
+    public LocalDateTime getDysrupRegisteredAt() {
+        return dysrupRegisteredAt;
+    }
+
+    public void setDysrupRegisteredAt(LocalDateTime dysrupRegisteredAt) {
+        this.dysrupRegisteredAt = dysrupRegisteredAt;
+    }
+
+    public java.time.LocalDate getBirthDate() {
+        return birthDate;
+    }
+
+    public void setBirthDate(java.time.LocalDate birthDate) {
+        this.birthDate = birthDate;
+    }
+
+    public String getAddressNumber() {
+        return addressNumber;
+    }
+
+    public void setAddressNumber(String addressNumber) {
+        this.addressNumber = addressNumber;
+    }
+
+    public String getComplement() {
+        return complement;
+    }
+
+    public void setComplement(String complement) {
+        this.complement = complement;
+    }
 
     public String getRouteName() {
         return routeName;
@@ -158,6 +202,14 @@ public class Candidate {
 
     public void setRoutePhotoPath(String routePhotoPath) {
         this.routePhotoPath = routePhotoPath;
+    }
+
+    public LocalDateTime getTiTicketCreatedAt() {
+        return tiTicketCreatedAt;
+    }
+
+    public void setTiTicketCreatedAt(LocalDateTime tiTicketCreatedAt) {
+        this.tiTicketCreatedAt = tiTicketCreatedAt;
     }
 
     @Override

@@ -257,15 +257,47 @@
   border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+  flex-shrink: 0;
+}
+
+.cancelBtn {
+  height: 40px;
+  padding: 0 20px;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.cancelBtn:hover:not(:disabled) {
+  border-color: var(--border-secondary);
+  color: var(--text-primary);
+}
+
+.cancelBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .submitBtn {
   height: 40px;
-  margin-top: 4px;
+  padding: 0 20px;
   background: var(--primary);
   border-radius: var(--radius-md);
   color: #fff;
   font-size: 0.875rem;
   font-weight: 600;
   font-family: inherit;
+  cursor: pointer;
   transition: background var(--transition-fast);
 }
 

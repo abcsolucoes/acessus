@@ -24,6 +24,7 @@ import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -152,6 +153,25 @@ public class DysrupService {
         login();
     }
 
+    private synchronized void invalidateTokens() {
+        cachedControleToken = null;
+        cachedGestaoToken = null;
+        tokenExpiresAt = Instant.EPOCH;
+    }
+
+    // O cache de tokens só expira pelo relógio local; se a Dysrup invalidar a sessão antes
+    // disso (ex.: login concorrente no site), a chamada volta 401 mesmo com cache "válido".
+    // Aqui a gente força um novo login e tenta de novo uma única vez antes de desistir.
+    private <T> ResponseEntity<T> comRetryDeAuth(java.util.function.Supplier<ResponseEntity<T>> chamada) {
+        try {
+            return chamada.get();
+        } catch (HttpClientErrorException.Unauthorized e) {
+            log.warn("Dysrup retornou 401 — invalidando tokens em cache e tentando novamente com login novo");
+            invalidateTokens();
+            return chamada.get();
+        }
+    }
+
     public synchronized String getControleToken() {
         ensureTokens();
         return cachedControleToken;
@@ -169,22 +189,23 @@ public class DysrupService {
             return cachedItineraries;
         }
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(getGestaoToken());
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
         Map<String, Object> payload = Map.of(
                 "reset_filter", false,
                 "status", "active",
                 "sort_by", Map.of("sort_by", "itinerary_description", "sort_desc", "asc")
         );
 
-        ResponseEntity<Map> resp = restTemplate.exchange(
-                BASE_URL + "/web/itinerary/filter?page=1&per_page=100",
-                HttpMethod.POST,
-                new HttpEntity<>(payload, headers),
-                Map.class
-        );
+        ResponseEntity<Map> resp = comRetryDeAuth(() -> {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(getGestaoToken());
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            return restTemplate.exchange(
+                    BASE_URL + "/web/itinerary/filter?page=1&per_page=100",
+                    HttpMethod.POST,
+                    new HttpEntity<>(payload, headers),
+                    Map.class
+            );
+        });
 
         Map<?, ?> body = resp.getBody();
         if (body == null) throw new RuntimeException("Resposta vazia da Dysrup");
@@ -289,10 +310,6 @@ public class DysrupService {
     // Retorna os bytes do Excel e o nome do arquivo original
 
     private ResultadoDownload gerarEBaixar(int itineraryId) throws Exception {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(getGestaoToken());
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
         // 1. Pede para a API gerar o relatório
         Map<String, Object> payload = Map.of(
                 "report_entity", "itinerary",
@@ -300,12 +317,17 @@ public class DysrupService {
                 "print_form_id", 2,
                 "header_fields_id", List.of()
         );
-        ResponseEntity<Map> resp = restTemplate.exchange(
-                BASE_URL + "/admin/report/generate",
-                HttpMethod.POST,
-                new HttpEntity<>(payload, headers),
-                Map.class
-        );
+        ResponseEntity<Map> resp = comRetryDeAuth(() -> {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(getGestaoToken());
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            return restTemplate.exchange(
+                    BASE_URL + "/admin/report/generate",
+                    HttpMethod.POST,
+                    new HttpEntity<>(payload, headers),
+                    Map.class
+            );
+        });
 
         // 2. Extrai o caminho do arquivo da resposta
         String filePath = extrairFilePath(resp.getBody());
@@ -326,19 +348,26 @@ public class DysrupService {
 
         log.info("URL download: {}", url);
         HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).build();
-        HttpRequest dlRequest = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .header("Authorization", headers.getFirst("Authorization"))
-                .header("Accept", "*/*")
-                .GET()
-                .build();
 
         byte[] conteudo = null;
         for (int tentativa = 1; tentativa <= 10; tentativa++) {
             Thread.sleep(5000);
+            HttpRequest dlRequest = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("Authorization", "Bearer " + getGestaoToken())
+                    .header("Accept", "*/*")
+                    .GET()
+                    .build();
             HttpResponse<byte[]> dl = httpClient.send(dlRequest, HttpResponse.BodyHandlers.ofByteArray());
             byte[] body = dl.body();
             log.info("[retry {}/10] status={} size={} para {}", tentativa, dl.statusCode(), body != null ? body.length : -1, nomeArquivo);
+
+            if (dl.statusCode() == 401) {
+                log.warn("Download Dysrup retornou 401 — invalidando tokens e tentando novamente");
+                invalidateTokens();
+                continue;
+            }
+
             if (body != null && body.length > 100) {
                 conteudo = body;
                 break;
@@ -709,22 +738,30 @@ public class DysrupService {
         payload.put("state",              endereco.getOrDefault("uf", "").toString());
         payload.put("zipcode",            zipcodeNumerico);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(getControleToken());
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
         ResponseEntity<Map> resp;
         try {
-            resp = restTemplate.exchange(
-                    "https://api.dysrup.com.br/api/user/user",
-                    HttpMethod.POST,
-                    new HttpEntity<>(payload, headers),
-                    Map.class
-            );
+            resp = comRetryDeAuth(() -> {
+                HttpHeaders headers = new HttpHeaders();
+                headers.setBearerAuth(getControleToken());
+                headers.setContentType(MediaType.APPLICATION_JSON);
+                return restTemplate.exchange(
+                        "https://api.dysrup.com.br/api/user/user",
+                        HttpMethod.POST,
+                        new HttpEntity<>(payload, headers),
+                        Map.class
+                );
+            });
         } catch (HttpClientErrorException e) {
             String body = e.getResponseBodyAsString();
+            if (e.getStatusCode().value() == 409 && body.contains("CPF informado")) {
+                candidate.setDysrupRegisteredAt(LocalDateTime.now());
+                candidateRepository.save(candidate);
+            }
             throw new RuntimeException("Dysrup: " + body);
         }
+
+        candidate.setDysrupRegisteredAt(LocalDateTime.now());
+        candidateRepository.save(candidate);
 
         log.info("Candidato {} registrado na Dysrup — status {}", candidateId, resp.getStatusCode());
         return (Map<String, Object>) resp.getBody();

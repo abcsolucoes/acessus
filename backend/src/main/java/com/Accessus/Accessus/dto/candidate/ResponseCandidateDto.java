@@ -3,6 +3,7 @@ package com.Accessus.Accessus.dto.candidate;
 import com.Accessus.Accessus.enums.CandidateStatus;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public record ResponseCandidateDto(
         Long id,
@@ -19,5 +20,9 @@ public record ResponseCandidateDto(
         CandidateStatus candidateStatus,
         Boolean formEnabled,
         String routeName,
-        String teamName
+        String teamName,
+        LocalDateTime welcomeMessageSentAt,
+        LocalDateTime routeDataSentAt,
+        LocalDateTime dysrupRegisteredAt,
+        LocalDateTime tiTicketCreatedAt
 ) {}

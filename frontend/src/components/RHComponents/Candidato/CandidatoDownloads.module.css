@@ -1,0 +1,81 @@
+.section {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  padding: 22px 24px;
+  transition: border-color var(--transition-fast);
+}
+
+.section:hover {
+  border-color: var(--border-secondary);
+}
+
+.sectionTitle {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 18px;
+}
+
+.downloadCards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.downloadCard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-primary);
+  background: var(--bg-tertiary);
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.downloadCard:hover {
+  border-color: var(--border-secondary);
+  background: color-mix(in srgb, var(--bg-tertiary) 80%, var(--bg-secondary));
+}
+
+.downloadIcon {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.downloadInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.downloadInfo strong {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.downloadInfo small {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.downloadArrow {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}

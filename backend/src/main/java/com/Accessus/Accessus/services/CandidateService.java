@@ -3,6 +3,8 @@ package com.Accessus.Accessus.services;
 import com.Accessus.Accessus.document.ReportGenerator;
 import com.Accessus.Accessus.dto.candidate.RegisterCandidateDto;
 import com.Accessus.Accessus.dto.candidate.ResponseCandidateDto;
+import com.Accessus.Accessus.dto.ticket.CreateTicketDto;
+import com.Accessus.Accessus.enums.Department;
 import com.Accessus.Accessus.entities.Candidate;
 import com.Accessus.Accessus.entities.FieldValue;
 import com.Accessus.Accessus.enums.CandidateStatus;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -46,6 +49,9 @@ public class CandidateService {
 
     @Autowired
     private DysrupService dysrupService;
+
+    @Autowired
+    private TicketService ticketService;
 
     @Value("${app.base-url}")
     private String baseUrl;
@@ -136,6 +142,10 @@ public class CandidateService {
                 "Estou à disposição!";
 
         zApiService.sendText("55" + candidate.getTelephone(), message);
+
+        candidate.setWelcomeMessageSentAt(LocalDateTime.now());
+        candidateRepository.save(candidate);
+
         logsService.createLog("enviou mensagem de boas-vindas para " + candidate.getName());
     }
 
@@ -144,7 +154,32 @@ public class CandidateService {
                 .orElseThrow(() -> new RuntimeException("Candidato não encontrado"));
 
         zApiService.sendCandidateRouteNotification(candidate.getName(), candidate.getRouteName(), candidate.getRoutePhotoPath());
+
+        candidate.setRouteDataSentAt(LocalDateTime.now());
+        candidateRepository.save(candidate);
+
         logsService.createLog("enviou notificação de rota para " + candidate.getName());
+    }
+
+    @Transactional
+    public void createTiTicket(Long id) {
+        Candidate candidate = candidateRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Candidato não encontrado"));
+
+        CreateTicketDto dto = new CreateTicketDto(
+                "Aparelho para " + candidate.getName(),
+                "Gentileza providenciar a configuração de um aparelho para o(a) colaborador(a) "
+                        + candidate.getName() + ", referente à sua admissão em " + candidate.getAdmissionDate() + ".",
+                Department.TI,
+                null,
+                null
+        );
+        ticketService.create(dto);
+
+        candidate.setTiTicketCreatedAt(LocalDateTime.now());
+        candidateRepository.save(candidate);
+
+        logsService.createLog("abriu chamado de T.I para o candidato " + candidate.getName());
     }
 
     public String formCandidate(Long id) {
@@ -277,7 +312,11 @@ public class CandidateService {
                 candidate.getCandidateStatus(),
                 candidate.getCandidateStatus() == CandidateStatus.PENDING,
                 candidate.getRouteName(),
-                candidate.getTeamName()
+                candidate.getTeamName(),
+                candidate.getWelcomeMessageSentAt(),
+                candidate.getRouteDataSentAt(),
+                candidate.getDysrupRegisteredAt(),
+                candidate.getTiTicketCreatedAt()
         );
     }
 

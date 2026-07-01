@@ -30,6 +30,10 @@ export type Candidate = {
   formEnabled: boolean
   routeName: string | null
   teamName: string | null
+  welcomeMessageSentAt: string | null
+  routeDataSentAt: string | null
+  dysrupRegisteredAt: string | null
+  tiTicketCreatedAt: string | null
 }
 
 export type Contact = {
