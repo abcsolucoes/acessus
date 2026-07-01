@@ -278,120 +278,44 @@ public class TestConfig implements CommandLineRunner {
         ));
 
         // =====================================================
-        // CAMPOS DO PRIMEIRO CANDIDATO
+        // CAMPOS PADRÃO (ADMISSION) — mesma lista que será lançada em produção
+        // via POST /field/create. Sem candidato vinculado (candidate = null),
+        // igual ao que a rota real cria quando candidateId vem nulo.
         // =====================================================
 
         List<Field> fields = List.of(
-
-                new Field(
-                        null,
-                        "Data de nascimento",
-                        true,
-                        FieldSize.MEDIUM,
-                        FieldType.DATE,
-                        Steps.personalData,
-                        FieldScope.ADMISSION,
-                        candidato1
-                ),
-
-                new Field(
-                        null,
-                        "Estado civil",
-                        true,
-                        FieldSize.MEDIUM,
-                        FieldType.TEXT,
-                        Steps.personalData,
-                        FieldScope.ADMISSION,
-                        candidato1
-                ),
-
-                new Field(
-                        null,
-                        "CEP",
-                        true,
-                        FieldSize.MEDIUM,
-                        FieldType.TEXT,
-                        Steps.address,
-                        FieldScope.ADMISSION,
-                        candidato1
-                ),
-
-                new Field(
-                        null,
-                        "Comprovante de residência",
-                        true,
-                        FieldSize.BIG,
-                        FieldType.DOC,
-                        Steps.address,
-                        FieldScope.ADMISSION,
-                        candidato1
-                ),
-
-                new Field(
-                        null,
-                        "RG",
-                        true,
-                        FieldSize.MEDIUM,
-                        FieldType.TEXT,
-                        Steps.docs,
-                        FieldScope.ADMISSION,
-                        candidato1
-                ),
-
-                new Field(
-                        null,
-                        "Foto do documento",
-                        true,
-                        FieldSize.BIG,
-                        FieldType.DOC,
-                        Steps.docs,
-                        FieldScope.ADMISSION,
-                        candidato1
-                ),
-
-                new Field(
-                        null,
-                        "Certidão de nascimento dos dependentes",
-                        true,
-                        FieldSize.BIG,
-                        FieldType.DOC,
-                        Steps.dependentsDocs,
-                        FieldScope.ADMISSION,
-                        candidato1
-                ),
-
-                new Field(
-                        null,
-                        "CPF dos dependentes",
-                        true,
-                        FieldSize.MEDIUM,
-                        FieldType.TEXT,
-                        Steps.dependentsDocs,
-                        FieldScope.ADMISSION,
-                        candidato1
-                ),
-
-                new Field(
-                        null,
-                        "Banco",
-                        true,
-                        FieldSize.MEDIUM,
-                        FieldType.TEXT,
-                        Steps.bankDetails,
-                        FieldScope.ADMISSION,
-                        candidato1
-                ),
-
-                new Field(
-                        null,
-                        "Comprovante bancário",
-                        true,
-                        FieldSize.BIG,
-                        FieldType.DOC,
-                        Steps.bankDetails,
-                        FieldScope.ADMISSION,
-                        candidato1
-                )
+                new Field(null, "Documento de Identificação com CPF", true, FieldSize.BIG, FieldType.DOC, Steps.personalData, FieldScope.ADMISSION, null),
+                new Field(null, "Comprovante de Endereço (Atualizado)", true, FieldSize.BIG, FieldType.DOC, Steps.address, FieldScope.ADMISSION, null),
+                new Field(null, "Comprovante de Escolaridade", true, FieldSize.BIG, FieldType.DOC, Steps.docs, FieldScope.ADMISSION, null),
+                new Field(null, "Foto (Selfie frontal ou 3x4)", true, FieldSize.BIG, FieldType.DOC, Steps.docs, FieldScope.ADMISSION, null),
+                new Field(null, "Titulo de Eleitor", true, FieldSize.BIG, FieldType.DOC, Steps.docs, FieldScope.ADMISSION, null),
+                new Field(null, "Dispensa Militar / Reservista", true, FieldSize.BIG, FieldType.DOC, Steps.docs, FieldScope.ADMISSION, null),
+                new Field(null, "Certidão de Casamento", true, FieldSize.MEDIUM, FieldType.DOC, Steps.docs, FieldScope.ADMISSION, null),
+                new Field(null, "Documento de Identificação do Cônjuge", true, FieldSize.BIG, FieldType.DOC, Steps.docs, FieldScope.ADMISSION, null),
+                new Field(null, "Certidão de Nascimento dos Dependentes", true, FieldSize.BIG, FieldType.DOC, Steps.dependentsDocs, FieldScope.ADMISSION, null),
+                new Field(null, "Conta Bancária (Apenas Bradesco ou Santander)", true, FieldSize.BIG, FieldType.DOC, Steps.bankDetails, FieldScope.ADMISSION, null),
+                new Field(null, "Cartão de Vacina dos Dependentes (ATÉ 7 ANOS)", true, FieldSize.BIG, FieldType.DOC, Steps.dependentsDocs, FieldScope.ADMISSION, null),
+                new Field(null, "Comprovante de Escolaridade dos Dependentes (Acima de 7 anos)", true, FieldSize.BIG, FieldType.DOC, Steps.dependentsDocs, FieldScope.ADMISSION, null),
+                new Field(null, "CPF do Dependente", true, FieldSize.BIG, FieldType.DOC, Steps.dependentsDocs, FieldScope.ADMISSION, null),
+                new Field(null, "Identidade", true, FieldSize.BIG, FieldType.TEXT, Steps.personalData, FieldScope.ADMISSION, null),
+                new Field(null, "CEP", true, FieldSize.MEDIUM, FieldType.TEXT, Steps.address, FieldScope.ADMISSION, null),
+                new Field(null, "Logradouro", true, FieldSize.BIG, FieldType.TEXT, Steps.address, FieldScope.ADMISSION, null),
+                new Field(null, "Número", true, FieldSize.MEDIUM, FieldType.TEXT, Steps.address, FieldScope.ADMISSION, null),
+                new Field(null, "Complemento", true, FieldSize.MEDIUM, FieldType.TEXT, Steps.address, FieldScope.ADMISSION, null),
+                new Field(null, "Bairro", true, FieldSize.MEDIUM, FieldType.TEXT, Steps.address, FieldScope.ADMISSION, null),
+                new Field(null, "Cidade", true, FieldSize.MEDIUM, FieldType.TEXT, Steps.address, FieldScope.ADMISSION, null),
+                new Field(null, "Estado", true, FieldSize.MEDIUM, FieldType.TEXT, Steps.address, FieldScope.ADMISSION, null),
+                new Field(null, "Estado Civil", true, FieldSize.MEDIUM, FieldType.TEXT, Steps.personalData, FieldScope.ADMISSION, null),
+                new Field(null, "Email", true, FieldSize.MEDIUM, FieldType.TEXT, Steps.personalData, FieldScope.ADMISSION, null),
+                new Field(null, "Cidade e Estado de Nascimento", true, FieldSize.MEDIUM, FieldType.TEXT, Steps.personalData, FieldScope.ADMISSION, null),
+                new Field(null, "Escolaridade", true, FieldSize.BIG, FieldType.TEXT, Steps.personalData, FieldScope.ADMISSION, null),
+                new Field(null, "Data de Nascimento", true, FieldSize.MEDIUM, FieldType.DATE, Steps.personalData, FieldScope.ADMISSION, null),
+                new Field(null, "Raça / Cor", true, FieldSize.MEDIUM, FieldType.TEXT, Steps.personalData, FieldScope.ADMISSION, null),
+                new Field(null, "Nome do Contato de Emergência", true, FieldSize.BIG, FieldType.TEXT, Steps.personalData, FieldScope.ADMISSION, null),
+                new Field(null, "Telefone do Contato de Emergência", true, FieldSize.MEDIUM, FieldType.TEXT, Steps.personalData, FieldScope.ADMISSION, null),
+                new Field(null, "Tamanho da Camisa de Uniforme", true, FieldSize.MEDIUM, FieldType.TEXT, Steps.personalData, FieldScope.ADMISSION, null),
+                new Field(null, "Tamanho da Bota", true, FieldSize.MEDIUM, FieldType.TEXT, Steps.personalData, FieldScope.ADMISSION, null),
+                new Field(null, "Chave Pix", true, FieldSize.MEDIUM, FieldType.TEXT, Steps.personalData, FieldScope.ADMISSION, null)
         );
 
         fieldRepository.saveAll(fields);

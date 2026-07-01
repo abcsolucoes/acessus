@@ -8,10 +8,13 @@ import com.Accessus.Accessus.entities.FieldValue;
 import com.Accessus.Accessus.repositories.CandidateRepository;
 import com.Accessus.Accessus.repositories.FieldRepository;
 import com.Accessus.Accessus.repositories.FieldValueRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +22,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class FieldValueService {
+
+    private static final Logger log = LoggerFactory.getLogger(FieldValueService.class);
 
     @Autowired
     private CandidateRepository candidateRepository;
@@ -52,6 +57,7 @@ public class FieldValueService {
 
         // Montar lista de upserts em memória — sem queries no loop
         List<FieldValue> toSave = new ArrayList<>();
+        boolean candidateChanged = false;
         for (SaveFieldValuesDto.FieldValueItem item : dto.values()) {
             Field field = fieldMap.get(item.fieldId());
             if (field == null) continue;
@@ -61,10 +67,48 @@ public class FieldValueService {
             fv.setField(field);
             fv.setValue(item.value());
             toSave.add(fv);
+
+            candidateChanged |= syncToCandidate(candidate, field.getFieldName(), item.value());
         }
 
         // 1 query batch — salva tudo de uma vez
         fieldValueRepository.saveAll(toSave);
+
+        if (candidateChanged) {
+            candidateRepository.save(candidate);
+        }
+    }
+
+    // Alguns fields ADMISSION, além de virarem um FieldValue genérico, também alimentam
+    // a coluna fixa correspondente do Candidate — é o que as integrações (ex.: Dysrup)
+    // leem. Casado pelo nome exato do field (precisa bater com o que foi cadastrado).
+    private static final String FIELD_CEP = "CEP";
+    private static final String FIELD_NUMERO = "Número";
+    private static final String FIELD_COMPLEMENTO = "Complemento";
+    private static final String FIELD_EMAIL = "Email";
+    private static final String FIELD_DATA_NASCIMENTO = "Data de Nascimento";
+
+    private boolean syncToCandidate(Candidate candidate, String fieldName, String value) {
+        if (fieldName == null || value == null || value.isBlank()) return false;
+
+        switch (fieldName) {
+            case FIELD_CEP -> candidate.setZipcode(value.replaceAll("[^0-9]", ""));
+            case FIELD_NUMERO -> candidate.setAddressNumber(value);
+            case FIELD_COMPLEMENTO -> candidate.setComplement(value);
+            case FIELD_EMAIL -> candidate.setEmail(value);
+            case FIELD_DATA_NASCIMENTO -> {
+                try {
+                    candidate.setBirthDate(LocalDate.parse(value));
+                } catch (Exception e) {
+                    log.warn("Data de nascimento inválida recebida do formulário: '{}'", value);
+                    return false;
+                }
+            }
+            default -> {
+                return false;
+            }
+        }
+        return true;
     }
 
     // ── Buscar valores salvos de um candidato ─────────────────────────────────

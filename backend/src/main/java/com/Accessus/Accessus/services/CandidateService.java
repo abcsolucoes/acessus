@@ -76,7 +76,9 @@ public class CandidateService {
     public ResponseCandidateDto register(RegisterCandidateDto dto, MultipartFile routePhoto) {
         Candidate candidate = new Candidate();
 
-        if (candidateRepository.findByEmail(dto.email()).isPresent() || candidateRepository.findByCpf(dto.cpf()).isPresent()) {
+        boolean emailJaExiste = dto.email() != null && !dto.email().isBlank()
+                && candidateRepository.findByEmail(dto.email()).isPresent();
+        if (emailJaExiste || candidateRepository.findByCpf(dto.cpf()).isPresent()) {
             throw new RuntimeException("Usuário já cadastrado");
         }
 
@@ -106,7 +108,9 @@ public class CandidateService {
         }
 
         String link = baseUrl + "/formulario/" + token;
-        emailService.sendCandidateForm(candidate.getEmail(), link);
+        if (candidate.getEmail() != null && !candidate.getEmail().isBlank()) {
+            emailService.sendCandidateForm(candidate.getEmail(), link);
+        }
 
         String message = "Olá, " + candidate.getName().split(" ")[0] + "! Seja bem-vindo(a) à ABC! 🎉\n\n" +
                 "Estamos muito felizes em ter você no nosso time. Seu processo de admissão foi iniciado e precisamos que você preencha seus documentos.\n\n" +
@@ -194,7 +198,9 @@ public class CandidateService {
                 .orElseThrow(() -> new RuntimeException("Candidato não encontrado"));
 
         String link = baseUrl + "/formulario/" + candidate.getActivationToken();
-        emailService.sendCandidateForm(candidate.getEmail(), link);
+        if (candidate.getEmail() != null && !candidate.getEmail().isBlank()) {
+            emailService.sendCandidateForm(candidate.getEmail(), link);
+        }
 
         String message = "Olá, " + candidate.getName().split(" ")[0] + "! Seja bem-vindo(a) à ABC! 🎉\n\n" +
                 "Estamos muito felizes em ter você no nosso time. Seu processo de admissão foi iniciado e precisamos que você preencha seus documentos.\n\n" +

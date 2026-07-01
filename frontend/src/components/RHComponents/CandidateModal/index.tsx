@@ -58,25 +58,25 @@ export function CandidateModal({ onClose, onSuccess, initialData }: Props) {
         setLoading(true)
 
         if (name.trim().length < 3) { setError('Nome deve ter pelo menos 3 caracteres'); setLoading(false); return }
-        if (!isValidEmail(email)) { setError('E-mail inválido'); setLoading(false); return }
         if (!isValidCpf(cpf)) { setError('CPF inválido'); setLoading(false); return }
         if (telephone.length < 8) { setError('Telefone inválido'); setLoading(false); return }
-        if (!birthDate) { setError('Informe a data de nascimento'); setLoading(false); return }
-        if (zipcode.replace(/\D/g, '').length !== 8) { setError('Informe o CEP'); setLoading(false); return }
-        if (!addressNumber.trim()) { setError('Informe o número do endereço'); setLoading(false); return }
-        if (!admissionDate) { setError('Data de admissão obrigatória'); setLoading(false); return }
+        if (email && !isValidEmail(email)) { setError('E-mail inválido'); setLoading(false); return }
+        if (zipcode && zipcode.replace(/\D/g, '').length !== 8) { setError('CEP inválido'); setLoading(false); return }
 
         try {
             const data = {
-                name, email,
+                name,
+                email: email || null,
                 cpf: cpf.replace(/\D/g, ''),
                 telephone: telephone.replace(/\D/g, ''),
-                position, admissionDate,
+                position: position || null,
+                admissionDate: admissionDate || null,
                 birthDate: birthDate || null,
                 zipcode: zipcode.replace(/\D/g, '') || null,
                 addressNumber: addressNumber || null,
                 complement: complement || null,
-                routeName, teamName,
+                routeName: routeName || null,
+                teamName: teamName || null,
             }
 
             const formData = new FormData()
@@ -164,14 +164,6 @@ export function CandidateModal({ onClose, onSuccess, initialData }: Props) {
 
                     <div className={styles.grid2}>
                         <div>
-                            <label>E-mail</label>
-                            <input
-                                placeholder="email@email.com"
-                                value={email}
-                                onChange={e => setEmail(e.target.value)}
-                            />
-                        </div>
-                        <div>
                             <label>CPF</label>
                             <input
                                 placeholder="000.000.000-00"
@@ -180,9 +172,6 @@ export function CandidateModal({ onClose, onSuccess, initialData }: Props) {
                                 maxLength={14}
                             />
                         </div>
-                    </div>
-
-                    <div className={styles.grid2}>
                         <div>
                             <label>Telefone</label>
                             <input
@@ -192,77 +181,92 @@ export function CandidateModal({ onClose, onSuccess, initialData }: Props) {
                                 maxLength={15}
                             />
                         </div>
-                        <div>
-                            <label>Data de nascimento</label>
-                            <input
-                                type="date"
-                                value={birthDate}
-                                onChange={e => setBirthDate(e.target.value)}
-                            />
-                        </div>
                     </div>
 
-                    <p className={styles.sectionTitle}>Endereço</p>
+                    {isEditing && (
+                        <>
+                            <div className={styles.grid2}>
+                                <div>
+                                    <label>E-mail <span className={styles.optional}>(opcional)</span></label>
+                                    <input
+                                        placeholder="email@email.com"
+                                        value={email}
+                                        onChange={e => setEmail(e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <label>Data de nascimento <span className={styles.optional}>(opcional)</span></label>
+                                    <input
+                                        type="date"
+                                        value={birthDate}
+                                        onChange={e => setBirthDate(e.target.value)}
+                                    />
+                                </div>
+                            </div>
 
-                    <div className={styles.grid2}>
-                        <div>
-                            <label>
-                                CEP{cepLoading && <span className={styles.cepSpinner}> buscando…</span>}
-                            </label>
-                            <input
-                                placeholder="00000-000"
-                                value={formatCep(zipcode)}
-                                onChange={e => setZipcode(e.target.value.replace(/\D/g, ''))}
-                                maxLength={9}
-                            />
-                            {cepError && <span className={styles.fieldError}>{cepError}</span>}
-                        </div>
-                        <div>
-                            <label>Estado</label>
-                            <input placeholder="UF" value={addressState} readOnly maxLength={2} />
-                        </div>
-                    </div>
+                            <p className={styles.sectionTitle}>Endereço</p>
 
-                    <div className={styles.fullWidth}>
-                        <label>Logradouro</label>
-                        <input placeholder="Preenchido automaticamente pelo CEP" value={address} readOnly />
-                    </div>
+                            <div className={styles.grid2}>
+                                <div>
+                                    <label>
+                                        CEP{cepLoading && <span className={styles.cepSpinner}> buscando…</span>}
+                                    </label>
+                                    <input
+                                        placeholder="00000-000"
+                                        value={formatCep(zipcode)}
+                                        onChange={e => setZipcode(e.target.value.replace(/\D/g, ''))}
+                                        maxLength={9}
+                                    />
+                                    {cepError && <span className={styles.fieldError}>{cepError}</span>}
+                                </div>
+                                <div>
+                                    <label>Estado</label>
+                                    <input placeholder="UF" value={addressState} readOnly maxLength={2} />
+                                </div>
+                            </div>
 
-                    <div className={styles.grid2}>
-                        <div>
-                            <label>Número</label>
-                            <input
-                                placeholder="Ex: 950"
-                                value={addressNumber}
-                                onChange={e => setAddressNumber(e.target.value)}
-                            />
-                        </div>
-                        <div>
-                            <label>Complemento <span className={styles.optional}>(opcional)</span></label>
-                            <input
-                                placeholder="Apto, bloco..."
-                                value={complement}
-                                onChange={e => setComplement(e.target.value)}
-                            />
-                        </div>
-                    </div>
+                            <div className={styles.fullWidth}>
+                                <label>Logradouro</label>
+                                <input placeholder="Preenchido automaticamente pelo CEP" value={address} readOnly />
+                            </div>
 
-                    <div className={styles.grid2}>
-                        <div>
-                            <label>Bairro</label>
-                            <input placeholder="Bairro" value={district} readOnly />
-                        </div>
-                        <div>
-                            <label>Cidade</label>
-                            <input placeholder="Cidade" value={city} readOnly />
-                        </div>
-                    </div>
+                            <div className={styles.grid2}>
+                                <div>
+                                    <label>Número</label>
+                                    <input
+                                        placeholder="Ex: 950"
+                                        value={addressNumber}
+                                        onChange={e => setAddressNumber(e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <label>Complemento <span className={styles.optional}>(opcional)</span></label>
+                                    <input
+                                        placeholder="Apto, bloco..."
+                                        value={complement}
+                                        onChange={e => setComplement(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className={styles.grid2}>
+                                <div>
+                                    <label>Bairro</label>
+                                    <input placeholder="Bairro" value={district} readOnly />
+                                </div>
+                                <div>
+                                    <label>Cidade</label>
+                                    <input placeholder="Cidade" value={city} readOnly />
+                                </div>
+                            </div>
+                        </>
+                    )}
 
                     <p className={styles.sectionTitle}>Cargo e equipe</p>
 
                     <div className={styles.grid2}>
                         <div>
-                            <label>Cargo</label>
+                            <label>Cargo <span className={styles.optional}>(opcional)</span></label>
                             <input
                                 placeholder="Ex: Promotor, Analista..."
                                 value={position}
@@ -270,7 +274,7 @@ export function CandidateModal({ onClose, onSuccess, initialData }: Props) {
                             />
                         </div>
                         <div>
-                            <label>Data de admissão</label>
+                            <label>Data de admissão <span className={styles.optional}>(opcional)</span></label>
                             <input
                                 type="date"
                                 value={admissionDate}

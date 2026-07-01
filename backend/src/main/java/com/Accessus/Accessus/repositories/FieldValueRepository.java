@@ -10,4 +10,5 @@ public interface FieldValueRepository extends JpaRepository<FieldValue, Long> {
     List<FieldValue> findByCandidateId(Long candidateId);
     List<FieldValue> findByCandidateIdAndFieldIdIn(Long candidateId, List<Long> fieldIds);
     Optional<FieldValue> findByCandidateIdAndFieldId(Long candidateId, Long fieldId);
+    boolean existsByFieldId(Long fieldId);
 }

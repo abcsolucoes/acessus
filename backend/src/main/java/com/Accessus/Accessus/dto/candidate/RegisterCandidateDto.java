@@ -2,14 +2,17 @@ package com.Accessus.Accessus.dto.candidate;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import org.hibernate.validator.constraints.br.CPF;
 
 import java.time.LocalDate;
 
+// Só nome/cpf/telefone são obrigatórios no cadastro — o resto (inclusive dados de
+// endereço/nascimento/e-mail) o próprio candidato preenche depois no formulário de
+// admissão. Esses campos continuam aqui (opcionais) porque o RH pode editar/corrigir
+// os dados do candidato mais tarde, reaproveitando o mesmo DTO.
 public record RegisterCandidateDto(
-        @NotBlank @Email @Size(max = 150)
+        @Email @Size(max = 150)
         String email,
 
         @NotBlank @Size(min = 3, max = 100)
@@ -21,19 +24,17 @@ public record RegisterCandidateDto(
         @NotBlank @Size(min = 8, max = 20)
         String telephone,
 
-        @NotBlank @Size(max = 100)
+        @Size(max = 100)
         String position,
 
-        @NotNull
         LocalDate admissionDate,
 
-        @NotNull
         LocalDate birthDate,
 
-        @NotBlank @Size(max = 9)
+        @Size(max = 9)
         String zipcode,
 
-        @NotBlank @Size(max = 20)
+        @Size(max = 20)
         String addressNumber,
 
         @Size(max = 100)

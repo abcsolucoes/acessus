@@ -22,12 +22,23 @@ const STEP_LABEL: Record<string, string> = {
   bankDetails: 'Dados bancários',
 }
 
+// Só quem gerencia os campos padrão (ADMISSION) — trava real está no backend,
+// isso aqui só evita mostrar um botão que vai dar 403. Lista separada por vírgula.
+const DEV_EMAILS = new Set(
+  (import.meta.env.VITE_DEV_EMAIL as string | undefined ?? '')
+    .split(',')
+    .map(e => e.trim().toLowerCase())
+    .filter(Boolean)
+)
+
 export function RHCamposPage() {
   const [fields, setFields] = useState<Field[]>([])
   const [user, setUser] = useState<{ name: string; role: string; sub: string } | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [deleteError, setDeleteError] = useState('')
   const navigate = useNavigate()
+
+  const isDev = !!user?.sub && DEV_EMAILS.has(user.sub.toLowerCase())
 
   useEffect(() => {
     setUser(decodeToken())
@@ -53,9 +64,11 @@ export function RHCamposPage() {
             ← Voltar
           </button>
           <h1 className={styles.title}>Campos padrão</h1>
-          <button className={styles.addBtn} onClick={() => setShowModal(true)}>
-            Novo campo
-          </button>
+          {isDev && (
+            <button className={styles.addBtn} onClick={() => setShowModal(true)}>
+              Novo campo
+            </button>
+          )}
         </div>
 
         {deleteError && <p className={styles.error}>{deleteError}</p>}
@@ -69,12 +82,14 @@ export function RHCamposPage() {
                 <div className={styles.cardName}>{f.fieldName}</div>
                 <div className={styles.cardInfo}>{FIELD_TYPE_LABEL[f.fieldType]}</div>
                 <div className={styles.cardInfo}>{STEP_LABEL[f.step]}</div>
-                <button
-                  className={styles.deleteBtn}
-                  onClick={() => handleDelete(f.id)}
-                >
-                  Excluir
-                </button>
+                {(f.scope !== 'ADMISSION' || isDev) && (
+                  <button
+                    className={styles.deleteBtn}
+                    onClick={() => handleDelete(f.id)}
+                  >
+                    Excluir
+                  </button>
+                )}
               </div>
             ))
           )}
