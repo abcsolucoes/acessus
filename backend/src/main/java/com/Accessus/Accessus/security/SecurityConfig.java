@@ -84,7 +84,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET,
                                 "/candidates/public/**",
                                 "/field/public/**",
-                                "/fieldValue/*/values"
+                                "/fieldValue/*/values",
+                                "/dysrup/cep"
                         ).permitAll()
 
                         .requestMatchers(HttpMethod.POST,
@@ -94,6 +95,8 @@ public class SecurityConfig {
                                 "/candidates/changeStatus/*",
                                 "/candidates/*/upload"
                         ).permitAll()
+
+                        .requestMatchers(HttpMethod.DELETE, "/candidates/*/files/*").permitAll()
 
                         // =========================================================
                         // ADMIN — logs

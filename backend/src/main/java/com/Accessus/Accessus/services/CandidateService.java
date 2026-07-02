@@ -352,6 +352,10 @@ public class CandidateService {
         fileStorageService.upload(candidateId, fieldId, file);
     }
 
+    public void deleteFile(Long candidateId, Long valueId) {
+        fileStorageService.deleteFieldValueFile(candidateId, valueId);
+    }
+
     public byte[] zipCandidateFiles(Long candidateId) {
         return fileStorageService.zipCandidateFiles(candidateId);
     }

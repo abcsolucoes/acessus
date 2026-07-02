@@ -138,6 +138,17 @@ public class    CandidateController {
         return ResponseEntity.ok().build();
     }
 
+    @DeleteMapping("/{candidateId}/files/{valueId}")
+    public ResponseEntity<Void> deleteFile(
+            @PathVariable Long candidateId,
+            @PathVariable Long valueId,
+            @RequestParam("token") String token
+    ) {
+        fieldService.validateCandidateToken(candidateId, token);
+        candidateService.deleteFile(candidateId, valueId);
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/{candidateId}/files/zip")
     public ResponseEntity<byte[]> downloadCandidateFilesZip(@PathVariable Long candidateId) {
         byte[] zip = candidateService.zipCandidateFiles(candidateId);

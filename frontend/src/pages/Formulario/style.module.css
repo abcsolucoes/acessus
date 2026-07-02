@@ -250,6 +250,19 @@
   letter-spacing: 0.05em;
 }
 
+.cepSpinner {
+  text-transform: none;
+  font-weight: 400;
+  color: var(--primary);
+}
+
+.fileCount {
+  text-transform: none;
+  font-weight: 400;
+  color: var(--text-muted);
+  letter-spacing: normal;
+}
+
 /* ── Input de texto / data ────────────────────────────────── */
 .input {
   height: 40px;

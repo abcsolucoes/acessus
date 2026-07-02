@@ -20,7 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Optional;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
@@ -30,6 +30,7 @@ import java.util.zip.ZipOutputStream;
 public class FileStorageService {
 
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
+    private static final int MAX_FILES_PER_FIELD = 5;
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of(".pdf", ".jpg", ".jpeg", ".png", ".heic", ".heif", ".webp");
     private static final Set<String> ALLOWED_MIME_TYPES = Set.of("application/pdf", "image/jpeg", "image/png", "image/heic", "image/heif", "image/webp");
 
@@ -63,6 +64,12 @@ public class FileStorageService {
 
         if (field.getFieldType() != FieldType.DOC) {
             throw new RuntimeException("Campo não aceita arquivo");
+        }
+
+        List<FieldValue> existingFiles = fieldValueRepository
+                .findByCandidateIdAndFieldId(candidate.getId(), field.getId());
+        if (existingFiles.size() >= MAX_FILES_PER_FIELD) {
+            throw new RuntimeException("Limite de " + MAX_FILES_PER_FIELD + " arquivos atingido para este campo");
         }
 
         String original = file.getOriginalFilename();
@@ -118,30 +125,23 @@ public class FileStorageService {
                 .replaceAll("[^a-z0-9]", "");
         String safeBaseName = fieldNameNorm + "_" + firstNameNorm;
 
-        String fileName = safeBaseName + extension;
-
         Path uploadDirPath = Paths.get(uploadDir).toAbsolutePath();
+
+        // Sempre uma linha nova (até 5 por campo) — salva primeiro pra ter o id gerado
+        // e usar ele no nome do arquivo, garantindo que nunca colide em disco mesmo se
+        // um arquivo do meio for excluído depois (numeração sequencial quebraria nisso).
+        FieldValue fv = new FieldValue();
+        fv.setCandidate(candidate);
+        fv.setField(field);
+        fv.setFileName(originalName);
+        fv.setContentType(file.getContentType());
+        fv = fieldValueRepository.save(fv);
+
+        String fileName = safeBaseName + "_" + fv.getId() + extension;
         Path filePath = uploadDirPath.resolve(fileName).normalize();
 
         if (!filePath.startsWith(uploadDirPath)) {
             throw new RuntimeException("Caminho de arquivo inválido");
-        }
-
-        Optional<FieldValue> existing = fieldValueRepository
-                .findByCandidateIdAndFieldId(candidate.getId(), field.getId());
-
-        FieldValue fv;
-
-        if (existing.isPresent()) {
-            fv = existing.get();
-            if (fv.getFilePath() != null) {
-                File oldFile = new File(fv.getFilePath());
-                if (oldFile.exists()) oldFile.delete();
-            }
-        } else {
-            fv = new FieldValue();
-            fv.setCandidate(candidate);
-            fv.setField(field);
         }
 
         try {
@@ -150,11 +150,25 @@ public class FileStorageService {
             throw new RuntimeException("Erro ao salvar arquivo: " + e.getMessage(), e);
         }
 
-        fv.setFileName(originalName);
         fv.setFilePath(filePath.toString());
-        fv.setContentType(file.getContentType());
-
         fieldValueRepository.save(fv);
+    }
+
+    @Transactional
+    public void deleteFieldValueFile(Long candidateId, Long valueId) {
+        FieldValue fv = fieldValueRepository.findById(valueId)
+                .orElseThrow(() -> new RuntimeException("Arquivo não encontrado"));
+
+        if (!fv.getCandidate().getId().equals(candidateId)) {
+            throw new RuntimeException("Arquivo não pertence a este candidato");
+        }
+
+        if (fv.getFilePath() != null) {
+            File file = new File(fv.getFilePath());
+            if (file.exists()) file.delete();
+        }
+
+        fieldValueRepository.delete(fv);
     }
 
     public String saveRoutePhoto(Long candidateId, MultipartFile file) {

@@ -5,6 +5,7 @@ import com.Accessus.Accessus.dto.fieldValue.SaveFieldValuesDto;
 import com.Accessus.Accessus.entities.Candidate;
 import com.Accessus.Accessus.entities.Field;
 import com.Accessus.Accessus.entities.FieldValue;
+import com.Accessus.Accessus.enums.FieldType;
 import com.Accessus.Accessus.repositories.CandidateRepository;
 import com.Accessus.Accessus.repositories.FieldRepository;
 import com.Accessus.Accessus.repositories.FieldValueRepository;
@@ -50,17 +51,21 @@ public class FieldValueService {
                 .collect(Collectors.toMap(Field::getId, f -> f));
 
         // 1 query — todos os FieldValues existentes de uma vez
+        // (merge a->a: campo DOC pode ter várias linhas, mas essa rota só trata Texto/Data,
+        // que sempre tem no máximo uma — se cair aqui por engano, ignora as extras)
         Map<Long, FieldValue> existingMap = fieldValueRepository
                 .findByCandidateIdAndFieldIdIn(candidateId, fieldIds)
                 .stream()
-                .collect(Collectors.toMap(fv -> fv.getField().getId(), fv -> fv));
+                .collect(Collectors.toMap(fv -> fv.getField().getId(), fv -> fv, (a, b) -> a));
 
         // Montar lista de upserts em memória — sem queries no loop
         List<FieldValue> toSave = new ArrayList<>();
         boolean candidateChanged = false;
         for (SaveFieldValuesDto.FieldValueItem item : dto.values()) {
             Field field = fieldMap.get(item.fieldId());
-            if (field == null) continue;
+            // Campos de Documento têm seu próprio fluxo (upload de arquivo, até 5 por campo)
+            // e nunca deveriam vir por aqui — ignora se vier por engano.
+            if (field == null || field.getFieldType() == FieldType.DOC) continue;
 
             FieldValue fv = existingMap.getOrDefault(item.fieldId(), new FieldValue());
             fv.setCandidate(candidate);
@@ -121,6 +126,7 @@ public class FieldValueService {
         return fieldValueRepository.findByCandidateId(candidateId)
                 .stream()
                 .map(fv -> new FieldValueResponseDto(
+                        fv.getId(),
                         fv.getField().getId(),
                         fv.getValue(),
                         fv.getFileName()

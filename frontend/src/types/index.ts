@@ -90,6 +90,7 @@ export type FieldValue = {
 }
 
 export type FieldValueResponse = {
+  valueId: number
   fieldId: number
   value: string | null
   fileName: string | null

@@ -21,12 +21,6 @@ public class FieldController {
         return ResponseEntity.ok(fieldService.createField(dto));
     }
 
-    // TODO-TEMP: só pra carga inicial dos fields ADMISSION em produção — REMOVER depois de usar.
-    @PostMapping("/create-batch")
-    public ResponseEntity<List<Field>> createFields(@RequestBody @Valid List<CreateFieldDto> dtos) {
-        return ResponseEntity.ok(fieldService.createFields(dtos));
-    }
-
     @GetMapping("/{candidateId}")
     public ResponseEntity<List<Field>> loadFields(@PathVariable Long candidateId) {
         return ResponseEntity.ok(fieldService.loadFields(candidateId));

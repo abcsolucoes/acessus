@@ -4,12 +4,11 @@ import jakarta.persistence.*;
 
 import java.util.Objects;
 
+// Sem unique (candidate_id, field_id): campos de Documento podem ter até 5 arquivos,
+// cada um sua própria linha. Campos de Texto/Data continuam com um valor só, mas isso
+// é garantido pela aplicação (FieldValueService), não mais pelo banco.
 @Entity
-@Table(name = "field_value_tb",
-        uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"candidate_id", "field_id"})
-        }
-)
+@Table(name = "field_value_tb")
 public class FieldValue {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
