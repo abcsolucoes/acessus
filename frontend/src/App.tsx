@@ -24,6 +24,8 @@ import { ActivatePage } from './pages/Auth/Activate'
 
 // Área logada (stubs por enquanto)
 import { DashboardPage } from './pages/Dashboard'
+import { InventarioPage } from './pages/Inventario'
+import { InventarioFuncionariosPage } from './pages/Inventario/Funcionarios'
 import { RHPage } from './pages/RH'
 import { RHCamposPage } from './pages/RH/Campos'
 import { RHCandidatoPage } from './pages/RH/Candidato'
@@ -52,6 +54,8 @@ export default function App() {
         {/* ── Área logada — qualquer usuário autenticado ── */}
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/inventario" element={<InventarioPage />} />
+          <Route path="/inventario/funcionarios" element={<InventarioFuncionariosPage />} />
           <Route path="/contatos" element={<ContatosPage />} />
           <Route path="/ajuda" element={<AjudaPage />} />
           <Route path="/tickets" element={<TicketsPage />} />

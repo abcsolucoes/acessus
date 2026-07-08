@@ -180,6 +180,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/dysrup/**").authenticated()
 
                         // =========================================================
+                        // FUNCIONÁRIOS (INVENTÁRIO) — apenas TI
+                        // =========================================================
+                        .requestMatchers("/employees/**").hasAuthority("DEPT_TI")
+
+                        // =========================================================
                         // QUALQUER OUTRA ROTA
                         // =========================================================
                         .anyRequest().authenticated()

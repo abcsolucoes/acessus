@@ -37,6 +37,36 @@ export type Candidate = {
   hasRoutePhoto: boolean
 }
 
+export type EmployeeStatus =
+  | 'ATIVO'
+  | 'EXPERIENCIA'
+  | 'FERIAS'
+  | 'FERIAS_VENCIDAS'
+  | 'AFASTADO'
+  | 'ATESTADO_MEDICO_VENCIDO'
+  | 'AVISO_PREVIO'
+  | 'DEMITIDO'
+  | 'PENDENTE_REVISAO'
+
+export type Funcionario = {
+  id: number
+  cpf: string
+  name: string
+  department: string | null
+  position: string | null
+  state: string | null
+  city: string | null
+  admissionDate: string
+  status: EmployeeStatus
+  companyName: string
+}
+
+export type EmployeeSummary = {
+  total: number
+  active: number
+  byStatus: Record<EmployeeStatus, number>
+}
+
 export type Contact = {
   resourceName: string
   name: string

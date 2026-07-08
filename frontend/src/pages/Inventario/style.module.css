@@ -1,0 +1,265 @@
+/* ============================================================
+   Inventário — Visão geral
+   ============================================================ */
+
+.main {
+  position: relative;
+  padding: 10px clamp(16px, 3vw, 40px) 0px;
+  max-width: 1280px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+.main::before,
+.main::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  border-radius: 999px;
+  pointer-events: none;
+  filter: blur(2px);
+}
+
+
+/* ── Topo de seção ────────────────────────────────────────── */
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 4px 0 14px;
+}
+
+.sectionTitle {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.sectionHint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* ── KPIs ─────────────────────────────────────────────────── */
+.bento {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.kpiTile {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+  animation: cardEnter 380ms ease-out both;
+}
+
+.kpiTile:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-secondary);
+  box-shadow: var(--shadow-sm);
+}
+
+.kpiTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.kpiIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+}
+
+.kpiIcon svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.kpiIconDefault { background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--primary); }
+.kpiIconSuccess { background: color-mix(in srgb, var(--success) 14%, transparent); color: var(--success); }
+.kpiIconWarning { background: color-mix(in srgb, var(--warning) 14%, transparent); color: var(--warning); }
+.kpiIconDanger { background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); }
+
+.kpiDelta {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.kpiDelta svg {
+  width: 10px;
+  height: 10px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.kpiDeltaUp { background: color-mix(in srgb, var(--success) 14%, transparent); color: var(--success); }
+.kpiDeltaDown { background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); }
+.kpiDeltaFlatWarning { background: color-mix(in srgb, var(--warning) 14%, transparent); color: var(--warning); }
+
+.kpiValue {
+  font-size: 1.5rem;
+  font-weight: 850;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.kpiLabel {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.bento .kpiTile:nth-child(1) { animation-delay: 0ms; }
+.bento .kpiTile:nth-child(2) { animation-delay: 40ms; }
+.bento .kpiTile:nth-child(3) { animation-delay: 80ms; }
+.bento .kpiTile:nth-child(4) { animation-delay: 120ms; }
+.bento .kpiTile:nth-child(5) { animation-delay: 160ms; }
+.bento .kpiTile:nth-child(6) { animation-delay: 200ms; }
+.bento .kpiTile:nth-child(7) { animation-delay: 240ms; }
+.bento .kpiTile:nth-child(8) { animation-delay: 280ms; }
+
+@media (max-width: 980px) {
+  .bento {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .bento {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Banners de alerta ────────────────────────────────────── */
+.alerts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.alertBanner {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 16px 14px 18px;
+  border: 1px solid;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  animation: pageEnter 380ms 80ms ease-out both;
+}
+
+.alertBanner::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+}
+
+.alertIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+}
+
+.alertIcon svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.alertText {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.alertTitle {
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.alertDesc {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.alertDesc strong {
+  color: var(--text-primary);
+}
+
+.alertDanger {
+  border-color: color-mix(in srgb, var(--danger) 26%, transparent);
+  background: color-mix(in srgb, var(--danger) 5%, var(--bg-secondary));
+}
+
+.alertDanger::before { background: var(--danger); }
+.alertDanger .alertIcon { background: color-mix(in srgb, var(--danger) 16%, transparent); color: var(--danger); }
+.alertDanger .alertTitle { color: var(--danger); }
+
+.alertWarning {
+  border-color: color-mix(in srgb, var(--warning) 26%, transparent);
+  background: color-mix(in srgb, var(--warning) 5%, var(--bg-secondary));
+}
+
+.alertWarning::before { background: var(--warning); }
+.alertWarning .alertIcon { background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--warning); }
+.alertWarning .alertTitle { color: var(--warning); }
+
+/* ── Animações ────────────────────────────────────────────── */
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cardEnter {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kpiTile, .alertBanner {
+    animation: none !important;
+  }
+
+  .kpiTile:hover {
+    transform: none;
+  }
+}
