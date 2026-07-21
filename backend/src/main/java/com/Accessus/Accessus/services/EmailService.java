@@ -123,6 +123,20 @@ public class EmailService {
         sendHtml(recipients.toArray(String[]::new), "Novo chamado para o seu setor - Accessus", html);
     }
 
+    public void sendCandidateFormSubmitted(String candidateName, List<String> recipients) {
+        String html = buildEmailTemplate(
+                "Documentação recebida",
+                "Olá!",
+                "O candidato <strong>" + candidateName + "</strong> finalizou o envio da documentação de admissão.",
+                "Acesse o Accessus para revisar os dados e dar sequência ao processo.",
+                null,
+                null,
+                null
+        );
+
+        sendHtml(recipients.toArray(String[]::new), "Candidato finalizou envio de documentação - Accessus", html);
+    }
+
     public void sendConsolidadoDysrup(String to, byte[] anexo, String nomeArquivo) {
         String html = buildEmailTemplate(
                 "Consolidado de Roteiros",

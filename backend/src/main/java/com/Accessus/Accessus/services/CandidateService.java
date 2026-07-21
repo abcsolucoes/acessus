@@ -32,6 +32,14 @@ public class CandidateService {
 
     private static final Logger log = LoggerFactory.getLogger(CandidateService.class);
 
+    // E-mails fixos notificados quando o candidato finaliza o envio do formulário público
+    private static final List<String> FORM_SUBMITTED_EMAILS = List.of(
+            "maria.carvalho@solucoesabc.com.br",
+            "alessandra.barbosa@solucoesabc.com.br",
+            "carla.araujo@solucoesabc.com.br",
+            "felipe.barbosa@solucoesabc.com.br"
+    );
+
     @Autowired
     private CandidateRepository candidateRepository;
 
@@ -310,6 +318,14 @@ public class CandidateService {
                             + ", para "
                             + STATUS_MAP.getOrDefault(status.name(), status.name())
             );
+        } else {
+            // Candidato enviando o próprio formulário — notifica o RH por e-mail.
+            // try/catch pra não derrubar o envio do formulário se o SMTP falhar.
+            try {
+                emailService.sendCandidateFormSubmitted(candidate.getName(), FORM_SUBMITTED_EMAILS);
+            } catch (Exception e) {
+                log.error("Erro ao notificar RH sobre envio de documentação do candidato {}: {}", candidate.getName(), e.getMessage(), e);
+            }
         }
 
         return toDto(candidate);
