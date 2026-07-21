@@ -37,6 +37,43 @@
   color: var(--primary);
 }
 
+.topActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.importBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 38px;
+  padding: 0 16px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: #fff;
+  background: var(--primary);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.importBtn:hover {
+  filter: brightness(1.08);
+}
+
+.importBtn svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .exportBtn {
   display: inline-flex;
   align-items: center;

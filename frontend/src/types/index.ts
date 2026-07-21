@@ -48,6 +48,61 @@ export type EmployeeStatus =
   | 'DEMITIDO'
   | 'PENDENTE_REVISAO'
 
+export type EmployeeProfile = 'EMPLOYEE' | 'PARTNER' | 'SERVICE_PROVIDER'
+
+export type FuncionariosIndicadores = {
+  ativos: number
+  afastados: number
+}
+
+export type ImportResumo = {
+  created: number
+  updated: number
+  flaggedForReview: number
+}
+
+export type Company = {
+  id: number
+  name: string
+  cnpj: string
+  address: string
+  number: string
+  neighborhood: string
+  cep: string
+  city: string
+  uf: string
+  complement: string | null
+}
+
+export type NovoFuncionarioPayload = {
+  name: string
+  cpf: string
+  profile: EmployeeProfile
+  department?: string
+  position?: string
+  state?: string
+  city?: string
+  admissionDate?: string
+  status?: EmployeeStatus
+}
+
+export type DeviceSituacao = 'EM_USO' | 'DISPONIVEL' | 'MANUTENCAO' | 'SEM_USUARIO_IDENTIFICADO'
+
+export type Device = {
+  id: number
+  pulsusId: number
+  manufacturer: string | null
+  model: string | null
+  serialNumber: string | null
+  group: string | null
+  imei1: string | null
+  imei2: string | null
+  tagDevice: string | null
+  situacao: DeviceSituacao
+  employeeName: string | null
+  employeeId: number | null
+}
+
 export type Funcionario = {
   id: number
   cpf: string
@@ -58,13 +113,9 @@ export type Funcionario = {
   city: string | null
   admissionDate: string
   status: EmployeeStatus
-  companyName: string
-}
-
-export type EmployeeSummary = {
-  total: number
-  active: number
-  byStatus: Record<EmployeeStatus, number>
+  profile: EmployeeProfile
+  company: Company
+  devices: Device[]
 }
 
 export type Contact = {
@@ -137,4 +188,12 @@ export type LogsFilter = {
   userName: string
   startDate: string
   endDate: string
+}
+
+export type DeviceHistory = {
+  id: number
+  device: Device
+  employee: Funcionario
+  actionType: "ALLOCATION" | "DEALLOCATION"
+  createdAt: string
 }

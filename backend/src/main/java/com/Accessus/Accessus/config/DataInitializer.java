@@ -51,30 +51,35 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     /**
-     * Empresas do grupo ABC Soluções. Dado de referência estável (CNPJ/endereço),
-     * diferente do Employee que é populado por importação recorrente de planilha.
+     * Empresas do grupo ABC Soluções. Dado de referência estável (código/CNPJ/endereço),
+     * diferente do Funcionario que é populado por importação recorrente de planilha.
+     * O código (coluna "Empresa" da planilha de funcionários) é a chave usada na
+     * importação a partir de agora — o CNPJ fica só como dado de referência/endereço.
+     * ABC SOLUCOES EM VENDAS (00004) e ABC SOLUÇÕES (00009) são a mesma empresa
+     * legal (mesmo CNPJ) mas o sistema de origem já trata como códigos separados —
+     * 00009 é usado especificamente para marcar prestadores de serviço/freelancers,
+     * então mantemos as duas linhas separadas aqui também.
      */
     private void seedCompanies() {
         if (companyRepository.count() > 0) {
             return;
         }
 
-        // CNPJ guardado só com dígitos (sem pontuação) — a planilha de origem
-        // formata o mesmo CNPJ de jeitos diferentes entre linhas, então a
-        // importação sempre normaliza (remove não-dígitos) antes de comparar.
         List<Company> companies = List.of(
-                new Company(null, "ABC SOLUCOES EM VENDAS LTDA", "13676274000147",
-                        "RUA ARAGUARI", "511", "SALA 05", "BARRO PRETO", "BELO HORIZONTE", "MG", "30190114"),
-                new Company(null, "IMPACTO SERVICOS LTDA", "50685192000195",
-                        "RUA DOS GUAJAJARAS", "40", "SALA 404", "CENTRO", "BELO HORIZONTE", "MG", "30180910"),
-                new Company(null, "AREADO SERVICOS LTDA", "32531307000105",
-                        "RUA DOS GUAJAJARAS", "40", "SALA 404", "CENTRO", "BELO HORIZONTE", "MG", "30180910"),
-                new Company(null, "PDV ATIVO PRESTACAO DE SERVICOS LTDA", "41213121000107",
-                        "RUA ARAGUARI", "358", "LOJA 3", "BARRO PRETO", "BELO HORIZONTE", "MG", "30190110"),
-                new Company(null, "NOVA PRIME SERVICOS LTDA", "65563987000106",
-                        "AV PRESIDENTE ANTONIO CARLOS", "8100", null, "SAO LUIZ", "BELO HORIZONTE", "MG", "31270672"),
-                new Company(null, "NOVA BASE SERVICOS LTDA", "64887499000183",
-                        "RUA SANTA RITA DURAO", "444", "SALA 01", "SAVASSI", "BELO HORIZONTE", "MG", "30140111")
+                new Company(null, "00004", "ABC SOLUCOES EM VENDAS LTDA", "13676274000147",
+                        "RUA ARAGUARI", "511", "BARRO PRETO", "30190114", "BELO HORIZONTE", "MG", "SALA 05"),
+                new Company(null, "00009", "ABC SOLUÇÕES", "13676274000147",
+                        "RUA ARAGUARI", "511", "BARRO PRETO", "30190114", "BELO HORIZONTE", "MG", "SALA 05"),
+                new Company(null, "00008", "IMPACTO SERVICOS LTDA", "50685192000195",
+                        "RUA DOS GUAJAJARAS", "40", "CENTRO", "30180910", "BELO HORIZONTE", "MG", "SALA 404"),
+                new Company(null, "00006", "AREADO SERVICOS LTDA", "32531307000105",
+                        "RUA DOS GUAJAJARAS", "40", "CENTRO", "30180910", "BELO HORIZONTE", "MG", "SALA 404"),
+                new Company(null, "00005", "PDV ATIVO PRESTACAO DE SERVICOS LTDA", "41213121000107",
+                        "RUA ARAGUARI", "358", "BARRO PRETO", "30190110", "BELO HORIZONTE", "MG", "LOJA 3"),
+                new Company(null, "00012", "NOVA PRIME SERVICOS LTDA", "65563987000106",
+                        "AV PRESIDENTE ANTONIO CARLOS", "8100", "SAO LUIZ", "31270672", "BELO HORIZONTE", "MG", null),
+                new Company(null, "00011", "NOVA BASE SERVICOS LTDA", "64887499000183",
+                        "RUA SANTA RITA DURAO", "444", "SAVASSI", "30140111", "BELO HORIZONTE", "MG", "SALA 01")
         );
 
         companyRepository.saveAll(companies);

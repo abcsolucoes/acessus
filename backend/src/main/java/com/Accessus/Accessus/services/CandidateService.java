@@ -10,6 +10,8 @@ import com.Accessus.Accessus.entities.FieldValue;
 import com.Accessus.Accessus.enums.CandidateStatus;
 import com.Accessus.Accessus.repositories.CandidateRepository;
 import com.Accessus.Accessus.repositories.FieldValueRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -25,6 +27,8 @@ import java.util.UUID;
 
 @Service
 public class CandidateService {
+
+    private static final Logger log = LoggerFactory.getLogger(CandidateService.class);
 
     @Autowired
     private CandidateRepository candidateRepository;
@@ -123,7 +127,11 @@ public class CandidateService {
                 "Qualquer dúvida é só me chamar por aqui. Estamos à disposição!\n" +
                 "Bem-vindo(a) à equipe! 💼";
 
-        zApiService.sendText("55" + candidate.getTelephone(), message);
+        try {
+            zApiService.sendText("55" + candidate.getTelephone(), message);
+        } catch (Exception e) {
+            log.error("Erro ao enviar WhatsApp de boas-vindas para candidato {}: {}", candidate.getName(), e.getMessage(), e);
+        }
 
         logsService.createLog("criou o registro do candidato" + dto.name() + ", cpf " + dto.cpf());
 
@@ -378,4 +386,5 @@ public class CandidateService {
 
         return toDto(candidate);
     }
+    
 }

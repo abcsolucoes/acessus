@@ -1,0 +1,227 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 24px;
+}
+
+.modal {
+  width: 100%;
+  max-width: 680px;
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  overflow: hidden;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-shrink: 0;
+}
+
+.modalTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.closeBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.closeBtn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.sectionTitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  padding-top: 8px;
+  margin-bottom: 2px;
+  border-top: 1px solid var(--border-primary);
+}
+
+.sectionTitle:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.grid2 > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.fullWidth {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.form label,
+.grid2 label,
+.fullWidth label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.form input,
+.grid2 input,
+.fullWidth input {
+  height: 40px;
+  padding: 0 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.form input:focus,
+.grid2 input:focus,
+.fullWidth input:focus {
+  border-color: var(--primary);
+}
+
+.form input::placeholder,
+.grid2 input::placeholder,
+.fullWidth input::placeholder {
+  color: var(--text-muted);
+}
+
+.grid2 select {
+  height: 40px;
+  padding: 0 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.grid2 select:focus {
+  border-color: var(--primary);
+}
+
+.grid2 select option {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.required {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.optional {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.error {
+  font-size: 0.8125rem;
+  color: var(--danger);
+  padding: 8px 12px;
+  background: rgba(239, 68, 68, 0.08);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+  flex-shrink: 0;
+}
+
+.cancelBtn {
+  height: 40px;
+  padding: 0 20px;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.cancelBtn:hover:not(:disabled) {
+  border-color: var(--border-secondary);
+  color: var(--text-primary);
+}
+
+.cancelBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.submitBtn {
+  height: 40px;
+  padding: 0 20px;
+  background: var(--primary);
+  border-radius: var(--radius-md);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.submitBtn:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.submitBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

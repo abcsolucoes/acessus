@@ -1,5 +1,6 @@
 package com.Accessus.Accessus.entities;
 
+
 import jakarta.persistence.*;
 
 import java.util.Objects;
@@ -10,31 +11,32 @@ public class Company {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    private String code;
     private String name;
     private String cnpj;
-    private String street;
+    private String address;
     private String number;
-    private String complement;
     private String neighborhood;
+    private String cep;
     private String city;
-    private String state;
-    private String zipcode;
+    private String uf;
+    private String complement;
 
     public Company() {
     }
 
-    public Company(Long id, String name, String cnpj, String street, String number, String complement, String neighborhood, String city, String state, String zipcode) {
+    public Company(Long id, String code, String name, String cnpj, String address, String number, String neighborhood, String cep, String city, String uf, String complement) {
         this.id = id;
+        this.code = code;
         this.name = name;
         this.cnpj = cnpj;
-        this.street = street;
+        this.address = address;
         this.number = number;
-        this.complement = complement;
         this.neighborhood = neighborhood;
+        this.cep = cep;
         this.city = city;
-        this.state = state;
-        this.zipcode = zipcode;
+        this.uf = uf;
+        this.complement = complement;
     }
 
     public Long getId() {
@@ -43,6 +45,14 @@ public class Company {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
     }
 
     public String getName() {
@@ -61,12 +71,12 @@ public class Company {
         this.cnpj = cnpj;
     }
 
-    public String getStreet() {
-        return street;
+    public String getAddress() {
+        return address;
     }
 
-    public void setStreet(String street) {
-        this.street = street;
+    public void setAddress(String address) {
+        this.address = address;
     }
 
     public String getNumber() {
@@ -77,20 +87,20 @@ public class Company {
         this.number = number;
     }
 
-    public String getComplement() {
-        return complement;
-    }
-
-    public void setComplement(String complement) {
-        this.complement = complement;
-    }
-
     public String getNeighborhood() {
         return neighborhood;
     }
 
     public void setNeighborhood(String neighborhood) {
         this.neighborhood = neighborhood;
+    }
+
+    public String getCep() {
+        return cep;
+    }
+
+    public void setCep(String cep) {
+        this.cep = cep;
     }
 
     public String getCity() {
@@ -101,20 +111,20 @@ public class Company {
         this.city = city;
     }
 
-    public String getState() {
-        return state;
+    public String getUf() {
+        return uf;
     }
 
-    public void setState(String state) {
-        this.state = state;
+    public void setUf(String uf) {
+        this.uf = uf;
     }
 
-    public String getZipcode() {
-        return zipcode;
+    public String getComplement() {
+        return complement;
     }
 
-    public void setZipcode(String zipcode) {
-        this.zipcode = zipcode;
+    public void setComplement(String complement) {
+        this.complement = complement;
     }
 
     @Override

@@ -1,0 +1,199 @@
+.section {
+  padding: 22px 24px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  animation: sectionEnter 340ms 140ms ease-out both;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.sectionTitle {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.count {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.timeline {
+  list-style: none;
+  max-height: 480px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.item {
+  position: relative;
+  display: flex;
+  gap: 14px;
+  padding-bottom: 22px;
+}
+
+.item:last-child {
+  padding-bottom: 0;
+}
+
+.item:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 13px;
+  top: 28px;
+  bottom: -2px;
+  width: 2px;
+  background: var(--border-primary);
+}
+
+.marker {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid;
+}
+
+.marker svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.markerAlocacao {
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+  border-color: color-mix(in srgb, var(--success) 30%, transparent);
+}
+
+.markerDevolucao {
+  color: var(--info);
+  background: color-mix(in srgb, var(--info) 12%, transparent);
+  border-color: color-mix(in srgb, var(--info) 30%, transparent);
+}
+
+.itemBody {
+  flex: 1;
+  min-width: 0;
+  padding-top: 3px;
+}
+
+.itemHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.itemAction {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.itemDate {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.itemDesc {
+  margin-top: 3px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.deviceModel {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.deviceChips {
+  display: flex;
+  gap: 6px;
+  margin-top: 7px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.deviceLinks {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.deviceLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: color var(--transition-fast);
+}
+
+.deviceLink:hover {
+  color: var(--primary);
+}
+
+.deviceLink svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.emptyState {
+  padding: 12px 4px;
+}
+
+.emptyText {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+@keyframes sectionEnter {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section {
+    animation: none;
+  }
+}

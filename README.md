@@ -19,7 +19,7 @@ acessus/
 | RH | Candidatos (cadastro, edição, exclusão, reenvio de formulário), campos dinâmicos de admissão, formulário público, checklist pós-aprovação (Dysrup, WhatsApp, ticket de TI), relatório `.docx` | ADMIN, RH |
 | Contatos | Agenda corporativa integrada com Google Contacts, com atalho para iniciar conversa no WhatsApp | ADMIN, RH, OPERACIONAL, DP |
 | Tickets | Chamados internos com filtros (meus, meu setor, criados por mim, todos), anexos e notificação por e-mail | Todos |
-| Inventário | Funcionários e aparelhos corporativos, com importação de planilha do sistema de RH externo | TI |
+| Inventário | Funcionários (importação de planilha do RH) e aparelhos corporativos sincronizados do MDM Pulsus, com vínculo automático (por nome) ou manual (tela de Alocação) aparelho ↔ funcionário, e histórico de movimentações | TI |
 | Configurações | Gestão de usuários do sistema | ADMIN |
 | Logs | Auditoria paginada e filtrável de todas as ações | ADMIN |
 
@@ -71,6 +71,7 @@ As variáveis ficam em `/opt/acessus/.env` no servidor. Nenhum segredo deve ser 
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `GOOGLE_REFRESH_TOKEN` | OAuth2 Google Contacts |
 | `DYSRUP_TOKEN` / `DYSRUP_EMAIL` / `DYSRUP_PASSWORD` / `DYSRUP_EMPLOYER_CODE` | Integração com o sistema de roteirização Dysrup |
 | `ZAPI_INSTANCE_ID` / `ZAPI_TOKEN` / `ZAPI_CLIENT_TOKEN` | Envio de mensagens no WhatsApp (Z-API) |
+| `PULSUS_TOKEN` | Sincronização de aparelhos corporativos com o MDM Pulsus |
 | `DEV_EMAIL` | E-mails com permissão para gerenciar campos de admissão (escopo `ADMISSION`) |
 | `BASE_URL` | URL pública do sistema |
 | `CORS_ALLOWED_ORIGINS` | Origens permitidas no CORS |

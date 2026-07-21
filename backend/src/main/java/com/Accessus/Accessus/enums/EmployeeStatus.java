@@ -14,6 +14,6 @@ public enum EmployeeStatus {
     // Situações em que a empresa ainda considera o vínculo ativo — só DEMITIDO e
     // PENDENTE_REVISAO tiram o funcionário da contagem de ativos do Inventário.
     public boolean isActive() {
-        return this != DEMITIDO && this != PENDENTE_REVISAO;
+        return this != DEMITIDO && this != PENDENTE_REVISAO && this != FERIAS && this != AFASTADO;
     }
 }

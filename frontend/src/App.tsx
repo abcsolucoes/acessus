@@ -26,6 +26,11 @@ import { ActivatePage } from './pages/Auth/Activate'
 import { DashboardPage } from './pages/Dashboard'
 import { InventarioPage } from './pages/Inventario'
 import { InventarioFuncionariosPage } from './pages/Inventario/Funcionarios'
+import { InventarioFuncionarioDetalhePage } from './pages/Inventario/FuncionarioDetalhe'
+import { InventarioAparelhosPage } from './pages/Inventario/Aparelhos'
+import { InventarioAparelhoDetalhePage } from './pages/Inventario/AparelhoDetalhe'
+import { InventarioAlocacaoPage } from './pages/Inventario/Alocacao'
+import { InventarioMovimentacoesPage } from './pages/Inventario/Movimentacoes'
 import { RHPage } from './pages/RH'
 import { RHCamposPage } from './pages/RH/Campos'
 import { RHCandidatoPage } from './pages/RH/Candidato'
@@ -56,6 +61,11 @@ export default function App() {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/inventario" element={<InventarioPage />} />
           <Route path="/inventario/funcionarios" element={<InventarioFuncionariosPage />} />
+          <Route path="/inventario/funcionarios/:id" element={<InventarioFuncionarioDetalhePage />} />
+          <Route path="/inventario/aparelhos" element={<InventarioAparelhosPage />} />
+          <Route path="/inventario/aparelhos/:id" element={<InventarioAparelhoDetalhePage />} />
+          <Route path="/inventario/alocacao" element={<InventarioAlocacaoPage />} />
+          <Route path="/inventario/movimentacoes" element={<InventarioMovimentacoesPage />} />
           <Route path="/contatos" element={<ContatosPage />} />
           <Route path="/ajuda" element={<AjudaPage />} />
           <Route path="/tickets" element={<TicketsPage />} />

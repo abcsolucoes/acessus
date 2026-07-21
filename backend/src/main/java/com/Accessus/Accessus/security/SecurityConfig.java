@@ -182,7 +182,7 @@ public class SecurityConfig {
                         // =========================================================
                         // FUNCIONÁRIOS (INVENTÁRIO) — apenas TI
                         // =========================================================
-                        .requestMatchers("/employees/**").hasAuthority("DEPT_TI")
+                        .requestMatchers("/employee/**").hasAuthority("DEPT_TI")
 
                         // =========================================================
                         // QUALQUER OUTRA ROTA

@@ -30,11 +30,12 @@ export function authHeaders(extra: Record<string, string> = {}): Record<string, 
 // ── Fetch com tratamento de erro padrão ────────────────────
 export async function apiFetch<T>(
   path: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  timeoutMs: number = 15000
 ): Promise<T> {
 
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 15000)
+  const timeout = setTimeout(() => controller.abort(), timeoutMs)
 
   const res = await fetch(`${API_URL}${path}`, {
     ...options,

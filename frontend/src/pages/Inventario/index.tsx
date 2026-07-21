@@ -22,8 +22,8 @@ export function InventarioPage() {
           <span className={styles.sectionHint}>Atualizado agora há pouco</span>
         </div>
 
-        <IndicadoresCards 
-        totalAtivos={summary}
+        <IndicadoresCards
+        indicadores={summary}
         />
 
         {/* ── Alertas ──────────────────────────────────────── */}

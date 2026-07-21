@@ -1,11 +1,11 @@
 import styles from "../../../pages/Inventario/style.module.css"
-import type { EmployeeSummary } from "../../../types"
+import type { FuncionariosIndicadores } from "../../../types"
 
 type Props = {
-    totalAtivos: EmployeeSummary | undefined
+    indicadores: FuncionariosIndicadores | undefined
 }
 
-export function IndicadoresCards({totalAtivos}:Props) {
+export function IndicadoresCards({indicadores}:Props) {
     return (
         <div className={styles.bento}>
             <div className={styles.kpiTile}>
@@ -18,7 +18,7 @@ export function IndicadoresCards({totalAtivos}:Props) {
                         4
                     </span>
                 </div>
-                <span className={styles.kpiValue}>{totalAtivos?.active}</span>
+                <span className={styles.kpiValue}>{indicadores?.ativos}</span>
                 <span className={styles.kpiLabel}>Funcionários ativos</span>
             </div>
 
@@ -74,7 +74,7 @@ export function IndicadoresCards({totalAtivos}:Props) {
                         1
                     </span>
                 </div>
-                <span className={styles.kpiValue}>4</span>
+                <span className={styles.kpiValue}>{indicadores?.afastados}</span>
                 <span className={styles.kpiLabel}>Afastados</span>
             </div>
 

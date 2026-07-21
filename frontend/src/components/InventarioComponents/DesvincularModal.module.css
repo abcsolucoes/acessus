@@ -1,0 +1,120 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modal {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 420px;
+  box-shadow: var(--shadow-lg);
+  animation: modalIn 200ms ease-out both;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.modalTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  transition: color var(--transition-fast);
+}
+
+.closeBtn:hover {
+  color: var(--text-primary);
+}
+
+.body {
+  padding: 20px 24px;
+}
+
+.message {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.message strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px 20px;
+  border-top: 1px solid var(--border-primary);
+}
+
+.cancelBtn {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-primary);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.cancelBtn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.confirmBtn {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: var(--radius-md);
+  border: none;
+  background: var(--danger);
+  color: #fff;
+  font-size: 0.875rem;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter var(--transition-fast);
+}
+
+.confirmBtn:hover {
+  filter: brightness(1.1);
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal {
+    animation: none;
+  }
+}

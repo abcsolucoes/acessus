@@ -1,10 +1,13 @@
 package com.Accessus.Accessus.entities;
 
+import com.Accessus.Accessus.enums.EmployeeProfile;
 import com.Accessus.Accessus.enums.EmployeeStatus;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @Entity
@@ -29,6 +32,9 @@ public class Employee {
     @Enumerated(EnumType.STRING)
     private EmployeeStatus status;
 
+    @Enumerated(EnumType.STRING)
+    private EmployeeProfile profile;
+
     private LocalDate leaveStart;
     private LocalDate leaveEnd;
     private LocalDate vacationStart;
@@ -37,6 +43,12 @@ public class Employee {
     // Carimbado a cada importação em que o CPF aparece na planilha — usado para
     // detectar quem sumiu da base de origem e precisa de revisão manual.
     private LocalDateTime lastImportedAt;
+
+    private boolean importManaged;
+
+    // Lado inverso do relacionamento — o dono é Device.employee (FK employee_id em tb_device)
+    @OneToMany(mappedBy = "employee")
+    private List<Device> devices = new ArrayList<>();
 
     public Employee() {
     }
@@ -121,6 +133,14 @@ public class Employee {
         this.status = status;
     }
 
+    public EmployeeProfile getProfile() {
+        return profile;
+    }
+
+    public void setProfile(EmployeeProfile profile) {
+        this.profile = profile;
+    }
+
     public LocalDate getLeaveStart() {
         return leaveStart;
     }
@@ -159,6 +179,18 @@ public class Employee {
 
     public void setLastImportedAt(LocalDateTime lastImportedAt) {
         this.lastImportedAt = lastImportedAt;
+    }
+
+    public boolean isImportManaged() {
+        return importManaged;
+    }
+
+    public void setImportManaged(boolean importManaged) {
+        this.importManaged = importManaged;
+    }
+
+    public List<Device> getDevices() {
+        return devices;
     }
 
     @Override
