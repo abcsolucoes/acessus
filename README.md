@@ -70,7 +70,7 @@ As variáveis ficam em `/opt/acessus/.env` no servidor. Nenhum segredo deve ser 
 | `MAIL_USERNAME` / `MAIL_PASSWORD` / `MAIL_FROM` | Credenciais SMTP Office365 |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `GOOGLE_REFRESH_TOKEN` | OAuth2 Google Contacts |
 | `DYSRUP_TOKEN` / `DYSRUP_EMAIL` / `DYSRUP_PASSWORD` / `DYSRUP_EMPLOYER_CODE` | Integração com o sistema de roteirização Dysrup |
-| `ZAPI_INSTANCE_ID` / `ZAPI_TOKEN` / `ZAPI_CLIENT_TOKEN` | Envio de mensagens no WhatsApp (Z-API) |
+| `ZAPI_INSTANCE_ID` / `ZAPI_TOKEN` / `ZAPI_CLIENT_TOKEN` | Envio de mensagens no WhatsApp (Z-API) — as três são obrigatórias em produção |
 | `PULSUS_TOKEN` | Sincronização de aparelhos corporativos com o MDM Pulsus |
 | `DEV_EMAIL` | E-mails com permissão para gerenciar campos de admissão (escopo `ADMISSION`) |
 | `BASE_URL` | URL pública do sistema |

@@ -7,6 +7,7 @@ import com.Accessus.Accessus.dto.ticket.CreateTicketDto;
 import com.Accessus.Accessus.enums.Department;
 import com.Accessus.Accessus.entities.Candidate;
 import com.Accessus.Accessus.entities.FieldValue;
+import com.Accessus.Accessus.entities.User;
 import com.Accessus.Accessus.enums.CandidateStatus;
 import com.Accessus.Accessus.repositories.CandidateRepository;
 import com.Accessus.Accessus.repositories.FieldValueRepository;
@@ -16,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -296,13 +298,19 @@ public class CandidateService {
                 "REJECTED", "Rejeitado"
         );
 
-        logsService.createLog(
-                "alterou o status de "
-                        + candidate.getName()
-                        + ", cpf " + candidate.getCpf()
-                        + ", para "
-                        + STATUS_MAP.getOrDefault(status.name(), status.name())
-        );
+        // Rota também é chamada, sem autenticação, pelo próprio formulário público do candidato
+        // (PENDING -> UNDER_ANALYSIS ao enviar) — nesse caso o principal é o anônimo padrão do
+        // Spring Security (não um User), e getAuthenticatedUser() derrubaria a transação com 401.
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated() && authentication.getPrincipal() instanceof User) {
+            logsService.createLog(
+                    "alterou o status de "
+                            + candidate.getName()
+                            + ", cpf " + candidate.getCpf()
+                            + ", para "
+                            + STATUS_MAP.getOrDefault(status.name(), status.name())
+            );
+        }
 
         return toDto(candidate);
     }

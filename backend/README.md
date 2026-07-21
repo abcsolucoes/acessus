@@ -45,11 +45,11 @@ API REST do sistema Accessus. Java 25 + Spring Boot 4, com JWT stateless, Postgr
 | Formulário público de admissão | `/formulario/:token` | Público (token) |
 | Contatos | `/contatos` | Todos (autenticado) |
 | Tickets | `/tickets`, `/tickets/ticketDetail/:id` | Todos (autenticado) |
-| Inventário | `/inventario`, `/inventario/funcionarios`, `/inventario/aparelhos`, `/inventario/alocacao`, `/inventario/movimentacoes` | Todos no front¹, restrito a `DEPT_TI` no backend (só `/employee/**` — `/devices/**` e `/deviceHistory/**` ainda não têm essa restrição, ver nota² abaixo) |
+| Inventário | `/inventario`, `/inventario/funcionarios`, `/inventario/funcionarios/:id`, `/inventario/aparelhos`, `/inventario/aparelhos/:id`, `/inventario/alocacao`, `/inventario/movimentacoes` | Todos no front¹, restrito a `DEPT_TI` no backend (só `/employee/**` — `/devices/**` e `/deviceHistory/**` ainda não têm essa restrição, ver nota² abaixo) |
 | Configurações | `/configuracoes` | ADMIN |
 | Logs | `/logs` | ADMIN |
 
-¹ A tela ainda não tem restrição de menu no frontend — qualquer usuário autenticado enxerga o módulo, mas as chamadas de API (`/employee/**`) só funcionam para usuários do departamento TI. Alinhar isso (esconder o menu de quem não é TI) é o único ajuste pendente no frontend — as telas de Funcionários, Aparelhos e Alocação já estão ligadas em dados reais; Movimentações ainda é só layout estático (mock), sem chamada à API (ver seção de Endpoints).
+¹ A tela ainda não tem restrição de menu no frontend — qualquer usuário autenticado enxerga o módulo, mas as chamadas de API (`/employee/**`) só funcionam para usuários do departamento TI. Alinhar isso (esconder o menu de quem não é TI) é o único ajuste pendente no frontend — as telas de Funcionários, Aparelhos, Alocação e Movimentações já estão ligadas em dados reais; as páginas de detalhe (`/inventario/funcionarios/:id` e `/inventario/aparelhos/:id`) também consomem a API de verdade, exceto o botão "Desvincular" nelas, que ainda é só visual (ver seção de Endpoints e `frontend/README.md`).
 
 ² `/devices/**` e `/deviceHistory/**` caem no `.anyRequest().authenticated()` genérico do `SecurityConfig` — qualquer usuário logado (não só TI) pode listar/vincular aparelhos ou ver o histórico hoje. Diferente de `/employee/**`, que já tem a restrição `DEPT_TI` explícita. Ajuste pendente.
 
@@ -86,7 +86,7 @@ Em produção, as variáveis ficam em `/opt/acessus/.env`, carregado pelo system
 | `MAIL_USERNAME` / `MAIL_PASSWORD` / `MAIL_FROM` | Credenciais e remetente do SMTP Office365 |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `GOOGLE_REFRESH_TOKEN` | OAuth2 para a Google People API |
 | `DYSRUP_TOKEN` / `DYSRUP_EMAIL` / `DYSRUP_PASSWORD` / `DYSRUP_EMPLOYER_CODE` | Autenticação com o sistema Dysrup (roteirização) |
-| `ZAPI_INSTANCE_ID` / `ZAPI_TOKEN` / `ZAPI_CLIENT_TOKEN` | Envio de mensagens WhatsApp via Z-API |
+| `ZAPI_INSTANCE_ID` / `ZAPI_TOKEN` / `ZAPI_CLIENT_TOKEN` | Envio de mensagens WhatsApp via Z-API — as três são obrigatórias em produção (sem valor default; a aplicação não sobe se alguma faltar) |
 | `PULSUS_TOKEN` | Token estático (header `ApiToken`) para a API do MDM Pulsus |
 | `DEV_EMAIL` | Lista de e-mails (separados por vírgula) com permissão de gerenciar campos de admissão (`FieldScope.ADMISSION`) |
 | `BASE_URL` | URL pública do frontend |
@@ -210,6 +210,7 @@ Ao criar um ticket sem responsável específico, a notificação por e-mail vai 
 | Método | Rota | Auth | Descrição |
 |---|---|---|---|
 | GET | `/employee?status=&ativos=&hasDevice=&page=&size=` | `DEPT_TI` | Lista funcionários paginada |
+| GET | `/employee/:id` | `DEPT_TI` | Detalhe de um funcionário (usado pela tela `/inventario/funcionarios/:id`) |
 | GET | `/employee/search?term=&page=&size=` | `DEPT_TI` | Busca por nome ou CPF — termo só com dígitos busca por CPF, qualquer outra coisa busca por nome (mesmo padrão do `/candidates/search`) |
 | GET | `/employee/count?status=&ativos=` | `DEPT_TI` | Mesmos filtros do `GET /employee`, mas devolve só a contagem (usado pelos KPIs do dashboard do Inventário) |
 | GET | `/employee/export` | `DEPT_TI` | Gera e devolve um `.xlsx` com a base inteira de funcionários (sem filtro por enquanto — exporta tudo, independente do que estiver filtrado na tela) |
@@ -246,12 +247,15 @@ A importação faz upsert por CPF: quem já existe é atualizado, quem não exis
 |---|---|---|---|
 | GET | `/devices?situacao=&page=&size=` | Autenticado² | Lista aparelhos paginada (default `sort=id`, `size=20`), filtro opcional por `DeviceSituacao` exato |
 | GET | `/devices/search?term=&page=&size=` | Autenticado² | Busca por substring (case-insensitive) em `serialNumber`, `tagDevice` ou `pulsusId` — os três com `OR` na mesma query. **Não aceita `situacao` junto** — buscar e filtrar por situação ao mesmo tempo não é suportado no backend (a tela de Alocação contorna isso filtrando o resultado no front, ver `frontend/README.md`) |
+| GET | `/devices/:id` | Autenticado² | Detalhe de um aparelho (usado pela tela `/inventario/aparelhos/:id`) |
 | POST | `/devices/sync` | Autenticado² | Sincroniza a base de aparelhos com o Pulsus (upsert), síncrono/bloqueante |
 | PATCH | `/devices/:id/vincular` | Autenticado² | Vincula manualmente um aparelho a um funcionário (corpo: `{ employeeId }`) — ver detalhes abaixo |
 
 ² Ver nota² na seção de rotas do frontend — `/devices/**` ainda não tem a restrição `DEPT_TI` que `/employee/**` já tem.
 
 **Entidade `Device`:** `pulsusId` (id do aparelho na Pulsus, `unique`), `manufacturer`, `model`, `serialNumber`, `group` (nome do grupo Pulsus, coluna `device_group` porque `GROUP` é palavra reservada em SQL), `imei1`/`imei2`, `tagDevice` (valor de `user.identifier` na Pulsus — texto livre, não confiável/único), `situacao` (enum `DeviceSituacao`) e `employee` (`@ManyToOne`, FK `employee_id`, nullable).
+
+`ResponseDeviceDto` (usado por `GET /devices`, `/devices/search` e `/devices/:id`) inclui `employeeName` e `employeeId` (ambos `null` quando o aparelho não está vinculado) — o `employeeId` foi adicionado especificamente para o front conseguir linkar direto pra `/inventario/funcionarios/:id` a partir de um aparelho, sem precisar de uma segunda chamada.
 
 **`DeviceSituacao`:** `EM_USO`, `DISPONIVEL`, `MANUTENCAO`, `SEM_USUARIO_IDENTIFICADO`. Não é um campo booleano por situação de propósito — cada situação nova (ex: uma futura `SUCATA`) é só mais um valor de enum e um `else if` no matching, não uma coluna nova.
 
@@ -278,10 +282,14 @@ Esse matching é **só por nome** — não existe hoje nenhum identificador conf
 | Método | Rota | Auth | Descrição |
 |---|---|---|---|
 | GET | `/deviceHistory?page=&size=` | Autenticado² | Lista todas as movimentações (alocação/devolução) paginadas, sem filtro ainda |
+| GET | `/deviceHistory/employee/:employeeId?page=&size=` | Autenticado² | Movimentações de um funcionário específico, mais recentes primeiro (usado pela tela `/inventario/funcionarios/:id`) |
+| GET | `/deviceHistory/device/:deviceId?page=&size=` | Autenticado² | Movimentações de um aparelho específico, mais recentes primeiro (usado pela tela `/inventario/aparelhos/:id`) |
 
-**Entidade `DeviceHistory`:** `device` (`@ManyToOne`), `employee` (`@ManyToOne`), `actionType` (enum `HistoryAction`: `ALLOCATION`, `DEALLOCATION`) e `createdAt`. Criada hoje só em `DeviceService.vincular()` (sempre `ALLOCATION`) — não existe ainda uma ação de desvincular/devolver aparelho, então `DEALLOCATION` está no enum mas nunca é produzido.
+**Entidade `DeviceHistory`:** `device` (`@ManyToOne`), `employee` (`@ManyToOne`), `actionType` (enum `HistoryAction`: `ALLOCATION`, `DEALLOCATION`) e `createdAt`. Criada hoje só em `DeviceService.vincular()` (sempre `ALLOCATION`) — não existe ainda uma ação de desvincular/devolver aparelho no backend, então `DEALLOCATION` está no enum mas nunca é produzido (o frontend já tem um botão "Desvincular" e um modal de confirmação nas telas de detalhe, mas por enquanto são só visuais — não chamam nenhuma API ainda, ver `frontend/README.md`).
 
-`DeviceHistoryRepository` já tem `findByDeviceIdOrderByCreatedAtDesc`/`findByEmployeeIdOrderByCreatedAtDesc` prontos, mas nenhum endpoint os expõe ainda — hoje só existe o `GET /deviceHistory` genérico (todas as movimentações, sem filtro por aparelho/funcionário/período/tipo). O frontend (tela Inventário → Movimentações) ainda é só layout estático com dados mockados, não está ligado nesse endpoint.
+`ResponseHistoryDto` embute `ResponseDeviceDto`/`ResponseEmployeeDto` (os mesmos DTOs achatados usados em `/devices` e `/employee`), montados em `DeviceHistoryService` sem depender de `DeviceService`/`EmployeeService` como bean autowired pro `device` (pra evitar um ciclo de dependência, já que `DeviceService` autowira `DeviceHistoryService` para gravar o histórico em `vincular()`) — só o `employee` reaproveita `EmployeeService.toDto(...)` diretamente, sem ciclo nesse caso.
+
+`DeviceHistoryRepository` tem `findByDeviceIdOrderByCreatedAtDesc`/`findByEmployeeIdOrderByCreatedAtDesc`, hoje expostos pelos dois endpoints acima. Ainda não há filtro por período (`de`/`até`) nem por `actionType` em nenhum dos três endpoints — a tela Inventário → Movimentações já lista dados reais paginados, mas os campos de busca/data/tipo do filtro dela continuam só visuais (ver `frontend/README.md`).
 
 Propositalmente **sem** coleção `@OneToMany<DeviceHistory>` em `Device`/`Employee` (ex: `device.getHistorico()`) — cresce sem limite e não pagina bem carregado via entidade; a consulta é sempre direto pelo repositório.
 
@@ -324,7 +332,9 @@ Sistema externo de roteirização/gestão de equipes de campo. A integração:
 Autenticação com a Dysrup usa um token estático (`DYSRUP_TOKEN`) com fallback para login dinâmico (e-mail + senha) e re-autenticação automática em respostas `401`.
 
 ### Z-API (WhatsApp)
-Usado para notificar a equipe quando um candidato é vinculado a uma rota (com foto, se disponível) e para enviar as credenciais de acesso da Dysrup ao candidato.
+Usado para notificar a equipe quando um candidato é vinculado a uma rota (com foto, se disponível) e para enviar as credenciais de acesso da Dysrup ao candidato. Além disso, `CandidateService.register()` dispara automaticamente uma mensagem de boas-vindas com o link do formulário de admissão pro telefone do candidato assim que ele é cadastrado (não é opcional, é parte do próprio fluxo de cadastro) — esse envio é `try/catch`ado e só loga o erro em caso de falha, pra uma instabilidade da Z-API não derrubar a resposta HTTP do cadastro (o candidato já foi salvo antes desse envio).
+
+A conta Z-API pode ter a segurança "Client-Token" habilitada (Segurança, no menu da conta Z-API) — quando habilitada, toda chamada precisa do header `Client-Token` além do token da instância na própria URL; sem ele, a Z-API responde `400 {"error":"your client-token is not configured"}`. `ZAPI_CLIENT_TOKEN` é obrigatória em produção (`application-prod.properties`) justamente por causa disso — se ausente, a aplicação recusa subir em vez de falhar silenciosamente só na hora de mandar mensagem.
 
 ### Pulsus (MDM)
 Sistema externo de gestão de dispositivos móveis (MDM) usado pelo módulo Aparelhos do Inventário. `PulsusService` consome `GET https://api.pulsus.mobi/v1/devices` (autenticação por header estático `ApiToken`, sem OAuth) com paginação própria via `max_id`, e `PUT https://api.pulsus.mobi/v1/devices/update/{id}` pra escrever nome/TAG de usuário no vínculo manual. Ver seção [Aparelhos](#aparelhos-inventário--devices) para detalhes do matching, sincronização e da limitação conhecida (API não permite trocar grupo do aparelho).
