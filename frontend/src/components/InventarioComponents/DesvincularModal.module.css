@@ -49,6 +49,11 @@
   color: var(--text-primary);
 }
 
+.closeBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .body {
   padding: 20px 24px;
 }
@@ -62,6 +67,12 @@
 .message strong {
   color: var(--text-primary);
   font-weight: 600;
+}
+
+.error {
+  margin-top: 12px;
+  font-size: 0.82rem;
+  color: var(--danger);
 }
 
 .footer {
@@ -90,6 +101,11 @@
   color: var(--text-primary);
 }
 
+.cancelBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .confirmBtn {
   height: 36px;
   padding: 0 16px;
@@ -104,8 +120,13 @@
   transition: filter var(--transition-fast);
 }
 
-.confirmBtn:hover {
+.confirmBtn:hover:not(:disabled) {
   filter: brightness(1.1);
+}
+
+.confirmBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 @keyframes modalIn {

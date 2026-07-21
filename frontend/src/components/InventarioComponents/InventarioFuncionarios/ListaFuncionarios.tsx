@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom"
 import styles from "../../../pages/Inventario/Funcionarios/style.module.css"
 import type { EmployeeStatus, Funcionario } from "../../../types"
 import { getInitials } from "../../../utils/format";
@@ -34,6 +35,8 @@ function statusAparelho(f: Funcionario): { label: string; className: string } {
 }
 
 export function ListaFuncionarios({ funcionarios }: Props) {
+    const navigate = useNavigate()
+
     return (
         <div className={styles.tableWrapper}>
             <div className={styles.tableScroll}>
@@ -46,7 +49,6 @@ export function ListaFuncionarios({ funcionarios }: Props) {
                             <th>Status</th>
                             <th>TAG aparelho</th>
                             <th>ID Pulsus</th>
-                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -55,7 +57,11 @@ export function ListaFuncionarios({ funcionarios }: Props) {
                             const device = f.devices.length > 0 ? f.devices[0] : null
 
                             return (
-                                <tr key={f.id}>
+                                <tr
+                                    key={f.id}
+                                    className={styles.clickableRow}
+                                    onClick={() => navigate(`/inventario/funcionarios/${f.id}`)}
+                                >
                                     <td>
                                         <div className={styles.person}>
                                             <span className={styles.avatar}>{getInitials(f.name)}</span>
@@ -70,12 +76,6 @@ export function ListaFuncionarios({ funcionarios }: Props) {
                                     <td><span className={`${styles.statusBadge} ${className}`}>{label}</span></td>
                                     <td><span className={device ? styles.tag : `${styles.tag} ${styles.tagMuted}`}>{device?.tagDevice ?? '—'}</span></td>
                                     <td className={styles.cell}>{device?.pulsusId ?? '—'}</td>
-                                    <td>
-                                        <button className={styles.historyBtn}>
-                                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-                                            Histórico
-                                        </button>
-                                    </td>
                                 </tr>
                             )
                         })}

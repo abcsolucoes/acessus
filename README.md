@@ -16,7 +16,7 @@ acessus/
 |---|---|---|
 | Autenticação | Login JWT, ativação de conta, recuperação de senha | Todos |
 | Dashboard | Navegação entre módulos filtrada por perfil | Todos |
-| RH | Candidatos (cadastro, edição, exclusão, reenvio de formulário), campos dinâmicos de admissão, formulário público, checklist pós-aprovação (Dysrup, WhatsApp, ticket de TI), relatório `.docx` | ADMIN, RH |
+| RH | Candidatos (cadastro, edição, exclusão, reenvio de formulário), campos dinâmicos de admissão, formulário público (com notificação por e-mail ao RH quando o candidato finaliza o envio), checklist pós-aprovação (Dysrup, WhatsApp, ticket de TI), relatório `.docx` | ADMIN, RH |
 | Contatos | Agenda corporativa integrada com Google Contacts, com atalho para iniciar conversa no WhatsApp | ADMIN, RH, OPERACIONAL, DP |
 | Tickets | Chamados internos com filtros (meus, meu setor, criados por mim, todos), anexos e notificação por e-mail | Todos |
 | Inventário | Funcionários (importação de planilha do RH) e aparelhos corporativos sincronizados do MDM Pulsus, com vínculo automático (por nome) ou manual (tela de Alocação) aparelho ↔ funcionário, e histórico de movimentações | TI |

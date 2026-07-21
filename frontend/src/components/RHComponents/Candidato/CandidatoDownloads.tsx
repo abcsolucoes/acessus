@@ -3,17 +3,33 @@ import styles from './CandidatoDownloads.module.css'
 type Props = {
   candidateId: string | undefined
   candidateName: string | undefined
+  downloadingEndpoint: string | null
   onDownload: (endpoint: string, filename: string) => void
 }
 
-export function CandidatoDownloads({ candidateId, candidateName, onDownload }: Props) {
+function SpinnerIcon() {
+  return (
+    <svg className={styles.spinning} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" />
+      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+    </svg>
+  )
+}
+
+export function CandidatoDownloads({ candidateId, candidateName, downloadingEndpoint, onDownload }: Props) {
+  const reportEndpoint = `/candidates/${candidateId}/report`
+  const zipEndpoint = `/candidates/${candidateId}/files/zip`
+  const baixandoRelatorio = downloadingEndpoint === reportEndpoint
+  const baixandoDocumentos = downloadingEndpoint === zipEndpoint
+
   return (
     <section className={styles.section}>
       <h2 className={styles.sectionTitle}>Downloads</h2>
       <div className={styles.downloadCards}>
         <button
           className={styles.downloadCard}
-          onClick={() => onDownload(`/candidates/${candidateId}/report`, `relatorio_${candidateName ?? candidateId}.docx`)}
+          disabled={downloadingEndpoint !== null}
+          onClick={() => onDownload(reportEndpoint, `relatorio_${candidateName ?? candidateId}.docx`)}
         >
           <span className={styles.downloadIcon}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -25,15 +41,18 @@ export function CandidatoDownloads({ candidateId, candidateName, onDownload }: P
           </span>
           <span className={styles.downloadInfo}>
             <strong>Relatório</strong>
-            <small>.docx</small>
+            <small>{baixandoRelatorio ? 'Gerando…' : '.docx'}</small>
           </span>
-          <svg className={styles.downloadArrow} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 5v14M5 12l7 7 7-7" />
-          </svg>
+          {baixandoRelatorio ? <SpinnerIcon /> : (
+            <svg className={styles.downloadArrow} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 5v14M5 12l7 7 7-7" />
+            </svg>
+          )}
         </button>
         <button
           className={styles.downloadCard}
-          onClick={() => onDownload(`/candidates/${candidateId}/files/zip`, `documentos_${candidateName ?? candidateId}.zip`)}
+          disabled={downloadingEndpoint !== null}
+          onClick={() => onDownload(zipEndpoint, `documentos_${candidateName ?? candidateId}.zip`)}
         >
           <span className={styles.downloadIcon}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -44,11 +63,13 @@ export function CandidatoDownloads({ candidateId, candidateName, onDownload }: P
           </span>
           <span className={styles.downloadInfo}>
             <strong>Documentos</strong>
-            <small>.zip</small>
+            <small>{baixandoDocumentos ? 'Gerando…' : '.zip'}</small>
           </span>
-          <svg className={styles.downloadArrow} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 5v14M5 12l7 7 7-7" />
-          </svg>
+          {baixandoDocumentos ? <SpinnerIcon /> : (
+            <svg className={styles.downloadArrow} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 5v14M5 12l7 7 7-7" />
+            </svg>
+          )}
         </button>
       </div>
     </section>

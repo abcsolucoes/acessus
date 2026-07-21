@@ -42,6 +42,7 @@ export function RHCandidatoPage() {
     handleChangeStatus,
     handleDysrupConfirm,
     handleDownload,
+    downloadingEndpoint,
   } = useCandidato()
 
   return (
@@ -106,6 +107,7 @@ export function RHCandidatoPage() {
             <CandidatoDownloads
               candidateId={id}
               candidateName={candidate?.name}
+              downloadingEndpoint={downloadingEndpoint}
               onDownload={handleDownload}
             />
 

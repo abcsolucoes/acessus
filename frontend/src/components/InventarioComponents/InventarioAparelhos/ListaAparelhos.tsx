@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import styles from "../../../pages/Inventario/Aparelhos/style.module.css"
 import type { Device, DeviceSituacao } from "../../../types"
 
@@ -21,6 +21,8 @@ const SITUACAO_CLASSE: Record<DeviceSituacao, string> = {
 }
 
 export function ListaAparelhos({ aparelhos }: Props) {
+    const navigate = useNavigate()
+
     return (
         <div className={styles.tableWrapper}>
             <div className={styles.tableScroll}>
@@ -34,12 +36,15 @@ export function ListaAparelhos({ aparelhos }: Props) {
                             <th>TAG</th>
                             <th>Status</th>
                             <th>ID Pulsus</th>
-                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
                         {aparelhos.map(d => (
-                            <tr key={d.id}>
+                            <tr
+                                key={d.id}
+                                className={styles.clickableRow}
+                                onClick={() => navigate(`/inventario/aparelhos/${d.id}`)}
+                            >
                                 <td>
                                     <div className={styles.deviceInfo}>
                                         <span className={styles.deviceModel}>{d.model ?? '—'}</span>
@@ -60,12 +65,6 @@ export function ListaAparelhos({ aparelhos }: Props) {
                                     </span>
                                 </td>
                                 <td className={styles.cell}>{d.pulsusId}</td>
-                                <td>
-                                    <Link to={`/inventario/aparelhos/${d.id}`} className={styles.detailsBtn}>
-                                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4M12 8h.01" /></svg>
-                                        Detalhes
-                                    </Link>
-                                </td>
                             </tr>
                         ))}
                     </tbody>

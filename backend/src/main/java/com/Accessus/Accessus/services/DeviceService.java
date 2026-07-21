@@ -1,5 +1,6 @@
 package com.Accessus.Accessus.services;
 
+import com.Accessus.Accessus.document.ComodatoContractGenerator;
 import com.Accessus.Accessus.dto.device.ResponseDeviceDto;
 import com.Accessus.Accessus.dto.employee.ResponseEmployeeDto;
 import com.Accessus.Accessus.entities.Device;
@@ -40,6 +41,12 @@ public class DeviceService {
 
     @Autowired
     DeviceHistoryService deviceHistoryService;
+
+    @Autowired
+    ComodatoContractGenerator comodatoContractGenerator;
+
+    @Autowired
+    PdfConversionService pdfConversionService;
 
     public Page<ResponseDeviceDto> findAll(DeviceSituacao situacao, Pageable pageable) {
         Page<Device> page = situacao != null
@@ -138,6 +145,38 @@ public class DeviceService {
         return toDto(device);
     }
 
+    @Transactional
+    public ResponseDeviceDto desvincular(Long deviceId) {
+        Device device = deviceRepository.findById(deviceId)
+                .orElseThrow(() -> new RuntimeException("Aparelho não encontrado"));
+        Employee employee = device.getEmployee();
+        if (employee == null) {
+            throw new RuntimeException("Aparelho não está vinculado a nenhum funcionário");
+        }
+
+        // Precisa marcar isso na Pulsus também — senão o próximo sync (que casa aparelho
+        // com funcionário só pelo nome, ver syncDevices) encontraria o nome do mesmo
+        // funcionário ainda na Pulsus e re-vincularia sozinho, desfazendo o desvínculo.
+        Map<String, Object> body = Map.of(
+                "user_attributes", Map.of(
+                        "first_name", DeviceModelCatalog.rotulo(device.getModel()),
+                        "last_name", "DISPONIVEL",
+                        "identifier", device.getTagDevice()
+                )
+        );
+        pulsusService.updateDevice(device.getPulsusId(), body);
+
+        device.setEmployee(null);
+        device.setSituacao(DeviceSituacao.DISPONIVEL);
+        deviceRepository.save(device);
+
+        logsService.createLog("Desvinculou aparelho " + device.getTagDevice() + " (" + device.getModel() + ") do funcionário " + employee.getName());
+
+        deviceHistoryService.createNewHistory(employee, device, HistoryAction.DEALLOCATION);
+
+        return toDto(device);
+    }
+
     public ResponseDeviceDto toDto(Device device) {
         return new ResponseDeviceDto(
                 device.getId(),
@@ -160,6 +199,18 @@ public class DeviceService {
                 .orElseThrow(() -> new RuntimeException("Aparelho não encontrado"));
 
         return toDto(device);
+    }
+
+    public byte[] generateComodatoContract(Long deviceId) {
+        Device device = deviceRepository.findById(deviceId)
+                .orElseThrow(() -> new RuntimeException("Aparelho não encontrado"));
+
+        if (device.getEmployee() == null) {
+            throw new RuntimeException("Aparelho sem funcionário vinculado — não é possível gerar o contrato de comodato");
+        }
+
+        byte[] docx = comodatoContractGenerator.generate(device);
+        return pdfConversionService.convertToPdf(docx);
     }
 
     @SuppressWarnings("unchecked")

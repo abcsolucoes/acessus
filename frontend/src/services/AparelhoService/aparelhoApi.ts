@@ -1,5 +1,5 @@
 import type { Device, Page } from "../../types"
-import { apiFetch, authHeaders } from "../api"
+import { API_URL, apiFetch, authHeaders } from "../api"
 
 export function listAparelhos(page: number, situacao?: string, search?: string) {
   if (search?.trim()) {
@@ -29,4 +29,24 @@ export function vincularAparelho(deviceId: number, employeeId: number) {
     headers: { ...authHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify({ employeeId }),
   })
+}
+
+export function desvincularAparelho(deviceId: number) {
+  return apiFetch<Device>(`/devices/${deviceId}/desvincular`, {
+    method: 'PATCH',
+    headers: authHeaders(),
+  })
+}
+
+export async function baixarContratoComodato(deviceId: number) {
+  const res = await fetch(`${API_URL}/devices/${deviceId}/comodato-contract`, { headers: authHeaders() })
+  if (!res.ok) throw new Error('Erro ao gerar contrato de comodato')
+
+  const blob = await res.blob()
+  const url = window.URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `comodato-${deviceId}.pdf`
+  a.click()
+  window.URL.revokeObjectURL(url)
 }

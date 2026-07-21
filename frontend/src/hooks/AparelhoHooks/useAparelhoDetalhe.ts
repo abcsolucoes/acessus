@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { Device, DeviceHistory } from "../../types";
 import { getAparelho } from "../../services/AparelhoService/aparelhoApi";
 import { ListHistoryByDevice } from "../../services/HistoricoAparelhoService/historicoApi";
@@ -10,16 +10,16 @@ export function useAparelhoDetalhe(id: number) {
     const [historicoPage, setHistoricoPage] = useState(0);
     const [historicoTotalPages, setHistoricoTotalPages] = useState(0);
 
-    useEffect(() => {
+    const refetchAparelho = useCallback(() => {
         setLoading(true);
-        getAparelho(id)
+        return getAparelho(id)
             .then(setAparelho)
             .catch(() => setAparelho(null))
             .finally(() => setLoading(false));
     }, [id]);
 
-    useEffect(() => {
-        ListHistoryByDevice(id, historicoPage)
+    const refetchHistorico = useCallback(() => {
+        return ListHistoryByDevice(id, historicoPage)
             .then((res) => {
                 setHistorico(res.content);
                 setHistoricoTotalPages(res.totalPages);
@@ -27,5 +27,14 @@ export function useAparelhoDetalhe(id: number) {
             .catch(() => { });
     }, [id, historicoPage]);
 
-    return { aparelho, loading, historico, historicoPage, setHistoricoPage, historicoTotalPages };
+    useEffect(() => { refetchAparelho(); }, [refetchAparelho]);
+    useEffect(() => { refetchHistorico(); }, [refetchHistorico]);
+
+    // Chamado depois de uma ação que muda o vínculo do aparelho (ex: desvincular
+    // funcionário) — atualiza os dois de uma vez, já que a página sempre mostra ambos juntos
+    const refetch = useCallback(() => {
+        return Promise.all([refetchAparelho(), refetchHistorico()]);
+    }, [refetchAparelho, refetchHistorico]);
+
+    return { aparelho, loading, historico, historicoPage, setHistoricoPage, historicoTotalPages, refetch };
 }

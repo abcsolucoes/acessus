@@ -9,7 +9,7 @@ import styles from './style.module.css'
 
 export function InventarioAparelhoDetalhePage() {
   const { id } = useParams<{ id: string }>()
-  const { aparelho, loading, historico, historicoPage, setHistoricoPage, historicoTotalPages } = useAparelhoDetalhe(Number(id))
+  const { aparelho, loading, historico, historicoPage, setHistoricoPage, historicoTotalPages, refetch } = useAparelhoDetalhe(Number(id))
 
   return (
     <>
@@ -34,7 +34,7 @@ export function InventarioAparelhoDetalhePage() {
             <div className={styles.grid}>
               <div className={styles.col}>
                 <AparelhoInfo aparelho={aparelho} />
-                <AparelhoFuncionario aparelho={aparelho} />
+                <AparelhoFuncionario aparelho={aparelho} onDesvinculado={refetch} />
               </div>
               <div className={styles.col}>
                 <AparelhoHistorico

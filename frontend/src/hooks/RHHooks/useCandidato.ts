@@ -21,6 +21,7 @@ export function useCandidato() {
   const [dysrupError, setDysrupError] = useState<string | null>(null)
   const [showChecklistModal, setShowChecklistModal] = useState(false)
   const [checklistLoading, setChecklistLoading] = useState(false)
+  const [downloadingEndpoint, setDownloadingEndpoint] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -43,6 +44,7 @@ export function useCandidato() {
   }
 
   async function handleDownload(endpoint: string, filename: string) {
+    setDownloadingEndpoint(endpoint)
     try {
       const res = await fetch(`${API_URL}${endpoint}`, { headers: authHeaders() })
       if (!res.ok) throw new Error(`Erro ${res.status}`)
@@ -55,6 +57,9 @@ export function useCandidato() {
       URL.revokeObjectURL(url)
     } catch (err) {
       console.error('Erro ao baixar arquivo:', err)
+      setToast('Erro ao baixar arquivo.')
+    } finally {
+      setDownloadingEndpoint(null)
     }
   }
 
@@ -258,5 +263,6 @@ export function useCandidato() {
     handleSendWelcome,
     handleSendRoute,
     handleDownload,
+    downloadingEndpoint,
   }
 }

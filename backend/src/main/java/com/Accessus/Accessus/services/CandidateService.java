@@ -9,7 +9,9 @@ import com.Accessus.Accessus.entities.Candidate;
 import com.Accessus.Accessus.entities.FieldValue;
 import com.Accessus.Accessus.entities.User;
 import com.Accessus.Accessus.enums.CandidateStatus;
+import com.Accessus.Accessus.enums.FieldScope;
 import com.Accessus.Accessus.repositories.CandidateRepository;
+import com.Accessus.Accessus.repositories.FieldRepository;
 import com.Accessus.Accessus.repositories.FieldValueRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +50,9 @@ public class CandidateService {
 
     @Autowired
     private FieldValueRepository fieldValueRepository;
+
+    @Autowired
+    private FieldRepository fieldRepository;
 
     @Autowired
     private ReportGenerator reportGenerator;
@@ -253,9 +258,14 @@ public class CandidateService {
         Candidate candidate = candidateRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Candidato não encontrado"));
 
-        if (!candidateRepository.existsById(id)) {
-            throw new RuntimeException("Candidato não encontrado");
+        // field_value_tb.candidate_id e field_tb.candidate_id são FK pra tb_promoter —
+        // sem apagar essas linhas antes (e o arquivo físico de cada FieldValue), o delete
+        // abaixo quebra com violação de constraint em qualquer candidato que já tenha
+        // campo, documento ou campo customizado (escopo CANDIDATE) preenchido
+        for (FieldValue fv : fieldValueRepository.findByCandidateId(id)) {
+            fileStorageService.deleteFieldValueFile(id, fv.getId());
         }
+        fieldRepository.deleteAll(fieldRepository.findByScopeAndCandidateId(FieldScope.CANDIDATE, id));
 
         candidateRepository.deleteById(id);
 

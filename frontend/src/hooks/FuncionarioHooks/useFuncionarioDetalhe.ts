@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { DeviceHistory, Funcionario } from "../../types";
 import { getFuncionario } from "../../services/FuncionarioService/funcionarioApi";
 import { ListHistoryByEmployee } from "../../services/HistoricoAparelhoService/historicoApi";
@@ -10,16 +10,16 @@ export function useFuncionarioDetalhe(id: number) {
     const [historicoPage, setHistoricoPage] = useState(0);
     const [historicoTotalPages, setHistoricoTotalPages] = useState(0);
 
-    useEffect(() => {
+    const refetchFuncionario = useCallback(() => {
         setLoading(true);
-        getFuncionario(id)
+        return getFuncionario(id)
             .then(setFuncionario)
             .catch(() => setFuncionario(null))
             .finally(() => setLoading(false));
     }, [id]);
 
-    useEffect(() => {
-        ListHistoryByEmployee(id, historicoPage)
+    const refetchHistorico = useCallback(() => {
+        return ListHistoryByEmployee(id, historicoPage)
             .then((res) => {
                 setHistorico(res.content);
                 setHistoricoTotalPages(res.totalPages);
@@ -27,5 +27,14 @@ export function useFuncionarioDetalhe(id: number) {
             .catch(() => { });
     }, [id, historicoPage]);
 
-    return { funcionario, loading, historico, historicoPage, setHistoricoPage, historicoTotalPages };
+    useEffect(() => { refetchFuncionario(); }, [refetchFuncionario]);
+    useEffect(() => { refetchHistorico(); }, [refetchHistorico]);
+
+    // Chamado depois de uma ação que muda o vínculo do funcionário (ex: desvincular
+    // aparelho) — atualiza os dois de uma vez, já que a página sempre mostra ambos juntos
+    const refetch = useCallback(() => {
+        return Promise.all([refetchFuncionario(), refetchHistorico()]);
+    }, [refetchFuncionario, refetchHistorico]);
+
+    return { funcionario, loading, historico, historicoPage, setHistoricoPage, historicoTotalPages, refetch };
 }

@@ -39,9 +39,14 @@
   transition: all var(--transition-fast);
 }
 
-.downloadCard:hover {
+.downloadCard:hover:not(:disabled) {
   border-color: var(--border-secondary);
   background: color-mix(in srgb, var(--bg-tertiary) 80%, var(--bg-secondary));
+}
+
+.downloadCard:disabled {
+  cursor: not-allowed;
+  opacity: 0.75;
 }
 
 .downloadIcon {
@@ -78,4 +83,23 @@
 .downloadArrow {
   color: var(--text-muted);
   flex-shrink: 0;
+}
+
+.spinning {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--primary);
+  animation: spin 900ms linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinning {
+    animation: none;
+  }
 }

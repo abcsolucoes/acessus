@@ -9,7 +9,7 @@ import { useFuncionarioDetalhe } from '../../../hooks/FuncionarioHooks/useFuncio
 
 export function InventarioFuncionarioDetalhePage() {
   const { id } = useParams<{ id: string }>()
-  const {funcionario} = useFuncionarioDetalhe(Number(id));
+  const { funcionario, historico, historicoPage, setHistoricoPage, historicoTotalPages, refetch } = useFuncionarioDetalhe(Number(id));
 
   return (
     <>
@@ -30,10 +30,15 @@ export function InventarioFuncionarioDetalhePage() {
         <div className={styles.grid}>
           <div className={styles.col}>
             <FuncionarioInfo funcionario={funcionario}/>
-            <FuncionarioAparelhos funcionario={funcionario}/>
+            <FuncionarioAparelhos funcionario={funcionario} onDesvinculado={refetch}/>
           </div>
           <div className={styles.col}>
-            <FuncionarioHistorico funcionario={funcionario}/>
+            <FuncionarioHistorico
+              historico={historico}
+              page={historicoPage}
+              totalPages={historicoTotalPages}
+              setPage={setHistoricoPage}
+            />
           </div>
         </div>
       </main>

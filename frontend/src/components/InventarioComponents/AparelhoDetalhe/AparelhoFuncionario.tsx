@@ -2,13 +2,22 @@ import { useState } from "react"
 import { Link } from "react-router-dom"
 import type { Device } from "../../../types"
 import { getInitials } from "../../../utils/format"
+import { desvincularAparelho } from "../../../services/AparelhoService/aparelhoApi"
 import { DesvincularModal } from "../DesvincularModal"
 import styles from "./AparelhoFuncionario.module.css"
 
-type Props = { aparelho: Device }
+type Props = {
+    aparelho: Device
+    onDesvinculado: () => void
+}
 
-export function AparelhoFuncionario({ aparelho }: Props) {
+export function AparelhoFuncionario({ aparelho, onDesvinculado }: Props) {
     const [showDesvincular, setShowDesvincular] = useState(false)
+
+    async function handleDesvincular() {
+        await desvincularAparelho(aparelho.id)
+        onDesvinculado()
+    }
 
     return (
         <section className={styles.section}>
@@ -41,7 +50,7 @@ export function AparelhoFuncionario({ aparelho }: Props) {
                     deviceModel={aparelho.model ?? 'este aparelho'}
                     employeeName={aparelho.employeeName}
                     onClose={() => setShowDesvincular(false)}
-                    onConfirm={() => setShowDesvincular(false)}
+                    onConfirm={handleDesvincular}
                 />
             )}
         </section>

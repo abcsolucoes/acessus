@@ -53,6 +53,7 @@ export function InventarioAlocacaoPage() {
     departamento: string | null
     aparelhoLabel: string
     pulsusId: number
+    deviceId: number
   } | null>(null)
 
   useEffect(() => {
@@ -70,11 +71,12 @@ export function InventarioAlocacaoPage() {
     const departamento = selectedFuncionario.department
     const aparelhoLabel = `${selectedAparelho.model ?? 'Aparelho'} · ${selectedAparelho.tagDevice ?? '—'}`
     const pulsusId = selectedAparelho.pulsusId
+    const deviceId = selectedAparelho.id
 
     try {
       await vincular()
 
-      setVinculoConcluido({ funcionarioName, departamento, aparelhoLabel, pulsusId })
+      setVinculoConcluido({ funcionarioName, departamento, aparelhoLabel, pulsusId, deviceId })
 
       limparSelecao()
       refetchFuncionarios()
@@ -156,7 +158,9 @@ export function InventarioAlocacaoPage() {
           departamento={vinculoConcluido.departamento}
           aparelhoLabel={vinculoConcluido.aparelhoLabel}
           pulsusId={vinculoConcluido.pulsusId}
+          deviceId={vinculoConcluido.deviceId}
           onClose={() => setVinculoConcluido(null)}
+          onDownloadError={() => setToast({ message: 'Erro ao gerar contrato de comodato', type: 'error' })}
         />
       )}
     </>

@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -46,5 +47,20 @@ public class DeviceController {
     @PatchMapping("/{id}/vincular")
     public ResponseEntity<ResponseDeviceDto> vincular(@PathVariable Long id, @RequestBody @Valid VincularDeviceDto dto) {
         return ResponseEntity.ok(deviceService.vincular(id, dto.employeeId()));
+    }
+
+    @PatchMapping("/{id}/desvincular")
+    public ResponseEntity<ResponseDeviceDto> desvincular(@PathVariable Long id) {
+        return ResponseEntity.ok(deviceService.desvincular(id));
+    }
+
+    @GetMapping("/{id}/comodato-contract")
+    public ResponseEntity<byte[]> generateComodatoContract(@PathVariable Long id) {
+        byte[] pdf = deviceService.generateComodatoContract(id);
+
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=\"comodato-" + id + ".pdf\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 }

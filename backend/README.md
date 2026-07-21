@@ -146,7 +146,7 @@ python deploy_accessus.py
 | GET | `/candidates/formCandidate/:id` | ADMIN, RH | Link do formulário de admissão |
 | GET | `/candidates/validate` | Público | Valida token de acesso ao formulário |
 | POST | `/candidates/register` | Público | Cadastro inicial (multipart) |
-| POST | `/candidates/changeStatus/:id` | Público | Muda status (usado pelo fluxo do formulário) |
+| POST | `/candidates/changeStatus/:id` | Público¹ | Muda status (usado pelo fluxo do formulário) |
 | POST | `/candidates/:id/upload` | Público (token) | Upload de documento vinculado a um campo |
 | POST | `/candidates/:id/resend-form` | ADMIN, RH | Reenvia o link do formulário por e-mail |
 | POST | `/candidates/:id/send-welcome` | ADMIN, RH | Envia instruções de acesso à Dysrup via WhatsApp |
@@ -155,6 +155,8 @@ python deploy_accessus.py
 | PUT | `/candidates/:id` | ADMIN, RH | Edita candidato (multipart) |
 | DELETE | `/candidates/delete/:id` | ADMIN, RH | Remove candidato |
 | DELETE | `/candidates/:id/files/:valueId` | Público (token) | Remove documento enviado |
+
+¹ `changeStatus` é compartilhado por dois fluxos bem diferentes: o RH mudando o status de um candidato (autenticado) e o próprio candidato enviando o formulário público (`PENDING` → `UNDER_ANALYSIS`, sem login). `CandidateService.changeStatus` decide o que fazer olhando o `Authentication` do contexto de segurança — se o principal é um `User` real (RH/ADMIN), grava o log de auditoria de sempre; se é o anônimo padrão do Spring Security (candidato via formulário), pula o log — nesse caso não existe um usuário logado pra atribuir a ação, e tentar buscar um (`UserService.getAuthenticatedUser()`) derrubava a transação inteira com 401 (candidato completava o formulário e o envio final travava). Em vez disso, dispara um e-mail avisando o RH que o candidato concluiu o envio (ver seção [SMTP Office365](#smtp-office365) abaixo).
 
 ### Campos dinâmicos — `/field` e `/fieldValue`
 | Método | Rota | Auth | Descrição |
@@ -320,7 +322,9 @@ Usada no módulo de Contatos. Autenticação OAuth2 com refresh token de longa d
 - **Escopo:** `https://www.googleapis.com/auth/contacts`
 
 ### SMTP Office365
-Usado para e-mails transacionais: ativação de conta, recuperação de senha, envio/reenvio de formulário de admissão, notificações de ticket e o consolidado de roteiros gerado pela "junção".
+Usado para e-mails transacionais: ativação de conta, recuperação de senha, envio/reenvio de formulário de admissão, notificações de ticket, o consolidado de roteiros gerado pela "junção" e o aviso ao RH quando o candidato finaliza o envio do formulário público.
+
+`CandidateService.changeStatus` dispara esse último para uma lista fixa de e-mails (`FORM_SUBMITTED_EMAILS`, hardcoded no service, mesmo padrão do `EMAILS_FOR_AREA` do `TicketService`) sempre que o próprio candidato conclui o formulário — não quando o RH altera o status manualmente pela tela. Envolto em `try/catch`: uma falha no SMTP não impede o candidato de concluir o envio.
 
 ### Dysrup
 Sistema externo de roteirização/gestão de equipes de campo. A integração:

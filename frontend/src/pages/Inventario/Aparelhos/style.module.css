@@ -132,6 +132,10 @@
   background: var(--bg-hover);
 }
 
+.clickableRow {
+  cursor: pointer;
+}
+
 .table td {
   padding: 13px 20px;
   vertical-align: middle;
@@ -227,34 +231,6 @@
   color: var(--text-muted);
   background: var(--bg-tertiary);
   border-color: var(--border-primary);
-}
-
-/* Ações */
-.detailsBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 6px 10px;
-  border-radius: var(--radius-sm);
-  color: var(--text-muted);
-  font-size: 0.78rem;
-  font-weight: 600;
-  transition: all var(--transition-fast);
-}
-
-.detailsBtn:hover {
-  color: var(--primary);
-  background: color-mix(in srgb, var(--primary) 8%, transparent);
-}
-
-.detailsBtn svg {
-  width: 14px;
-  height: 14px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 /* ── Paginação ────────────────────────────────────────────── */
