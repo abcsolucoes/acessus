@@ -6,6 +6,7 @@ import com.Accessus.Accessus.dto.line.ResponseLineDto;
 import com.Accessus.Accessus.entities.Employee;
 import com.Accessus.Accessus.entities.Line;
 import com.Accessus.Accessus.enums.LineStatus;
+import com.Accessus.Accessus.enums.LineType;
 import com.Accessus.Accessus.repositories.EmployeeRepository;
 import com.Accessus.Accessus.repositories.LineRepository;
 import org.apache.poi.ss.usermodel.Cell;
@@ -72,6 +73,7 @@ public class LineService {
         Line line = new Line();
         line.setNumber(dto.number());
         line.setIccid(dto.iccid());
+        line.setType(dto.type());
         line.setNotes(dto.notes());
         line.setStatus(LineStatus.AVAILABLE);
         lineRepository.save(line);
@@ -117,15 +119,37 @@ public class LineService {
         return toDto(line);
     }
 
+    // "Em uso" só é alcançável vinculando um funcionário (ver link() acima) — daqui
+    // só se muda pra AVAILABLE/REACTIVATE/UNAVAILABLE, e isso sempre solta o
+    // funcionário atual, se houver (não faz sentido a linha continuar "com alguém"
+    // e o status dizer outra coisa)
     @Transactional
     public ResponseLineDto updateStatus(Long lineId, LineStatus status) {
         Line line = lineRepository.findById(lineId)
                 .orElseThrow(() -> new RuntimeException("Linha não encontrada"));
 
+        if (status == LineStatus.IN_USE) {
+            throw new RuntimeException("Operação não permitida — o status Em uso só pode ser definido vinculando um funcionário");
+        }
+
+        line.setEmployee(null);
         line.setStatus(status);
         lineRepository.save(line);
 
         logsService.createLog("Alterou o status da linha " + line.getNumber() + " para " + status);
+
+        return toDto(line);
+    }
+
+    @Transactional
+    public ResponseLineDto updateNotes(Long lineId, String notes) {
+        Line line = lineRepository.findById(lineId)
+                .orElseThrow(() -> new RuntimeException("Linha não encontrada"));
+
+        line.setNotes(notes);
+        lineRepository.save(line);
+
+        logsService.createLog("Alterou as observações da linha " + line.getNumber());
 
         return toDto(line);
     }
@@ -149,6 +173,7 @@ public class LineService {
                 line.getId(),
                 line.getNumber(),
                 line.getIccid(),
+                line.getType(),
                 line.getStatus(),
                 line.getNotes(),
                 line.getEmployee() != null ? line.getEmployee().getName() : null,
@@ -203,7 +228,9 @@ public class LineService {
                 if (numeroDigits.isBlank()) continue;
 
                 String number = formatPhoneNumber(numeroDigits);
-                String iccid = chip.equalsIgnoreCase("ESIM") ? null : chip;
+                boolean isEsim = chip.equalsIgnoreCase("ESIM");
+                String iccid = isEsim ? null : chip;
+                LineType type = isEsim ? LineType.ESIM : LineType.CHIP;
                 String usuarioNormalizado = normalizeName(usuarioRaw);
 
                 LineStatus status;
@@ -236,6 +263,7 @@ public class LineService {
                 Line line = lineRepository.findByNumber(number).orElseGet(Line::new);
                 line.setNumber(number);
                 line.setIccid(iccid);
+                line.setType(type);
                 line.setEmployee(employee);
                 line.setStatus(status);
                 line.setNotes(notes);

@@ -1,5 +1,12 @@
 import styles from "../../../pages/Inventario/Linhas/style.module.css"
 
+type Props = {
+    statusFilter: string
+    setStatusFilter: (status: string) => void
+    search: string
+    setSearch: (search: string) => void
+}
+
 const OPCOES = [
     { value: 'ALL', label: 'Todas' },
     { value: 'IN_USE', label: 'Em uso' },
@@ -8,7 +15,7 @@ const OPCOES = [
     { value: 'UNAVAILABLE', label: 'Indisponível' },
 ]
 
-export function FiltroLinhas() {
+export function FiltroLinhas({ statusFilter, setStatusFilter, search, setSearch }: Props) {
     return (
         <div className={styles.filters}>
             <div className={styles.filterField}>
@@ -19,7 +26,9 @@ export function FiltroLinhas() {
                     </svg>
                     <input
                         className={styles.filterInput}
-                        placeholder="Número, chip ou funcionário..."
+                        placeholder="Número ou chip (ICCID)..."
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
                     />
                 </div>
             </div>
@@ -29,7 +38,8 @@ export function FiltroLinhas() {
                     <button
                         key={o.value}
                         type="button"
-                        className={`${styles.pillBtn} ${o.value === 'ALL' ? styles.pillBtnActive : ''}`}
+                        className={`${styles.pillBtn} ${statusFilter === o.value ? styles.pillBtnActive : ''}`}
+                        onClick={() => setStatusFilter(o.value)}
                     >
                         {o.label}
                     </button>

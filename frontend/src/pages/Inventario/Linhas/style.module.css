@@ -306,6 +306,14 @@
   cursor: pointer;
 }
 
+.emptyRow {
+  padding: 36px 20px !important;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  cursor: default;
+}
+
 .notesCell {
   font-size: 0.8125rem;
   color: var(--text-secondary);

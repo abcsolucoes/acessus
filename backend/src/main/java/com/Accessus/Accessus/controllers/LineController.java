@@ -4,6 +4,7 @@ import com.Accessus.Accessus.dto.line.CreateLineDto;
 import com.Accessus.Accessus.dto.line.LineImportResultDto;
 import com.Accessus.Accessus.dto.line.LinkLineDto;
 import com.Accessus.Accessus.dto.line.ResponseLineDto;
+import com.Accessus.Accessus.dto.line.UpdateNotesDto;
 import com.Accessus.Accessus.enums.LineStatus;
 import com.Accessus.Accessus.services.LineService;
 import jakarta.validation.Valid;
@@ -65,6 +66,11 @@ public class LineController {
     @PatchMapping("/{id}/status")
     public ResponseEntity<ResponseLineDto> updateStatus(@PathVariable Long id, @RequestBody LineStatus status) {
         return ResponseEntity.ok(lineService.updateStatus(id, status));
+    }
+
+    @PatchMapping("/{id}/notes")
+    public ResponseEntity<ResponseLineDto> updateNotes(@PathVariable Long id, @RequestBody UpdateNotesDto dto) {
+        return ResponseEntity.ok(lineService.updateNotes(id, dto.notes()));
     }
 
     @DeleteMapping("/{id}")

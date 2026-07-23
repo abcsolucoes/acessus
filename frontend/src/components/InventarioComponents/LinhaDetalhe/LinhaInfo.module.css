@@ -9,6 +9,9 @@
 }
 
 .sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   font-size: 0.72rem;
   font-weight: 700;
   color: var(--text-muted);
@@ -17,9 +20,20 @@
   margin-bottom: 18px;
 }
 
+.sectionIcon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .infoGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 18px 16px;
 }
 
@@ -38,6 +52,13 @@
   letter-spacing: 0.05em;
 }
 
+.infoValueRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
 .infoValue {
   font-size: 0.9rem;
   font-weight: 500;
@@ -48,26 +69,186 @@
   white-space: nowrap;
 }
 
+.copyBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  transition: all var(--transition-fast);
+}
+
+.copyBtn:hover {
+  color: var(--primary);
+  background: var(--bg-tertiary);
+}
+
+.copyBtn svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ── Observações (callout) ───────────────────────────────── */
 .notesBox {
-  margin-top: 18px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border-primary);
+  margin-top: 20px;
+  padding: 14px 16px;
+  background: color-mix(in srgb, var(--primary) 4%, var(--bg-tertiary));
+  border: 1px solid var(--border-primary);
+  border-left: 3px solid color-mix(in srgb, var(--primary) 45%, var(--border-primary));
+  border-radius: var(--radius-md);
+}
+
+.notesHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
 .notesLabel {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 0.68rem;
   font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 6px;
+}
+
+.notesIcon {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.editBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--primary);
+  transition: opacity var(--transition-fast);
+}
+
+.editBtn:hover {
+  opacity: 0.75;
+}
+
+.editBtn svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .notesText {
   font-size: 0.875rem;
   color: var(--text-secondary);
   line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.notesEmpty {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.editForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.notesInput {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-primary);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-family: inherit;
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.notesInput:focus {
+  border-color: var(--primary);
+}
+
+.editActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.cancelBtn {
+  height: 32px;
+  padding: 0 14px;
+  border-radius: var(--radius-md);
+  font-size: 0.8rem;
+  font-family: inherit;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.cancelBtn:hover:not(:disabled) {
+  border-color: var(--border-secondary);
+  color: var(--text-primary);
+}
+
+.cancelBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.saveBtn {
+  height: 32px;
+  padding: 0 14px;
+  background: var(--primary);
+  border-radius: var(--radius-md);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: inherit;
+  border: none;
+  cursor: pointer;
+  transition: filter var(--transition-fast);
+}
+
+.saveBtn:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.saveBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 @keyframes sectionEnter {

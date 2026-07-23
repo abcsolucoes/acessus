@@ -1,6 +1,7 @@
 package com.Accessus.Accessus.entities;
 
 import com.Accessus.Accessus.enums.LineStatus;
+import com.Accessus.Accessus.enums.LineType;
 import jakarta.persistence.*;
 
 import java.util.Objects;
@@ -18,6 +19,9 @@ public class Line {
     private String iccid;
 
     private String notes;
+
+    @Enumerated(EnumType.STRING)
+    private LineType type;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_id")
@@ -59,6 +63,14 @@ public class Line {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public LineType getType() {
+        return type;
+    }
+
+    public void setType(LineType type) {
+        this.type = type;
     }
 
     public Employee getEmployee() {

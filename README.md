@@ -16,10 +16,10 @@ acessus/
 |---|---|---|
 | Autenticação | Login JWT, ativação de conta, recuperação de senha | Todos |
 | Dashboard | Navegação entre módulos filtrada por perfil | Todos |
-| RH | Candidatos (cadastro, edição, exclusão, reenvio de formulário), campos dinâmicos de admissão, formulário público (com notificação por e-mail ao RH quando o candidato finaliza o envio), checklist pós-aprovação (Dysrup, WhatsApp, ticket de TI), relatório `.docx` | ADMIN, RH |
+| RH | Candidatos (cadastro, edição, exclusão, reenvio de formulário, ordenação por nome/data de admissão), campos dinâmicos de admissão (texto, data, documento ou seleção fixa), formulário público (com notificação por e-mail ao RH quando o candidato finaliza o envio), checklist pós-aprovação (Dysrup, WhatsApp, ticket de TI), relatório `.docx`, documentos enviados listados individualmente (download/exclusão avulsa, sem precisar do ZIP completo) | ADMIN, RH |
 | Contatos | Agenda corporativa integrada com Google Contacts, com atalho para iniciar conversa no WhatsApp | ADMIN, RH, OPERACIONAL, DP |
 | Tickets | Chamados internos com filtros (meus, meu setor, criados por mim, todos), anexos e notificação por e-mail | Todos |
-| Inventário | Funcionários (importação de planilha do RH) e aparelhos corporativos sincronizados do MDM Pulsus, com vínculo/desvínculo (manual, tela de Alocação, ou automático por nome) aparelho ↔ funcionário, contrato de comodato em PDF, e histórico de movimentações | TI |
+| Inventário | Funcionários (importação de planilha do RH), aparelhos corporativos sincronizados do MDM Pulsus e linhas telefônicas (chip físico ou eSIM), com vínculo/desvínculo (manual, tela de Alocação, ou automático por nome) aparelho ↔ funcionário, vínculo/desvínculo de linha ↔ funcionário, contrato de comodato em PDF, e histórico de movimentações | TI |
 | Configurações | Gestão de usuários do sistema | ADMIN |
 | Logs | Auditoria paginada e filtrável de todas as ações | ADMIN |
 
@@ -55,11 +55,18 @@ Sobe em `http://localhost:5173` apontando para o backend em `localhost:8080`.
 
 ## Deploy
 
-O deploy é executado pelo script `deploy_accessus.py` localizado na máquina do desenvolvedor. Ele faz o build dos dois projetos e sobe automaticamente para o servidor de produção via SSH/SFTP.
+O deploy é executado pelo script `deploy-acessus.ps1` (área de trabalho do desenvolvedor). Diferente de uma versão antiga que buildava local e subia os artefatos por SFTP, esse script funciona via Git:
 
-```bash
-python deploy_accessus.py
+1. `git add . / commit / push` do repositório local (`C:\Projetos\acessus`) — pergunta interativamente uma mensagem de commit e se a mudança foi no backend, frontend ou os dois.
+2. Conecta na VPS via SSH (chave em `~/.ssh/acessus_deploy`, sem senha) e roda `git pull` em `/opt/acessus`.
+3. Builda o que foi selecionado direto na VPS (`mvnw clean package -DskipTests` e/ou `npm run build`) e reinicia o serviço (`systemctl restart acessus`) e/ou recarrega o Nginx (`systemctl reload nginx`).
+
+```powershell
+cd C:\Projetos\acessus
+.\deploy-acessus.ps1
 ```
+
+Como o `npm run build` roda `tsc -b` antes do Vite, um erro de tipagem que passa batido no `npm run dev` local só aparece nesse momento — já aconteceu (ver histórico do repo) um erro de tipo do TypeScript que só a VPS pegou por estar numa versão mais estrita. Vale rodar `npx tsc -b` localmente antes de confiar num deploy silencioso.
 
 ## Variáveis de ambiente (produção)
 

@@ -1,15 +1,49 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Header } from '../../../components/Header'
+import { Toast } from '../../../components/Toast'
 import { InventarioSubnav } from '../../../components/InventarioComponents/InventarioSubnav'
 import { ResumoLinhas } from '../../../components/InventarioComponents/InventarioLinhas/ResumoLinhas'
 import { FiltroLinhas } from '../../../components/InventarioComponents/InventarioLinhas/FiltroLinhas'
 import { ListaLinhas } from '../../../components/InventarioComponents/InventarioLinhas/ListaLinhas'
 import { Paginacao } from '../../../components/InventarioComponents/InventarioLinhas/Paginacao'
 import { NovaLinhaModal } from '../../../components/InventarioComponents/InventarioLinhas/NovaLinhaModal'
+import { useLinhas } from '../../../hooks/LinhaHooks/useLinhas'
+import { countLinhas } from '../../../services/LinhaService/linhaApi'
 import styles from './style.module.css'
 
 export function InventarioLinhasPage() {
+  const {
+    linhas,
+    totalElements,
+    totalPages,
+    page,
+    setPage,
+    statusFilter,
+    setStatusFilter,
+    search,
+    setSearch,
+    refetch,
+  } = useLinhas()
+
+  const [emUso, setEmUso] = useState(0)
+  const [disponiveis, setDisponiveis] = useState(0)
   const [novaLinhaAberta, setNovaLinhaAberta] = useState(false)
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+
+  function atualizarResumo() {
+    countLinhas('IN_USE').then(setEmUso).catch(() => { })
+    countLinhas('AVAILABLE').then(setDisponiveis).catch(() => { })
+  }
+
+  useEffect(() => {
+    atualizarResumo()
+  }, [])
+
+  function handleNovaLinhaSuccess() {
+    refetch()
+    atualizarResumo()
+    setToast({ message: 'Linha cadastrada com sucesso', type: 'success' })
+  }
 
   return (
     <>
@@ -22,7 +56,7 @@ export function InventarioLinhasPage() {
         <div className={styles.top}>
           <div className={styles.titleGroup}>
             <span className={styles.title}>Linhas</span>
-            <span className={styles.badge}>8 registros</span>
+            <span className={styles.badge}>{totalElements} registros</span>
           </div>
           <div className={styles.topActions}>
             <button type="button" className={styles.primaryBtn} onClick={() => setNovaLinhaAberta(true)}>
@@ -32,17 +66,24 @@ export function InventarioLinhasPage() {
           </div>
         </div>
 
-        <ResumoLinhas />
+        <ResumoLinhas emUso={emUso} disponiveis={disponiveis} />
 
-        <FiltroLinhas />
+        <FiltroLinhas statusFilter={statusFilter} setStatusFilter={setStatusFilter} search={search} setSearch={setSearch} />
 
-        <ListaLinhas />
+        <ListaLinhas linhas={linhas} />
 
-        <Paginacao />
+        <Paginacao page={page} totalPages={totalPages} setPage={setPage} />
 
       </main>
 
-      {novaLinhaAberta && <NovaLinhaModal onClose={() => setNovaLinhaAberta(false)} />}
+      {novaLinhaAberta && (
+        <NovaLinhaModal
+          onClose={() => setNovaLinhaAberta(false)}
+          onSuccess={handleNovaLinhaSuccess}
+        />
+      )}
+
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </>
   )
 }

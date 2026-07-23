@@ -8,12 +8,26 @@
 }
 
 .sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   font-size: 0.72rem;
   font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.07em;
   margin-bottom: 16px;
+}
+
+.sectionIcon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .employeeCard {

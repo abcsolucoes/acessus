@@ -104,11 +104,13 @@ export type Device = {
 }
 
 export type LineStatus = 'IN_USE' | 'AVAILABLE' | 'REACTIVATE' | 'UNAVAILABLE'
+export type LineType = 'CHIP' | 'ESIM'
 
 export type Line = {
   id: number
   number: string
   iccid: string | null
+  type: LineType
   status: LineStatus
   notes: string | null
   employeeName: string | null

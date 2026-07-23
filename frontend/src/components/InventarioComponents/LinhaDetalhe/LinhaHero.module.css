@@ -133,6 +133,64 @@
   font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
 
+.heroActions {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.statusEditorLabel {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.statusSelect {
+  height: 36px;
+  padding: 0 30px 0 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-primary);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.statusSelect:hover {
+  border-color: var(--border-secondary);
+}
+
+.statusSelect:focus {
+  border-color: var(--primary);
+}
+
+.statusSelect:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.statusSelect option {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.statusHint {
+  font-size: 0.7rem;
+  color: var(--warning);
+  max-width: 160px;
+  text-align: right;
+  line-height: 1.3;
+}
+
 @keyframes heroEnter {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }

@@ -665,13 +665,21 @@ public class DysrupService {
         return null;
     }
 
-    @SuppressWarnings("unchecked")
     public LatLng getLatLng(String zipcode) {
-        String url = UriComponentsBuilder
+        return getLatLng(zipcode, null, null);
+    }
+
+    // Geocodificação só por CEP falha (corpo vazio) pra CEPs de rodovia/zona rural, que cobrem
+    // uma área grande demais pra ter uma coordenada fixa associada — confirmado inspecionando a
+    // própria tela de cadastro manual da Dysrup, que sempre manda endereço e bairro junto do CEP.
+    @SuppressWarnings("unchecked")
+    public LatLng getLatLng(String zipcode, String address, String district) {
+        UriComponentsBuilder builder = UriComponentsBuilder
                 .fromUriString("https://api.dysrup.com.br/api/public/get-latitude-and-longitude-from-address")
-                .queryParam("zipcode", zipcode)
-                .encode()
-                .toUriString();
+                .queryParam("zipcode", zipcode);
+        if (address != null && !address.isBlank()) builder.queryParam("address", address.replace(" ", "_"));
+        if (district != null && !district.isBlank()) builder.queryParam("district", district.replace(" ", "_"));
+        String url = builder.encode().toUriString();
 
         ResponseEntity<Map> resp = restTemplate.exchange(url, HttpMethod.GET, HttpEntity.EMPTY, Map.class);
 
@@ -701,7 +709,9 @@ public class DysrupService {
             throw new RuntimeException("Candidato sem número de endereço cadastrado");
 
         Map<String, Object> endereco = getEnderecoPorCep(zipcode);
-        LatLng coords = getLatLng(zipcode);
+        LatLng coords = getLatLng(zipcode,
+                endereco.getOrDefault("logradouro", "").toString(),
+                endereco.getOrDefault("bairro", "").toString());
 
         String[] nomeParts = candidate.getName().trim().split(" ", 2);
         String firstName = nomeParts[0];

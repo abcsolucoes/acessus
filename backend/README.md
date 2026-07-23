@@ -46,11 +46,11 @@ API REST do sistema Accessus. Java 25 + Spring Boot 4, com JWT stateless, Postgr
 | Formulário público de admissão | `/formulario/:token` | Público (token) |
 | Contatos | `/contatos` | Todos (autenticado) |
 | Tickets | `/tickets`, `/tickets/ticketDetail/:id` | Todos (autenticado) |
-| Inventário | `/inventario`, `/inventario/funcionarios`, `/inventario/funcionarios/:id`, `/inventario/aparelhos`, `/inventario/aparelhos/:id`, `/inventario/alocacao`, `/inventario/movimentacoes` | Todos no front¹, restrito a `DEPT_TI` no backend (só `/employee/**` — `/devices/**` e `/deviceHistory/**` ainda não têm essa restrição, ver nota² abaixo) |
+| Inventário | `/inventario`, `/inventario/funcionarios`, `/inventario/funcionarios/:id`, `/inventario/aparelhos`, `/inventario/aparelhos/:id`, `/inventario/linhas`, `/inventario/linhas/:id`, `/inventario/alocacao`, `/inventario/movimentacoes` | Todos no front¹, restrito a `DEPT_TI` no backend (`/employee/**` e `/lines/**` já têm a restrição — `/devices/**` e `/deviceHistory/**` ainda não, ver nota² abaixo) |
 | Configurações | `/configuracoes` | ADMIN |
 | Logs | `/logs` | ADMIN |
 
-¹ A tela ainda não tem restrição de menu no frontend — qualquer usuário autenticado enxerga o módulo, mas as chamadas de API (`/employee/**`) só funcionam para usuários do departamento TI. Alinhar isso (esconder o menu de quem não é TI) é o único ajuste pendente no frontend — as telas de Funcionários, Aparelhos, Alocação e Movimentações já estão ligadas em dados reais, assim como as páginas de detalhe (`/inventario/funcionarios/:id` e `/inventario/aparelhos/:id`), incluindo o botão "Desvincular" e o download do contrato de comodato nelas (ver seção de Endpoints e `frontend/README.md`).
+¹ A tela ainda não tem restrição de menu no frontend — qualquer usuário autenticado enxerga o módulo, mas as chamadas de API (`/employee/**`, `/lines/**`) só funcionam para usuários do departamento TI. Alinhar isso (esconder o menu de quem não é TI) é o único ajuste pendente no frontend — as telas de Funcionários, Aparelhos, Linhas, Alocação e Movimentações já estão ligadas em dados reais, assim como as páginas de detalhe (`/inventario/funcionarios/:id`, `/inventario/aparelhos/:id` e `/inventario/linhas/:id`), incluindo o botão "Desvincular" e o download do contrato de comodato nelas (ver seção de Endpoints e `frontend/README.md`).
 
 ² `/devices/**` e `/deviceHistory/**` caem no `.anyRequest().authenticated()` genérico do `SecurityConfig` — qualquer usuário logado (não só TI) pode listar/vincular aparelhos ou ver o histórico hoje. Diferente de `/employee/**`, que já tem a restrição `DEPT_TI` explícita. Ajuste pendente.
 
@@ -102,16 +102,10 @@ Em produção, as variáveis ficam em `/opt/acessus/.env`, carregado pelo system
 
 ## Deploy
 
-O deploy é feito pelo script Python `deploy_accessus.py` na área de trabalho. Ele executa automaticamente:
+O deploy é feito pelo script `deploy-acessus.ps1` (área de trabalho). Ele commita/dá push do repositório local, depois conecta na VPS via SSH (chave `~/.ssh/acessus_deploy`) e roda `git pull` + `mvnw clean package -DskipTests` + `systemctl restart acessus` direto lá — não builda mais localmente nem sobe artefato por SFTP (ver [README raiz](../README.md#deploy) para o fluxo completo, incluindo o frontend).
 
-1. Build do backend (`mvnw.cmd clean package -DskipTests`)
-2. Build do frontend (`npm run build`)
-3. Upload do `.jar` para `/opt/acessus/` via SFTP
-4. Upload do `dist/` para o diretório do Nginx via SFTP
-5. Restart do serviço via SSH (`sudo systemctl restart acessus`)
-
-```bash
-python deploy_accessus.py
+```powershell
+.\deploy-acessus.ps1
 ```
 
 **Logs do serviço em produção:** `sudo journalctl -u acessus -f`
@@ -141,43 +135,60 @@ python deploy_accessus.py
 ### Candidatos — `/candidates`
 | Método | Rota | Auth | Descrição |
 |---|---|---|---|
-| GET | `/candidates` | ADMIN, RH | Lista com paginação, filtro por `status`, ordenada por `id` decrescente (mais recente primeiro) |
-| GET | `/candidates/search` | ADMIN, RH | Busca por termo, paginada, mesma ordenação (`id` decrescente) |
+| GET | `/candidates` | ADMIN, RH | Lista com paginação e filtro por `status`. Aceita `sort=campo,direção` (Spring padrão) — default `id,desc`; `nullsLast()` é forçado em toda ordem (ver nota¹ abaixo) |
+| GET | `/candidates/search` | ADMIN, RH | Busca por termo, paginada, mesmo suporte a `sort` do endpoint acima |
 | GET | `/candidates/:id` | ADMIN, RH | Detalhe do candidato |
 | GET | `/candidates/:id/report` | ADMIN, RH | Gera relatório `.docx` |
 | GET | `/candidates/:id/route-photo` | ADMIN, RH | Download da foto da rota |
-| GET | `/candidates/:id/files/zip` | ADMIN, RH | Download ZIP com todos os documentos |
+| GET | `/candidates/:id/files/zip` | ADMIN, RH | Download de todos os documentos em ZIP, em streaming (ver nota² abaixo) |
+| GET | `/candidates/:id/files/:valueId` | ADMIN, RH | Download de um documento específico, sem precisar do ZIP completo |
 | GET | `/candidates/formCandidate/:id` | ADMIN, RH | Link do formulário de admissão |
 | GET | `/candidates/validate` | Público | Valida token de acesso ao formulário |
 | POST | `/candidates/register` | Público | Cadastro inicial (multipart) |
-| POST | `/candidates/changeStatus/:id` | Público¹ | Muda status (usado pelo fluxo do formulário) |
-| POST | `/candidates/:id/upload` | Público (token) | Upload de documento vinculado a um campo |
+| POST | `/candidates/changeStatus/:id` | Público³ | Muda status (usado pelo fluxo do formulário) |
+| POST | `/candidates/:id/upload` | Público (token) | Upload de documento vinculado a um campo — imagens JPG/PNG são redimensionadas antes de salvar (ver nota⁴ abaixo) |
 | POST | `/candidates/:id/resend-form` | ADMIN, RH | Reenvia o link do formulário por e-mail |
 | POST | `/candidates/:id/send-welcome` | ADMIN, RH | Envia instruções de acesso à Dysrup via WhatsApp |
 | POST | `/candidates/:id/send-route` | ADMIN, RH | Notifica a equipe sobre a rota do candidato (Z-API) |
 | POST | `/candidates/:id/create-ti-ticket` | ADMIN, RH | Abre ticket de TI automaticamente (provisionamento de aparelho) |
 | PUT | `/candidates/:id` | ADMIN, RH | Edita candidato (multipart) |
-| DELETE | `/candidates/delete/:id` | ADMIN, RH | Remove candidato² |
-| DELETE | `/candidates/:id/files/:valueId` | Público (token) | Remove documento enviado |
+| DELETE | `/candidates/delete/:id` | ADMIN, RH | Remove candidato⁵ |
+| DELETE | `/candidates/:id/files/:valueId` | Público (token) ou ADMIN/RH³ | Remove documento enviado — pelo próprio candidato no formulário (com token) ou pelo RH direto na tela do candidato (autenticado, sem token) |
 
-¹ `changeStatus` é compartilhado por dois fluxos bem diferentes: o RH mudando o status de um candidato (autenticado) e o próprio candidato enviando o formulário público (`PENDING` → `UNDER_ANALYSIS`, sem login). `CandidateService.changeStatus` decide o que fazer olhando o `Authentication` do contexto de segurança — se o principal é um `User` real (RH/ADMIN), grava o log de auditoria de sempre; se é o anônimo padrão do Spring Security (candidato via formulário), pula o log — nesse caso não existe um usuário logado pra atribuir a ação, e tentar buscar um (`UserService.getAuthenticatedUser()`) derrubava a transação inteira com 401 (candidato completava o formulário e o envio final travava). Em vez disso, dispara um e-mail avisando o RH que o candidato concluiu o envio (ver seção [SMTP Office365](#smtp-office365) abaixo).
+¹ O `sort` da URL (ex: `?sort=admissionDate,desc`) não carrega null handling — sem forçar `nullsLast()` em `CandidateController`, candidato sem `admissionDate` preenchida ordenava em posições diferentes dependendo do banco (Postgres bota `NULL` primeiro num `DESC`, H2 bota por último). Como não tem efeito em colunas sem `NULL` (`id`, `name`), é aplicado em toda ordem recebida, sem checar qual campo é.
 
-² Antes de apagar o `Candidate`, `CandidateService.delete` remove primeiro todo `FieldValue` dele (via `FileStorageService.deleteFieldValueFile`, que também apaga o arquivo físico de cada documento) e todo `Field` de escopo `CANDIDATE` vinculado a ele. Sem isso, o delete quebrava com violação de FK (`field_value_tb`/`field_tb` → `tb_promoter`) em qualquer candidato que já tivesse algum campo, documento ou campo customizado preenchido — ou seja, na prática quase todos.
+² `FileStorageService.zipCandidateFiles` escreve direto na resposta HTTP via `StreamingResponseBody` em vez de montar o ZIP inteiro num `ByteArrayOutputStream` primeiro — o navegador recebe o primeiro byte assim que o primeiro arquivo é lido, em vez de esperar tudo pronto. Isso expôs uma pegadinha clássica de Spring Security com dispatch assíncrono: `JwtAuthFilter` (um `OncePerRequestFilter`) não reautentica por padrão nesse segundo dispatch (`shouldNotFilterAsyncDispatch()` é `true` por padrão), então o `SecurityContext` ficava vazio e o `AuthorizationFilter` negava acesso já com a resposta parcialmente enviada — a conexão era cortada no meio (`ERR_INCOMPLETE_CHUNKED_ENCODING` no navegador). Corrigido sobrescrevendo `shouldNotFilterAsyncDispatch()` pra `false` no filtro. Qualquer endpoint futuro que use `StreamingResponseBody` já se beneficia dessa correção.
+
+³ `changeStatus` e a exclusão de um documento são compartilhados por dois fluxos bem diferentes: o RH agindo autenticado, e o próprio candidato pelo formulário público sem login. A rota é `permitAll` no `SecurityConfig`; quem decide se aceita é o próprio método, olhando se veio um `token` (fluxo público, valida contra o candidato) ou se existe um `Authentication` real no contexto de segurança (`UserService.getAuthenticatedUser()`, fluxo autenticado). Pra `changeStatus`, `CandidateService.changeStatus` além disso decide o que registrar: se o principal é um `User` real (RH/ADMIN), grava o log de auditoria de sempre; se é o anônimo padrão do Spring Security (candidato via formulário, `PENDING` → `UNDER_ANALYSIS`), pula o log — tentar buscar um usuário logado nesse caso (`getAuthenticatedUser()`) derrubava a transação inteira com 401 (candidato completava o formulário e o envio final travava) — em vez disso, dispara um e-mail avisando o RH que o candidato concluiu o envio (ver seção [SMTP Office365](#smtp-office365) abaixo).
+
+⁴ `FileStorageService.resizeIfLarge` reduz JPG/PNG cujo maior lado passa de 1600px (via `javax.imageio`, sem dependência nova) e recomprime JPEG em qualidade 82% — fotos de câmera de celular (3-10MB) costumavam deixar o download do ZIP completo bem lento; uma foto de documento não precisa de resolução de câmera pra ficar legível. Qualquer falha na leitura/decodificação (formato inesperado, arquivo corrompido) cai no catch e mantém o arquivo original — resize é otimização, nunca bloqueia o upload. HEIC/WEBP ficam de fora (Java não decodifica sem plugin externo).
+
+⁵ Antes de apagar o `Candidate`, `CandidateService.delete` remove primeiro todo `FieldValue` dele (via `FileStorageService.deleteFieldValueFile`, que também apaga o arquivo físico de cada documento) e todo `Field` de escopo `CANDIDATE` vinculado a ele. Sem isso, o delete quebrava com violação de FK (`field_value_tb`/`field_tb` → `tb_promoter`) em qualquer candidato que já tivesse algum campo, documento ou campo customizado preenchido — ou seja, na prática quase todos.
 
 ### Campos dinâmicos — `/field` e `/fieldValue`
 | Método | Rota | Auth | Descrição |
 |---|---|---|---|
-| GET | `/field` | ADMIN, RH | Lista todos os campos |
-| GET | `/field/:candidateId` | ADMIN, RH | Campos aplicáveis a um candidato |
+| GET | `/field` | ADMIN, RH | Lista só os campos padrão (`ADMISSION`) — usado pela tela "Gerenciar campos" |
+| GET | `/field/:candidateId` | ADMIN, RH | Campos aplicáveis a um candidato (`ADMISSION` + `CANDIDATE` dele) |
 | GET | `/field/public/:candidateId` | Público (token) | Campos do formulário público |
 | POST | `/field/create` | ADMIN, RH¹ | Cria campo |
+| PUT | `/field/:id` | ADMIN, RH¹ | Edita campo (nome, tamanho, etapa, opções, ativo/inativo — **não** o tipo, ver nota² abaixo) |
 | DELETE | `/field/:id` | ADMIN, RH¹ | Remove campo |
 | GET | `/fieldValue/:candidateId/values` | Público (token) | Respostas já preenchidas |
 | POST | `/fieldValue/:candidateId/values` | Público (token) | Salva respostas do formulário |
+| GET | `/fieldValue/:candidateId/documents` | ADMIN, RH | Só os `FieldValue` de campos `DOC` do candidato, autenticado (sem token) — usado pra listar os documentos enviados na tela do candidato, com download/exclusão individual |
 
-¹ Campos com escopo `ADMISSION` (globais, sincronizados com colunas do candidato) só podem ser criados/removidos por e-mails na lista `DEV_EMAIL`. Campos com escopo `CANDIDATE` (específicos de um candidato) são livres para ADMIN/RH.
+¹ Campos com escopo `ADMISSION` (globais, sincronizados com colunas do candidato) só podem ser criados/editados/removidos por e-mails na lista `DEV_EMAIL`. Campos com escopo `CANDIDATE` (específicos de um candidato) são livres para ADMIN/RH.
 
-Campo do tipo `DOC` aceita até 5 arquivos por campo (`MAX_FILES_PER_FIELD` em `FileStorageService`) — cada upload (`POST /candidates/:id/upload`, ver tabela de Candidatos acima) cria uma nova linha em `FieldValue` em vez de substituir a existente; `field_value_tb` não tem mais constraint única de `(candidate_id, field_id)` por causa disso (removida quando a fila foi implementada). Campo de Texto/Data continua com um valor só, garantido pela aplicação (`FieldValueService`), não pelo banco.
+² `UpdateFieldDto` não inclui `fieldType` de propósito — trocar o tipo de um campo que já tem valores salvos não faz sentido semântico (ex: virar `DOC` não tem fluxo de upload associado aos valores antigos já gravados como texto). O tipo é fixo desde a criação.
+
+**Tipos de campo (`FieldType`):** `TEXT`, `DOC`, `DATE` e `SELECT` (seleção fixa). Campo `SELECT` guarda as opções em `Field.fieldOptions`, uma string separada por vírgula (ex: `"Pai/Mãe,Irmão(ã),Cônjuge,Outro"`) — sem tabela própria, de propósito, dado o volume pequeno de opções por campo. Ver `frontend/README.md` para a convenção de UI quando a opção "Outro" é escolhida.
+
+**Etapas (`Steps`):** `personalData`, `address`, `docs`, `dependentsDocs`, `bankDetails`, `transport`, `emergencyContact` — cada uma vira uma seção no formulário público e no relatório `.docx` (ver `ReportGenerator` abaixo). `transport` e `emergencyContact` foram adicionadas pra cobrir transporte (linha de ônibus, cartão) e contato de emergência com grau de parentesco — esse último campo (`SELECT`) tomou o lugar de 2 campos de texto livre que já existiam soltos em `personalData` (nome/telefone do contato de emergência), agora reorganizados numa etapa própria.
+
+Campo do tipo `DOC` aceita até 5 arquivos por campo (`MAX_FILES_PER_FIELD` em `FileStorageService`) — cada upload (`POST /candidates/:id/upload`, ver tabela de Candidatos acima) cria uma nova linha em `FieldValue` em vez de substituir a existente; `field_value_tb` não tem mais constraint única de `(candidate_id, field_id)` por causa disso (removida quando a fila foi implementada). Campo de Texto/Data/Seleção continua com um valor só, garantido pela aplicação (`FieldValueService`), não pelo banco.
+
+**Relatório (`ReportGenerator`):** agrupa os `FieldValue` por `Field` antes de montar os cards do `.docx` — um campo `DOC` com vários arquivos (até 5) gera **um card só**, listando os nomes dos arquivos, em vez de um card duplicado por arquivo mostrando "Não informado" (bug corrigido; a causa era ler `fieldValue.getValue()`, que é sempre `null` em campo `DOC` — o nome do arquivo fica em `getFileName()`).
 
 ### Tickets — `/tickets`
 | Método | Rota | Auth | Descrição |
@@ -322,6 +333,33 @@ O rótulo do modelo (`"A12"`, `"A15"`, `"MOTO G35"`, `"REDMI 15C"`) vem de `Devi
 `DeviceHistoryRepository` tem `findByDeviceIdOrderByCreatedAtDesc`/`findByEmployeeIdOrderByCreatedAtDesc`, hoje expostos pelos dois endpoints acima. Ainda não há filtro por período (`de`/`até`) nem por `actionType` em nenhum dos três endpoints — a tela Inventário → Movimentações já lista dados reais paginados, mas os campos de busca/data/tipo do filtro dela continuam só visuais (ver `frontend/README.md`).
 
 Propositalmente **sem** coleção `@OneToMany<DeviceHistory>` em `Device`/`Employee` (ex: `device.getHistorico()`) — cresce sem limite e não pagina bem carregado via entidade; a consulta é sempre direto pelo repositório.
+
+### Linhas (Inventário) — `/lines`
+| Método | Rota | Auth | Descrição |
+|---|---|---|---|
+| GET | `/lines?status=&page=&size=` | `DEPT_TI` | Lista linhas paginada (default `sort=id`, `size=20`), filtro opcional por `LineStatus` exato |
+| GET | `/lines/search?term=&page=&size=` | `DEPT_TI` | Busca por número ou ICCID (substring, case-insensitive) — não busca por nome do funcionário vinculado |
+| GET | `/lines/count?status=` | `DEPT_TI` | Contagem com o mesmo filtro do `GET /lines` |
+| GET | `/lines/:id` | `DEPT_TI` | Detalhe de uma linha |
+| POST | `/lines` | `DEPT_TI` | Cadastra linha nova (`number` obrigatório, único; `iccid` opcional, único se informado) — nasce com `status = AVAILABLE` |
+| PATCH | `/lines/:id/link` | `DEPT_TI` | Vincula a linha a um funcionário (corpo: `{ employeeId }`), muda `status` pra `IN_USE` |
+| PATCH | `/lines/:id/unlink` | `DEPT_TI` | Desvincula do funcionário atual, volta `status` pra `AVAILABLE` — exige que esteja vinculada |
+| PATCH | `/lines/:id/status` | `DEPT_TI` | Ajusta manualmente o status (corpo: string JSON pura, ex: `"REACTIVATE"`, sem wrapper) — ver regra de `IN_USE`/desvínculo automático abaixo |
+| PATCH | `/lines/:id/notes` | `DEPT_TI` | Edita as observações (corpo: `{ "notes": "..." }` — ver nota¹ abaixo sobre por que não é string crua) |
+| DELETE | `/lines/:id` | `DEPT_TI` | Remove a linha — só permitido se não estiver vinculada a ninguém |
+| POST | `/lines/import-legacy` | `DEPT_TI` | **Temporário** — importa a planilha legada "Gestão de linhas e aparelhos.xlsx" (aba `linhas_vivo`), upsert por número. Remover (`LineService.importLegacySpreadsheet` + os 3 helpers privados dela, `LineImportResultDto` e esse endpoint) depois que a carga inicial for feita e conferida |
+
+`/lines/**` já nasceu com a restrição `DEPT_TI` (`SecurityConfig`, `.hasAuthority("DEPT_TI")`), diferente de `/devices/**`/`/deviceHistory/**` que ainda estão abertos a qualquer autenticado (ver nota² na seção de Aparelhos).
+
+**Entidade `Line`:** `number` (único), `iccid` (chip, nullable — sempre `null` quando `type = ESIM`, ver abaixo), `type` (enum `LineType`: `CHIP` ou `ESIM`), `notes`, `employee` (`@ManyToOne`, FK `employee_id`, nullable) e `status` (enum `LineStatus`: `IN_USE`, `AVAILABLE`, `REACTIVATE`, `UNAVAILABLE`).
+
+**`LineType` (`CHIP`/`ESIM`)** existe só pra classificar a linha — hoje não muda nenhuma regra de vínculo (chegou a existir uma versão que também guardava um `Device` pra linha eSIM, revertida: o vínculo é sempre só com `Employee`, independente do tipo). No frontend, linha eSIM mostra o texto "eSIM" no lugar do ICCID, já que esse tipo nunca tem um chip físico rastreável (ver `frontend/README.md`).
+
+**`IN_USE` só é alcançável vinculando um funcionário** (`PATCH /lines/:id/link`) — `LineService.updateStatus` rejeita `IN_USE` explicitamente (400) e, ao aplicar qualquer um dos outros três status, sempre limpa `employee` primeiro (mesmo que já estivesse vazio) — não faz sentido a linha continuar "com alguém" enquanto o status diz outra coisa. Efeito colateral: trocar o status de uma linha `IN_USE` desvincula o funcionário como parte da mesma operação; o frontend avisa isso antes de aplicar (ver `frontend/README.md`).
+
+¹ A primeira versão de `PATCH /lines/:id/notes` recebia `@RequestBody String notes` direto — mas o `StringHttpMessageConverter` do Spring não passa esse corpo pelo Jackson quando o parâmetro é `String` puro (diferente de um enum, ex: `LineStatus` no `/status` acima, que sempre passa), então as aspas do JSON enviado pelo cliente iam parar dentro do próprio texto salvo (`"Nota original"` literal, aspas incluídas). Resolvido envolvendo num record (`UpdateNotesDto { notes }`) — aí o Jackson entra em ação normalmente, como em qualquer outro DTO.
+
+**Frontend:** as telas (`/inventario/linhas`, `/inventario/linhas/:id`) já estão ligadas na API de verdade — `LinhaService/linhaApi.ts` e os hooks `useLinhas`/`useLinhaDetalhe` (ver `frontend/README.md`). Cobre listar/buscar/paginar, cadastrar, vincular/desvincular, editar observações inline e trocar status, com a regra de desvínculo automático acima refletida na UI (aviso antes de trocar, "Em uso" fora das opções). O import legado continua manual via Swagger/Insomnia — não tem botão no frontend, de propósito, já que é uma migração de uma vez só.
 
 ---
 

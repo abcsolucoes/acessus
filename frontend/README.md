@@ -21,23 +21,25 @@ src/
 │   ├── DashboardModuleNav/
 │   ├── DashboardComponents/     # Banner, cards de módulos, ações recentes, dica
 │   ├── RHComponents/
-│   │   ├── RHList/              # Card de candidato, toolbar de busca/filtro
-│   │   ├── Candidato/           # Hero, info, status, campos, downloads, checklist pós-aprovação, exclusão
+│   │   ├── RHList/              # Card de candidato (com data de admissão), toolbar de busca/filtro/ordenação
+│   │   ├── Candidato/           # Hero, info, status, campos, downloads, documentos enviados (individual), checklist pós-aprovação, exclusão
 │   │   ├── CandidateModal/      # Criar/editar candidato
-│   │   ├── FieldModal/          # Adicionar campo customizado
+│   │   ├── FieldModal/          # Criar ou editar campo (padrão ou customizado) — tipo `SELECT` e opções incluídos
 │   │   └── DysrupConfirmModal/  # Confirmação de cadastro na Dysrup
 │   ├── TicketComponents/        # Cards de KPI, lista, tabs de filtro, modal de criação
 │   ├── ContatosComponents/      # Header, busca, lista, modal de "abrir no WhatsApp" (Z-API)
 │   ├── LogsComponents/          # Header, filtro, tabela
 │   └── InventarioComponents/
-│       ├── InventarioSubnav/        # Navegação entre as 5 seções do módulo
+│       ├── InventarioSubnav/        # Navegação entre as 6 seções do módulo
 │       ├── InventarioDashboard/     # Indicadores (KPIs) e alertas da Visão geral
-│       ├── InventarioFuncionarios/  # Filtro, lista, paginação e modais da tela de Funcionários
+│       ├── InventarioFuncionarios/  # Filtro, lista, paginação e modais da tela de Colaboradores
 │       │   ├── ImportarModal/           # Upload de planilha (.xls), resumo de novos/atualizados/pendentes
 │       │   └── NovoFuncionarioModal/    # Cadastro manual (sócio/prestador de serviço)
 │       ├── FuncionarioDetalhe/      # Hero, info, aparelhos vinculados, histórico — tela /inventario/funcionarios/:id
 │       ├── InventarioAparelhos/     # Filtro, lista e paginação da tela de Aparelhos
 │       ├── AparelhoDetalhe/         # Hero, info, funcionário vinculado, histórico — tela /inventario/aparelhos/:id
+│       ├── InventarioLinhas/        # Filtro, lista, resumo, modal de cadastro (NovaLinhaModal) da tela de Linhas — já ligada na API
+│       ├── LinhaDetalhe/            # Hero (editor de status), info (observações editáveis), funcionário vinculado (VincularLinhaModal/DesvincularLinhaModal) — tela /inventario/linhas/:id
 │       ├── InventarioAlocacao/      # Painéis de funcionário/aparelho, barra de vínculo, modal de sucesso (com download do contrato de comodato e atalho pro Youk)
 │       ├── InventarioMovimentacoes/ # Filtro (mock), lista e paginação da tela de Movimentações — lista já real, ver abaixo
 │       └── DesvincularModal.tsx     # Confirmação de desvínculo, reaproveitado por FuncionarioDetalhe e AparelhoDetalhe — chama a API de verdade, renderiza via portal (`createPortal`) pra não ficar preso dentro de uma seção com animação de transform
@@ -47,12 +49,12 @@ src/
 │   ├── RH/                  # Lista + Campos + Candidato (detalhe)
 │   ├── Contatos/
 │   ├── Tickets/              # Lista + TicketDetail
-│   ├── Inventario/          # Visão geral + Funcionarios + FuncionarioDetalhe + Aparelhos + AparelhoDetalhe + Alocacao + Movimentacoes
+│   ├── Inventario/          # Visão geral + Funcionarios + FuncionarioDetalhe + Aparelhos + AparelhoDetalhe + Linhas + LinhaDetalhe + Alocacao + Movimentacoes
 │   ├── Configuracoes/
 │   ├── Logs/
 │   ├── Ajuda/
 │   └── Formulario/          # Formulário público de admissão (sem login)
-├── hooks/                    # Um pacote por módulo (RHHooks, TicketHooks, ContatosHooks, DashboardHooks, LogsHooks, FuncionarioHooks, AparelhoHooks, AlocacaoHooks, HistoricoHooks) — FuncionarioHooks/AparelhoHooks incluem também `useFuncionarioDetalhe`/`useAparelhoDetalhe`, usados pelas páginas de detalhe
+├── hooks/                    # Um pacote por módulo (RHHooks, TicketHooks, ContatosHooks, DashboardHooks, LogsHooks, FuncionarioHooks, AparelhoHooks, LinhaHooks, AlocacaoHooks, HistoricoHooks) — FuncionarioHooks/AparelhoHooks/LinhaHooks incluem também `useFuncionarioDetalhe`/`useAparelhoDetalhe`/`useLinhaDetalhe`, usados pelas páginas de detalhe
 ├── services/
 │   ├── api.ts                # apiFetch, authHeaders, decodeToken — base de toda chamada HTTP (apiFetch aceita timeout customizado por chamada, default 15s)
 │   ├── RhServices/
@@ -61,13 +63,14 @@ src/
 │   ├── LogsServices/
 │   ├── FuncionarioService/
 │   ├── AparelhoService/
+│   ├── LinhaService/
 │   └── HistoricoAparelhoService/
 ├── styles/
 │   └── global.css            # Design tokens e reset global
 ├── types/
 │   └── index.ts               # Interfaces TypeScript compartilhadas
 └── utils/
-    └── format.ts               # Formatação de datas
+    └── format.ts               # Formatação de datas, CPF/telefone, progresso de download e nome de arquivo de documento
 ```
 
 > Convenção de módulo: cada domínio ganha um pacote próprio em `components/<Modulo>Components/`, `hooks/<Modulo>Hooks/` e `services/<Modulo>Services/`. Componentes reutilizados entre páginas do mesmo módulo (ex: `InventarioSubnav`) ficam em pasta própria com seu `style.module.css`; componentes usados numa página só importam o `style.module.css` da própria página.
@@ -91,7 +94,7 @@ O JWT retornado pelo login é armazenado no `localStorage`. A função `decodeTo
 | `/login`, `/forgot-password`, `/activate` | Auth | Público |
 | `/formulario/:token` | Formulario | Público (token) |
 | `/dashboard` | Dashboard | Autenticado |
-| `/inventario`, `/inventario/funcionarios`, `/inventario/funcionarios/:id`, `/inventario/aparelhos`, `/inventario/aparelhos/:id`, `/inventario/alocacao`, `/inventario/movimentacoes` | Inventario | Autenticado¹ |
+| `/inventario`, `/inventario/funcionarios`, `/inventario/funcionarios/:id`, `/inventario/aparelhos`, `/inventario/aparelhos/:id`, `/inventario/linhas`, `/inventario/linhas/:id`, `/inventario/alocacao`, `/inventario/movimentacoes` | Inventario | Autenticado¹ |
 | `/contatos` | Contatos | Autenticado |
 | `/ajuda` | Ajuda | Autenticado |
 | `/tickets`, `/tickets/ticketDetail/:id` | Tickets | Autenticado |
@@ -115,10 +118,13 @@ O botão **"Realizar Junção"** no Header (dispara a consolidação de roteiros
 ## Módulos em detalhe
 
 ### RH
-Lista de candidatos com busca e filtro por status (mais recente primeiro — `GET /candidates` ordena por `id` decrescente), cadastro/edição/exclusão, reenvio de formulário, e uma página de detalhe (`/rh/:id`) com:
-- Informações básicas, campos customizados e downloads de documentos — os botões de download (relatório `.docx` e ZIP de documentos, `CandidatoDownloads.tsx`) mostram um ícone girando e o texto "Gerando…" enquanto a chamada está em andamento (o ZIP pode demorar dependendo da quantidade de documento do candidato), e ficam desabilitados até a resposta voltar; erro real aparece via `Toast`, não só no console
+Lista de candidatos com busca, filtro por status e **ordenação** (dropdown animado no mesmo padrão do menu do usuário no `Header`: Mais recentes / Nome A-Z / Data de admissão — `GET /candidates?sort=campo,direção`), com a data de admissão visível em cada card (`CandidateCard.tsx`, escondida em telas menores). Cadastro/edição/exclusão, reenvio de formulário, e uma página de detalhe (`/rh/:id`) com:
+- Informações básicas, campos customizados e downloads (relatório `.docx` e ZIP de documentos, `CandidatoDownloads.tsx`) — os botões mostram progresso real durante o download (`useCandidato.handleDownload`, lê a resposta via `ReadableStream`): percentual quando o `Content-Length` é conhecido (relatório, download individual), ou "X MB baixados" quando não é (o ZIP vai em streaming pelo backend, sem tamanho total conhecido de antemão). Ficam desabilitados até a resposta voltar; erro real aparece via `Toast`, não só no console
+- **Documentos enviados** (`CandidatoDocuments.tsx`) — lista cada documento (`GET /fieldValue/:id/documents`) com download individual (nome do arquivo normalizado igual ao de dentro do ZIP — `buildDocumentFileName` em `utils/format.ts`, mesma lógica de `field + primeiro nome do candidato` usada no backend) e um botão "✕" pra excluir direto ali, sem precisar abrir o formulário público
 - Mudança de status, com checklist automático pós-aprovação (cadastro na Dysrup, envio de boas-vindas e dados da rota via WhatsApp, abertura de ticket de TI)
-- Gerenciamento de campos de admissão (`/rh/campos`, restrito a e-mails de desenvolvedor)
+- Gerenciamento de campos de admissão (`/rh/campos`, restrito a e-mails de desenvolvedor) — criar **ou editar** um campo já existente (nome, tamanho, etapa, ativo/inativo, e as opções quando o tipo é "Seleção"); o tipo do campo não é editável depois de criado
+
+**Formulário público de admissão** (`/formulario/:token`, `pages/Formulario`) — hoje com 7 etapas: Dados pessoais, Endereço, Documentos, Docs. dependentes, Dados bancários, **Transporte** e **Contato de emergência**. Campo do tipo `SELECT` renderiza um `<select>`; quando a opção escolhida é literalmente `"Outro"`, aparece um input extra "Especifique..." — o valor salvo fica como uma string só (`"Outro: <texto>"`), sem precisar de campo/coluna nova no banco, e funciona pra qualquer campo `SELECT` futuro que tenha essa opção, não só o de grau de parentesco.
 
 ### Tickets
 Filtros: **Para mim**, **Meu setor**, **Abertos por mim**, e **Todos** (só ADMIN). Cards de KPI por status no topo, lista paginada, upload de anexos.
@@ -127,7 +133,9 @@ Filtros: **Para mim**, **Meu setor**, **Abertos por mim**, e **Todos** (só ADMI
 Agenda sincronizada com Google Contacts. Ao cadastrar um contato novo, oferece abrir uma conversa no WhatsApp (`wa.me`) diretamente — não depende de API própria, é só um link.
 
 ### Inventário
-Módulo com submenu de navegação (`InventarioSubnav`) entre 5 seções: Visão geral, Funcionários, Aparelhos, Alocação e Movimentações — todas já existem no `App.tsx`, todas com conteúdo real (Movimentações tem lista+paginação reais, mas o filtro dela ainda é só visual, ver abaixo). Funcionários e Aparelhos também ganharam uma página de detalhe cada (`/inventario/funcionarios/:id` e `/inventario/aparelhos/:id`), acessíveis clicando na linha correspondente nas respectivas listas — nenhuma delas aparece no `InventarioSubnav` (são páginas "filhas" de uma seção, não uma 6ª seção do menu, mesmo padrão de `/rh/:id` que também fica fora do menu do RH).
+Módulo com submenu de navegação (`InventarioSubnav`) entre 6 seções: Visão geral, Colaboradores¹, Aparelhos, Linhas, Alocação e Movimentações — todas já existem no `App.tsx` e todas com conteúdo real. Colaboradores, Aparelhos e Linhas também ganharam uma página de detalhe cada (`/inventario/funcionarios/:id`, `/inventario/aparelhos/:id` e `/inventario/linhas/:id`), acessíveis clicando na linha correspondente nas respectivas listas — nenhuma delas aparece no `InventarioSubnav` (são páginas "filhas" de uma seção, não uma 7ª seção do menu, mesmo padrão de `/rh/:id` que também fica fora do menu do RH).
+
+¹ O label do menu mudou de "Funcionários" pra "Colaboradores" (`InventarioSubnav.tsx`) — a rota (`/inventario/funcionarios`) e os nomes de componentes/hooks continuam com "Funcionário", só o texto visível no menu mudou.
 
 - **Visão geral**: os KPIs "Funcionários ativos" e "Afastados" já vêm de dados reais (`GET /employee/count`, hook `useFuncionario`). Os KPIs de aparelho (cadastrados, sem aparelho, disponíveis p/ alocação etc.) e os banners de alerta continuam mockados — agora que a tela de Aparelhos existe, dá pra alimentá-los com dado real.
 - **Funcionários**: lista real e paginada, ligada em `GET /employee` (hook `useFuncionario`). Inclui:
@@ -141,13 +149,20 @@ Módulo com submenu de navegação (`InventarioSubnav`) entre 5 seções: Visão
   - **Detalhe do funcionário** (`/inventario/funcionarios/:id`, hook `useFuncionarioDetalhe`) — hero (nome, cargo, status, perfil), seção de informações (CPF, empresa, departamento, cidade/UF, admissão), aparelhos vinculados (specs completos: ID Pulsus, TAG, IMEIs, com botões "Ver na Pulsus" e "Detalhes do aparelho") e histórico de movimentações em formato de timeline, com paginação (`GET /deviceHistory/employee/:id`). Cada aparelho vinculado tem um botão **"Desvincular"** que abre o `DesvincularModal` — confirma, chama `PATCH /devices/:id/desvincular` (ver `backend/README.md`), e ao concluir o hook `refetch()` recarrega o funcionário e o histórico de uma vez (a página inteira usa uma única chamada de `useFuncionarioDetalhe`, sem duplicar fetch).
 - **Aparelhos**: lista real e paginada, ligada em `GET /devices` (hook `useAparelhos`). Mostra modelo/fabricante, serial, grupo, funcionário vinculado (se houver), TAG, situação (`Em uso`/`Disponível`/`Em manutenção`/`Sem usuário identificado`) e ID Pulsus — a linha inteira é clicável, leva pra `/inventario/aparelhos/:id` (sem coluna de "Detalhes" separada). **Filtro por situação** (pills: Todos/Em uso/Disponível/Em manutenção/Sem usuário) usa `situacao=` na API. **Busca** por serial, TAG ou ID Pulsus (`GET /devices/search`), com debounce de 500ms. Botão **"Sincronizar com Pulsus"** dispara `POST /devices/sync` direto da tela — a chamada usa um timeout de 60s em vez do padrão de 15s do `apiFetch`, porque o sync é síncrono/bloqueante de propósito e pode passar de 30s (decisão consciente: evita condição de corrida com edição concorrente e garante dado sempre atualizado na hora, ver [backend/README.md](../backend/README.md#aparelhos-inventário--devices)).
   - **Detalhe do aparelho** (`/inventario/aparelhos/:id`, hook `useAparelhoDetalhe`) — hero (modelo, fabricante/grupo, situação, serial, botão "Ver na Pulsus"), specs (ID Pulsus, TAG, serial, grupo, IMEIs), funcionário vinculado (card com nome + link pro perfil dele, ou estado vazio com CTA pra Alocação) e histórico de movimentações em timeline, com paginação (`GET /deviceHistory/device/:id`). Mesma ação do funcionário: o botão **"Desvincular"** no card do funcionário vinculado chama a API de verdade e recarrega aparelho + histórico via `refetch()`.
-- **Alocação**: fluxo pra vincular manualmente um funcionário sem aparelho a um aparelho disponível, pra quando o matching automático do sync não resolve. Reaproveita os hooks que já existem em vez de duplicar fetch: `useFuncionario('SEM_APARELHO')` e `useAparelhos('DISPONIVEL')` (ambos os hooks aceitam um filtro inicial opcional, default `"ALL"`, sem quebrar quem já os chama sem argumento). Um hook novo, `useAlocacao`, cuida só do que é específico dessa tela — seleção de funcionário/aparelho e a ação de vincular — sem duplicar a busca de dados.
+- **Linhas**: lista real e paginada, ligada em `GET /lines` (hook `useLinhas`). **Busca** por número ou ICCID (`GET /lines/search` — não busca por nome do funcionário, diferente da busca de Funcionários/Aparelhos), debounce de 500ms. **Filtro por status** (pills: Todas/Em uso/Disponível/Reativar/Indisponível) via `status=` na API. KPIs do topo (`ResumoLinhas`: linhas em uso/disponíveis) vêm de `GET /lines/count`. **Coluna de chip**: mostra o ICCID normalmente, mas linha do tipo eSIM mostra sempre o texto "eSIM" no lugar — não faz sentido exibir um ICCID que não existe pra esse tipo (`Line.iccid` é sempre `null` quando `type = ESIM`, ver `backend/README.md`). **Nova linha** (`NovaLinhaModal`, `POST /lines`) pede número (único) e tipo (Chip físico/eSIM) obrigatórios, ICCID e observações opcionais. Linha da lista é clicável (mesmo padrão de Funcionários/Aparelhos), leva pra página de detalhe.
+  - **Detalhe da linha** (`/inventario/linhas/:id`, hook `useLinhaDetalhe`) — hero com número, tipo e status, mais um botão de copiar (`CopyButton`, ícone muda pra "check" por 1.5s após copiar) ao lado de Número e ICCID na seção de Informações.
+  - **Observações editáveis inline** (`LinhaInfo.tsx`) — estilizadas como um callout com borda de destaque em vez de texto solto. Botão "Editar" troca o texto por um `<textarea>` pré-preenchido com o valor atual; "Salvar" chama `PATCH /lines/:id/notes` (`atualizarObservacoesLinha`).
+  - **Editor de status** no hero (`LinhaHero.tsx`) — `<select>` com Disponível/Reativar/Indisponível; **"Em uso" nunca aparece como opção** (só é alcançado vinculando um funcionário, ver abaixo — regra do backend). Se a linha já estiver `IN_USE`, mostra um aviso "Desvincula o funcionário atual" ao lado do seletor, porque trocar o status nesse caso desvincula automaticamente (efeito colateral da regra do backend, não é um passo separado no front).
+  - **Vincular/Desvincular funcionário** (`LinhaFuncionario.tsx`) — `VincularLinhaModal` busca funcionários (reaproveita `listFuncionarios` do `funcionarioApi.ts`) com busca/seleção por clique, confirma via `PATCH /lines/:id/link` (`vincularLinha`); `DesvincularLinhaModal` pede confirmação (com número da linha e nome do funcionário na mensagem) e chama `PATCH /lines/:id/unlink` (`desvincularLinha`). **Não** reaproveitei o `DesvincularModal` de Aparelhos aqui — o texto dele é fixo pra "aparelho" e menciona histórico de movimentações (que `Line` não tem, ver `backend/README.md`) — criei uma cópia (`DesvincularLinhaModal`) com o texto certo em vez de generalizar o componente compartilhado.
+  - **Import legado** (`POST /lines/import-legacy`, temporário) não tem UI no frontend de propósito — é rodado uma vez via Swagger/Insomnia direto pelo TI, não é uma feature recorrente (ver `backend/README.md`).
+- **Alocação**: fluxo pra vincular manualmente um funcionário a um aparelho disponível, pra quando o matching automático do sync não resolve. Reaproveita os hooks que já existem em vez de duplicar fetch: `useFuncionario('SEM_APARELHO')` e `useAparelhos('DISPONIVEL')` (ambos os hooks aceitam um filtro inicial opcional, default `"ALL"`, sem quebrar quem já os chama sem argumento). Um hook novo, `useAlocacao`, cuida só do que é específico dessa tela — seleção de funcionário/aparelho e a ação de vincular — sem duplicar a busca de dados.
   - **Dois painéis lado a lado** (funcionários à esquerda, aparelhos à direita), cada um com busca, paginação própria e seleção por clique (rádio visual).
+  - **Toggle "Somente sem aparelho"** no painel de funcionários — desligado, mostra todo mundo (`useFuncionario('ALL')` na hora, via `setStatusFilter`), permitindo escolher alguém que **já tem** aparelho (fluxo de troca). Quem já tem aparelho aparece com um badge "Já possui: `<modelo>`" em vez do "Sem aparelho" vermelho, e o rodapé da barra de vínculo mostra um aviso amarelo antes de confirmar. O badge "X pendentes" no topo (`ResumoAlocacao`) sempre mostra a contagem **geral** de quem está sem aparelho (`GET /employee/count?hasDevice=false`, via `countFuncionariosSemAparelho`), independente do estado do toggle — só a lista em si muda de filtro.
   - **Furo conhecido de backend:** `/employee/search` e `/devices/search` não aceitam `hasDevice`/`situacao` junto com o termo de busca — buscando, o resultado pode trazer gente/aparelho fora do filtro esperado. Contornado no front: `PainelFuncionarios`/`PainelAparelhos` filtram o resultado (`f.devices.length === 0`, `d.situacao === 'DISPONIVEL'`) depois que a API responde, antes de renderizar. Efeito colateral aceito: durante uma busca ativa, os contadores de paginação/"pendentes" podem ficar levemente imprecisos (calculados sobre o resultado bruto da busca, antes do filtro extra do front) — por isso os badges "X pendentes"/"X disponíveis" no topo da tela **congelam** no último valor correto enquanto há texto na busca (`totalSemAparelho`/`totalDisponiveis` só atualizam quando o campo de busca está vazio), em vez de mostrar esse número impreciso.
-  - **Vincular** (`PATCH /devices/:id/vincular`, `vincularAparelho` em `aparelhoApi.ts`) atualiza o vínculo no Accessus e empurra nome/TAG pra Pulsus na mesma chamada (ver `backend/README.md`). Ao concluir, abre o `VinculoSucessoModal` com 3 próximos passos: **Baixar contrato de comodato** (`baixarContratoComodato`, chama `GET /devices/:id/comodato-contract`, com estado de carregando/erro próprio), **Documentos no Youk** (só abre `https://manager.youk.com.br/envioDocs` numa aba nova — não tem integração automática com a API do Youk ainda) e **Grupo no Pulsus** (o lembrete que já existia, `https://app.pulsus.mobi/devices/{pulsusId}` — porque a API da Pulsus não permite trocar o **grupo** do aparelho pela API, só o backend Accessus atualiza nome/TAG).
+  - **Vincular** (`PATCH /devices/:id/vincular`, `vincularAparelho` em `aparelhoApi.ts`) atualiza o vínculo no Accessus e empurra nome/TAG pra Pulsus na mesma chamada (ver `backend/README.md`). Ao concluir, abre o `VinculoSucessoModal` com os próximos passos: se o funcionário já tinha algum aparelho antes (fluxo de troca, ver toggle acima), o primeiro passo vem destacado em amarelo — **Desvincular aparelho antigo**, com um link direto pro perfil dele (`/inventario/funcionarios/:id`) pra fazer isso manualmente. Depois, os 3 passos de sempre: **Baixar contrato de comodato** (`baixarContratoComodato`, chama `GET /devices/:id/comodato-contract`, com estado de carregando/erro próprio), **Documentos no Youk** (só abre `https://manager.youk.com.br/envioDocs` numa aba nova — não tem integração automática com a API do Youk ainda) e **Grupo no Pulsus** (o lembrete que já existia, `https://app.pulsus.mobi/devices/{pulsusId}` — porque a API da Pulsus não permite trocar o **grupo** do aparelho pela API, só o backend Accessus atualiza nome/TAG).
 - **Movimentações**: lista e paginação reais, ligadas em `GET /deviceHistory` (hook `useHistorico`, sem filtro nenhum passado pra API ainda). Mostra data/hora, ação (badge "Alocação"/"Devolução" com ícone), funcionário (avatar + nome + departamento) e aparelho (modelo + TAG) de cada movimentação. O **filtro** (busca + período + pills Todas/Alocações/Devoluções) continua **só layout** — inputs sem `value`/`onChange`, sem estado nenhum — porque o backend ainda não aceita filtro por texto/data/tipo em `/deviceHistory` (ver `backend/README.md`).
 
-Acesso restrito a `DEPT_TI` no backend para `/employee/**` (ver nota¹ acima) — o frontend ainda não esconde o menu de quem não é TI, só as chamadas à API falham com 403. `/devices/**` e `/deviceHistory/**` ainda nem têm essa restrição no backend (qualquer autenticado acessa hoje).
+Acesso restrito a `DEPT_TI` no backend para `/employee/**` e `/lines/**` (ver nota¹ na seção de rotas acima) — o frontend ainda não esconde o menu de quem não é TI, só as chamadas à API falham com 403. `/devices/**` e `/deviceHistory/**` ainda nem têm essa restrição no backend (qualquer autenticado acessa hoje).
 
 Tanto `ListaFuncionarios.tsx` quanto `ListaAparelhos.tsx` não têm mais coluna de "Detalhes"/"Histórico" — a linha inteira da tabela é clicável (`onClick` no `<tr>` + `useNavigate`, `cursor: pointer` via CSS) e leva pra página de detalhe correspondente.
 
