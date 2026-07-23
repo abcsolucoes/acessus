@@ -1,20 +1,24 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { baixarContratoComodato } from '../../../services/AparelhoService/aparelhoApi'
+import type { Device } from '../../../types'
 import styles from './VinculoSucessoModal.module.css'
 
 type Props = {
     funcionarioName: string
+    funcionarioId: number
     departamento: string | null
     aparelhoLabel: string
     pulsusId: number
     deviceId: number
+    aparelhosAnteriores: Device[]
     onClose: () => void
     onDownloadError: () => void
 }
 
 const YOUK_URL = 'https://manager.youk.com.br/envioDocs'
 
-export function VinculoSucessoModal({ funcionarioName, departamento, aparelhoLabel, pulsusId, deviceId, onClose, onDownloadError }: Props) {
+export function VinculoSucessoModal({ funcionarioName, funcionarioId, departamento, aparelhoLabel, pulsusId, deviceId, aparelhosAnteriores, onClose, onDownloadError }: Props) {
     const [baixando, setBaixando] = useState(false)
 
     async function handleBaixarContrato() {
@@ -47,6 +51,26 @@ export function VinculoSucessoModal({ funcionarioName, departamento, aparelhoLab
                 </div>
 
                 <div className={styles.nextSteps}>
+                    {aparelhosAnteriores.length > 0 && (
+                        <div className={`${styles.step} ${styles.stepWarning}`}>
+                            <div className={styles.stepLeft}>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                    <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+                                    <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+                                </svg>
+                                <div className={styles.stepLabelWrap}>
+                                    <span>Desvincular aparelho antigo</span>
+                                    <span className={styles.stepHint}>
+                                        {funcionarioName.split(' ')[0]} ainda está com {aparelhosAnteriores.length === 1 ? `o ${aparelhosAnteriores[0].model ?? 'aparelho'} anterior` : `${aparelhosAnteriores.length} aparelhos anteriores`}
+                                    </span>
+                                </div>
+                            </div>
+                            <Link className={styles.stepBtn} to={`/inventario/funcionarios/${funcionarioId}`} onClick={onClose}>
+                                Ver perfil
+                            </Link>
+                        </div>
+                    )}
+
                     <div className={styles.step}>
                         <div className={styles.stepLeft}>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

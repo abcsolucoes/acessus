@@ -65,3 +65,32 @@ export function waNumero(telephone: string): string {
 export function getInitials(name: string): string {
   return name.split(' ').filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('')
 }
+
+/**
+ * "Comprovante de Endereço" + "Lucas Henrique Costa" + "Ementa HPRO.pdf"
+ * -> "comprovante_de_endereo_lucas.pdf" — mesma normalização usada no nome
+ * gravado em disco (FileStorageService.upload), pra bater com o nome de dentro do ZIP.
+ */
+export function buildDocumentFileName(fieldName: string, candidateName: string, originalFileName: string): string {
+  const fieldNorm = fieldName
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')
+    .trim()
+    .replace(/\s+/g, '_')
+  const firstName = candidateName.trim().split(/\s+/)[0] ?? ''
+  const firstNameNorm = firstName.toLowerCase().replace(/[^a-z0-9]/g, '')
+  const dot = originalFileName.lastIndexOf('.')
+  const extension = dot >= 0 ? originalFileName.slice(dot) : ''
+  return `${fieldNorm}_${firstNameNorm}${extension}`
+}
+
+export type DownloadProgress = { received: number; total: number | null }
+
+/** Com total conhecido (Content-Length) mostra "%"; sem total (ZIP em streaming), mostra "X MB" */
+export function formatDownloadProgress(progress: DownloadProgress | null): string {
+  if (!progress) return 'Gerando…'
+  if (progress.total) {
+    return `${Math.min(100, Math.round((progress.received / progress.total) * 100))}%`
+  }
+  return `${(progress.received / (1024 * 1024)).toFixed(1)} MB`
+}

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { apiFetch, authHeaders, decodeToken, API_URL } from '../../services/api'
-import type { Candidate, Field } from '../../types'
+import type { Candidate, Field, FieldValueResponse } from '../../types'
+import type { DownloadProgress } from '../../utils/format'
 
 export function useCandidato() {
   const { id } = useParams()
@@ -10,7 +11,8 @@ export function useCandidato() {
   const [candidate, setCandidate] = useState<Candidate | null>(null)
   const [user, setUser] = useState<{ name: string; role: string; sub: string } | null>(null)
   const [loading, setLoading] = useState(false)
-  const [fields, setFields] = useState<Field[]>([])
+  const [allFields, setAllFields] = useState<Field[]>([])
+  const [documents, setDocuments] = useState<FieldValueResponse[]>([])
   const [showFieldModal, setShowFieldModal] = useState(false)
   const [toast, setToast] = useState('')
   const [showEditModal, setShowEditModal] = useState(false)
@@ -22,6 +24,21 @@ export function useCandidato() {
   const [showChecklistModal, setShowChecklistModal] = useState(false)
   const [checklistLoading, setChecklistLoading] = useState(false)
   const [downloadingEndpoint, setDownloadingEndpoint] = useState<string | null>(null)
+  const [downloadProgress, setDownloadProgress] = useState<DownloadProgress | null>(null)
+
+  async function loadDocuments() {
+    const docs = await apiFetch<FieldValueResponse[]>(`/fieldValue/${id}/documents`, { headers: authHeaders() })
+    setDocuments(docs.filter(d => !!d.fileName))
+  }
+
+  async function handleDeleteDocument(valueId: number) {
+    try {
+      await apiFetch(`/candidates/${id}/files/${valueId}`, { method: 'DELETE', headers: authHeaders() })
+      setDocuments(prev => prev.filter(d => d.valueId !== valueId))
+    } catch (e) {
+      setToast(e instanceof Error ? e.message : 'Erro ao excluir documento.')
+    }
+  }
 
   useEffect(() => {
     async function load() {
@@ -30,7 +47,8 @@ export function useCandidato() {
         const data = await apiFetch<Candidate>(`/candidates/${id}`, { headers: authHeaders() })
         setCandidate(data)
         const fieldsData = await apiFetch<Field[]>(`/field/${id}`, { headers: authHeaders() })
-        setFields(fieldsData.filter(f => f.scope === 'CANDIDATE'))
+        setAllFields(fieldsData)
+        await loadDocuments()
       } catch {
         navigate('/rh')
       }
@@ -45,10 +63,36 @@ export function useCandidato() {
 
   async function handleDownload(endpoint: string, filename: string) {
     setDownloadingEndpoint(endpoint)
+    setDownloadProgress(null)
     try {
       const res = await fetch(`${API_URL}${endpoint}`, { headers: authHeaders() })
       if (!res.ok) throw new Error(`Erro ${res.status}`)
-      const blob = await res.blob()
+
+      // Content-Length só existe pros endpoints que respondem com o corpo todo pronto
+      // (relatório, arquivo individual) — o ZIP vai em streaming (ver backend), então
+      // não tem tamanho total conhecido de antemão; nesse caso mostra MB em vez de %.
+      const totalHeader = res.headers.get('content-length')
+      const total = totalHeader ? Number(totalHeader) : null
+      const reader = res.body?.getReader()
+
+      let blob: Blob
+      if (reader) {
+        const chunks: Uint8Array[] = []
+        let received = 0
+        for (; ;) {
+          const { done, value } = await reader.read()
+          if (done) break
+          if (value) {
+            chunks.push(value)
+            received += value.length
+            setDownloadProgress({ received, total })
+          }
+        }
+        blob = new Blob(chunks)
+      } else {
+        blob = await res.blob()
+      }
+
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -60,6 +104,7 @@ export function useCandidato() {
       setToast('Erro ao baixar arquivo.')
     } finally {
       setDownloadingEndpoint(null)
+      setDownloadProgress(null)
     }
   }
 
@@ -241,7 +286,9 @@ export function useCandidato() {
     candidate, setCandidate,
     user,
     loading,
-    fields, setFields,
+    fields: allFields.filter(f => f.scope === 'CANDIDATE'), setFields: setAllFields,
+    allFields,
+    documents, loadDocuments, handleDeleteDocument,
     toast, setToast,
     showEditModal, setShowEditModal,
     showDeleteModal, setShowDeleteModal,
@@ -264,5 +311,6 @@ export function useCandidato() {
     handleSendRoute,
     handleDownload,
     downloadingEndpoint,
+    downloadProgress,
   }
 }

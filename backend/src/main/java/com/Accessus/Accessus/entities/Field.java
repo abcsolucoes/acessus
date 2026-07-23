@@ -33,6 +33,9 @@ public class Field {
     @JoinColumn(name = "candidate_id")
     private Candidate candidate;
 
+    // Lista separada por vírgula (ex: "Pai/Mãe,Irmão(ã),Cônjuge,Outro") — só usado quando fieldType == SELECT.
+    private String fieldOptions;
+
     public Field() {
     }
 
@@ -109,5 +112,13 @@ public class Field {
 
     public void setCandidate(Candidate candidate) {
         this.candidate = candidate;
+    }
+
+    public String getFieldOptions() {
+        return fieldOptions;
+    }
+
+    public void setFieldOptions(String fieldOptions) {
+        this.fieldOptions = fieldOptions;
     }
 }

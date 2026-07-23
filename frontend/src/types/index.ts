@@ -103,6 +103,18 @@ export type Device = {
   employeeId: number | null
 }
 
+export type LineStatus = 'IN_USE' | 'AVAILABLE' | 'REACTIVATE' | 'UNAVAILABLE'
+
+export type Line = {
+  id: number
+  number: string
+  iccid: string | null
+  status: LineStatus
+  notes: string | null
+  employeeName: string | null
+  employeeId: number | null
+}
+
 export type Funcionario = {
   id: number
   cpf: string
@@ -138,10 +150,11 @@ export type Field = {
   fieldName: string
   enabled: boolean
   fieldSize: 'MEDIUM' | 'BIG'
-  fieldType: 'TEXT' | 'DOC' | 'DATE'
-  step: 'personalData' | 'address' | 'docs' | 'dependentsDocs' | 'bankDetails'
+  fieldType: 'TEXT' | 'DOC' | 'DATE' | 'SELECT'
+  step: 'personalData' | 'address' | 'docs' | 'dependentsDocs' | 'bankDetails' | 'transport' | 'emergencyContact'
   scope: 'ADMISSION' | 'CANDIDATE'
   candidate: { id: number } | null
+  fieldOptions: string | null
 }
 
 export type TicketStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED'

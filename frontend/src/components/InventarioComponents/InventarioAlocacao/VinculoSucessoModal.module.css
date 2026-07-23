@@ -92,6 +92,15 @@
   text-align: left;
 }
 
+.stepWarning {
+  border-color: color-mix(in srgb, var(--warning) 30%, transparent);
+  background: color-mix(in srgb, var(--warning) 6%, var(--bg-primary));
+}
+
+.stepWarning .stepLeft svg {
+  color: var(--warning);
+}
+
 .stepLeft {
   display: flex;
   align-items: center;

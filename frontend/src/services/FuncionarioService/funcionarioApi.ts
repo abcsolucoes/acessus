@@ -32,6 +32,10 @@ export function summaryFuncionarios(): Promise<FuncionariosIndicadores> {
     ]).then(([ativos, afastados]) => ({ ativos, afastados }))
 }
 
+export function countFuncionariosSemAparelho() {
+    return apiFetch<number>("/employee/count?hasDevice=false", { headers: authHeaders() })
+}
+
 export function listCompanies() {
     return apiFetch<Company[]>("/employee/companies", { headers: authHeaders() })
 }

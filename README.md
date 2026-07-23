@@ -19,7 +19,7 @@ acessus/
 | RH | Candidatos (cadastro, edição, exclusão, reenvio de formulário), campos dinâmicos de admissão, formulário público (com notificação por e-mail ao RH quando o candidato finaliza o envio), checklist pós-aprovação (Dysrup, WhatsApp, ticket de TI), relatório `.docx` | ADMIN, RH |
 | Contatos | Agenda corporativa integrada com Google Contacts, com atalho para iniciar conversa no WhatsApp | ADMIN, RH, OPERACIONAL, DP |
 | Tickets | Chamados internos com filtros (meus, meu setor, criados por mim, todos), anexos e notificação por e-mail | Todos |
-| Inventário | Funcionários (importação de planilha do RH) e aparelhos corporativos sincronizados do MDM Pulsus, com vínculo automático (por nome) ou manual (tela de Alocação) aparelho ↔ funcionário, e histórico de movimentações | TI |
+| Inventário | Funcionários (importação de planilha do RH) e aparelhos corporativos sincronizados do MDM Pulsus, com vínculo/desvínculo (manual, tela de Alocação, ou automático por nome) aparelho ↔ funcionário, contrato de comodato em PDF, e histórico de movimentações | TI |
 | Configurações | Gestão de usuários do sistema | ADMIN |
 | Logs | Auditoria paginada e filtrável de todas as ações | ADMIN |
 
@@ -40,6 +40,8 @@ cd backend
 
 Sobe em `http://localhost:8080` com banco H2 em memória (perfil `test`).
 Swagger disponível em `http://localhost:8080/swagger-ui.html`.
+
+Um `.env` na raiz do repo (copiado de `.env.example`, nunca commitado) é lido automaticamente na subida — não precisa exportar variável nenhuma na sessão do terminal antes de rodar.
 
 ### Frontend
 
@@ -75,6 +77,7 @@ As variáveis ficam em `/opt/acessus/.env` no servidor. Nenhum segredo deve ser 
 | `DEV_EMAIL` | E-mails com permissão para gerenciar campos de admissão (escopo `ADMISSION`) |
 | `BASE_URL` | URL pública do sistema |
 | `CORS_ALLOWED_ORIGINS` | Origens permitidas no CORS |
+| `SOFFICE_PATH` | Caminho do executável do LibreOffice, usado para converter o contrato de comodato (`.docx`) em PDF. Opcional — o padrão `soffice` já funciona em produção (Linux) depois do `apt install libreoffice`; só é preciso setar no Windows local, apontando pro `soffice.exe` |
 
 ## Documentação detalhada
 

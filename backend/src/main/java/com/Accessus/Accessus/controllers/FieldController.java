@@ -1,6 +1,7 @@
 package com.Accessus.Accessus.controllers;
 
 import com.Accessus.Accessus.dto.field.CreateFieldDto;
+import com.Accessus.Accessus.dto.field.UpdateFieldDto;
 import com.Accessus.Accessus.entities.Field;
 import com.Accessus.Accessus.services.FieldService;
 import jakarta.validation.Valid;
@@ -35,6 +36,11 @@ public class FieldController {
         return ResponseEntity.ok(fieldService.loadFields(candidateId));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<Field> updateField(@PathVariable Long id, @RequestBody @Valid UpdateFieldDto dto) {
+        return ResponseEntity.ok(fieldService.updateField(id, dto));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteField(@PathVariable Long id, @RequestParam(required = false) Long candidateId) {
         fieldService.delete(id, candidateId);
@@ -43,6 +49,6 @@ public class FieldController {
 
     @GetMapping
     public ResponseEntity<List<Field>> findAll() {
-        return ResponseEntity.ok(fieldService.findAll());
+        return ResponseEntity.ok(fieldService.findAdmissionFields());
     }
 }

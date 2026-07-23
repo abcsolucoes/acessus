@@ -29,6 +29,8 @@ import { InventarioFuncionariosPage } from './pages/Inventario/Funcionarios'
 import { InventarioFuncionarioDetalhePage } from './pages/Inventario/FuncionarioDetalhe'
 import { InventarioAparelhosPage } from './pages/Inventario/Aparelhos'
 import { InventarioAparelhoDetalhePage } from './pages/Inventario/AparelhoDetalhe'
+import { InventarioLinhasPage } from './pages/Inventario/Linhas'
+import { InventarioLinhaDetalhePage } from './pages/Inventario/LinhaDetalhe'
 import { InventarioAlocacaoPage } from './pages/Inventario/Alocacao'
 import { InventarioMovimentacoesPage } from './pages/Inventario/Movimentacoes'
 import { RHPage } from './pages/RH'
@@ -64,6 +66,8 @@ export default function App() {
           <Route path="/inventario/funcionarios/:id" element={<InventarioFuncionarioDetalhePage />} />
           <Route path="/inventario/aparelhos" element={<InventarioAparelhosPage />} />
           <Route path="/inventario/aparelhos/:id" element={<InventarioAparelhoDetalhePage />} />
+          <Route path="/inventario/linhas" element={<InventarioLinhasPage />} />
+          <Route path="/inventario/linhas/:id" element={<InventarioLinhaDetalhePage />} />
           <Route path="/inventario/alocacao" element={<InventarioAlocacaoPage />} />
           <Route path="/inventario/movimentacoes" element={<InventarioMovimentacoesPage />} />
           <Route path="/contatos" element={<ContatosPage />} />

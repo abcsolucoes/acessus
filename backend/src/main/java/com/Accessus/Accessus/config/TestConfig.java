@@ -283,6 +283,12 @@ public class TestConfig implements CommandLineRunner {
         // igual ao que a rota real cria quando candidateId vem nulo.
         // =====================================================
 
+        Field grauParentescoContatoEmergencia = new Field(
+                null, "Grau de Parentesco (Contato de Emergência)", true,
+                FieldSize.MEDIUM, FieldType.SELECT, Steps.emergencyContact, FieldScope.ADMISSION, null
+        );
+        grauParentescoContatoEmergencia.setFieldOptions("Pai/Mãe,Irmão(ã),Cônjuge,Outro");
+
         List<Field> fields = List.of(
                 new Field(null, "Documento de Identificação com CPF", true, FieldSize.BIG, FieldType.DOC, Steps.personalData, FieldScope.ADMISSION, null),
                 new Field(null, "Comprovante de Endereço (Atualizado)", true, FieldSize.BIG, FieldType.DOC, Steps.address, FieldScope.ADMISSION, null),
@@ -311,11 +317,24 @@ public class TestConfig implements CommandLineRunner {
                 new Field(null, "Escolaridade", true, FieldSize.BIG, FieldType.TEXT, Steps.personalData, FieldScope.ADMISSION, null),
                 new Field(null, "Data de Nascimento", true, FieldSize.MEDIUM, FieldType.DATE, Steps.personalData, FieldScope.ADMISSION, null),
                 new Field(null, "Raça / Cor", true, FieldSize.MEDIUM, FieldType.TEXT, Steps.personalData, FieldScope.ADMISSION, null),
-                new Field(null, "Nome do Contato de Emergência", true, FieldSize.BIG, FieldType.TEXT, Steps.personalData, FieldScope.ADMISSION, null),
-                new Field(null, "Telefone do Contato de Emergência", true, FieldSize.MEDIUM, FieldType.TEXT, Steps.personalData, FieldScope.ADMISSION, null),
                 new Field(null, "Tamanho da Camisa de Uniforme", true, FieldSize.MEDIUM, FieldType.TEXT, Steps.personalData, FieldScope.ADMISSION, null),
                 new Field(null, "Tamanho da Bota", true, FieldSize.MEDIUM, FieldType.TEXT, Steps.personalData, FieldScope.ADMISSION, null),
-                new Field(null, "Chave Pix", true, FieldSize.MEDIUM, FieldType.TEXT, Steps.personalData, FieldScope.ADMISSION, null)
+                new Field(null, "Chave Pix", true, FieldSize.MEDIUM, FieldType.TEXT, Steps.personalData, FieldScope.ADMISSION, null),
+
+                // Carteira de trabalho — mais um documento na etapa "Documentos"
+                new Field(null, "Carteira de Trabalho", true, FieldSize.MEDIUM, FieldType.DOC, Steps.docs, FieldScope.ADMISSION, null),
+
+                // Transporte — etapa própria
+                new Field(null, "Linha(s) de Ônibus (Ida e Volta)", true, FieldSize.BIG, FieldType.TEXT, Steps.transport, FieldScope.ADMISSION, null),
+                new Field(null, "Quantidade de Passagens por Dia", true, FieldSize.MEDIUM, FieldType.TEXT, Steps.transport, FieldScope.ADMISSION, null),
+                new Field(null, "Valor da Passagem", true, FieldSize.MEDIUM, FieldType.TEXT, Steps.transport, FieldScope.ADMISSION, null),
+                new Field(null, "Cartão de Ônibus", true, FieldSize.MEDIUM, FieldType.TEXT, Steps.transport, FieldScope.ADMISSION, null),
+
+                // Contato de emergência — etapa própria (nome/telefone já existiam soltos em
+                // "Dados pessoais"; movidos pra cá + o campo de parentesco que faltava)
+                new Field(null, "Nome do Contato de Emergência", true, FieldSize.BIG, FieldType.TEXT, Steps.emergencyContact, FieldScope.ADMISSION, null),
+                new Field(null, "Telefone do Contato de Emergência", true, FieldSize.MEDIUM, FieldType.TEXT, Steps.emergencyContact, FieldScope.ADMISSION, null),
+                grauParentescoContatoEmergencia
         );
 
         fieldRepository.saveAll(fields);

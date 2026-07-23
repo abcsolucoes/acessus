@@ -185,6 +185,11 @@ public class SecurityConfig {
                         .requestMatchers("/employee/**").hasAuthority("DEPT_TI")
 
                         // =========================================================
+                        // LINHAS (INVENTÁRIO) — apenas TI
+                        // =========================================================
+                        .requestMatchers("/lines/**").hasAuthority("DEPT_TI")
+
+                        // =========================================================
                         // QUALQUER OUTRA ROTA
                         // =========================================================
                         .anyRequest().authenticated()

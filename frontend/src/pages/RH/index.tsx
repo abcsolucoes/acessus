@@ -17,6 +17,7 @@ export function RHPage() {
     user,
     candidates, search, setSearch,
     statusFilter, setStatusFilter,
+    sort, setSort,
     page, setPage,
     totalPages, loading,
     refresh,
@@ -54,6 +55,8 @@ export function RHPage() {
           onStatusChange={setStatusFilter}
           search={search}
           onSearchChange={setSearch}
+          sort={sort}
+          onSortChange={setSort}
         />
 
         <div className={styles.list}>

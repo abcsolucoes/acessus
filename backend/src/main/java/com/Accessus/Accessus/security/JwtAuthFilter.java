@@ -25,6 +25,16 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Autowired
     private UserRepository userRepository;
 
+    // Endpoints que respondem via StreamingResponseBody (ex: GET /candidates/{id}/files/zip)
+    // disparam um dispatch assíncrono pra escrever o corpo da resposta. OncePerRequestFilter
+    // por padrão pula esse segundo dispatch (shouldNotFilterAsyncDispatch() = true) — sem
+    // reautenticar aqui, o SecurityContext fica vazio nessa passada e o AuthorizationFilter
+    // nega acesso já com a resposta committed, cortando a conexão no meio (chunked incompleto).
+    @Override
+    protected boolean shouldNotFilterAsyncDispatch() {
+        return false;
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {

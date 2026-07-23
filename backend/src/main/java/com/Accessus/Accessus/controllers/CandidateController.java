@@ -5,16 +5,19 @@ import com.Accessus.Accessus.dto.candidate.ResponseCandidateDto;
 import com.Accessus.Accessus.enums.CandidateStatus;
 import com.Accessus.Accessus.services.CandidateService;
 import com.Accessus.Accessus.services.FieldService;
+import com.Accessus.Accessus.services.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 @RestController
 @RequestMapping("/candidates")
@@ -25,12 +28,27 @@ public class    CandidateController {
     @Autowired
     FieldService fieldService;
 
+    @Autowired
+    UserService userService;
+
+    // O sort vindo da URL (?sort=admissionDate,desc) não carrega null handling — sem isso,
+    // NULL ordena diferente em cada banco (Postgres bota NULL primeiro no DESC, H2 bota por último).
+    // Forçar nullsLast() em toda ordem deixa o comportamento igual em dev e produção; não tem
+    // efeito em colunas sem null (id, name), então é seguro aplicar sempre, sem checar a propriedade.
+    private Pageable withNullsLast(Pageable pageable) {
+        return PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by(pageable.getSort().stream().map(Sort.Order::nullsLast).toList())
+        );
+    }
+
     @GetMapping
     public ResponseEntity<Page<ResponseCandidateDto>> findAll(
             @RequestParam(required = false) CandidateStatus status,
-            @PageableDefault(size = 20, sort = "id") Pageable pageable
+            @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        return ResponseEntity.ok(candidateService.findAll(status, pageable));
+        return ResponseEntity.ok(candidateService.findAll(status, withNullsLast(pageable)));
     }
 
     @GetMapping("/{id}")
@@ -99,10 +117,9 @@ public class    CandidateController {
     @GetMapping("/search")
     public ResponseEntity<Page<ResponseCandidateDto>> search(
             @RequestParam String term,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        return ResponseEntity.ok(candidateService.search(term, PageRequest.of(page, size)));
+        return ResponseEntity.ok(candidateService.search(term, withNullsLast(pageable)));
     }
 
     @GetMapping("/{id}/report")
@@ -138,25 +155,41 @@ public class    CandidateController {
         return ResponseEntity.ok().build();
     }
 
+    // Rota compartilhada por dois fluxos, igual changeStatus (ver CandidateService): o próprio
+    // candidato excluindo um upload durante o formulário público (token) ou o RH excluindo um
+    // documento direto na tela do candidato, já autenticado (sem token).
     @DeleteMapping("/{candidateId}/files/{valueId}")
     public ResponseEntity<Void> deleteFile(
             @PathVariable Long candidateId,
             @PathVariable Long valueId,
-            @RequestParam("token") String token
+            @RequestParam(required = false) String token
     ) {
-        fieldService.validateCandidateToken(candidateId, token);
+        if (token != null) {
+            fieldService.validateCandidateToken(candidateId, token);
+        } else {
+            userService.getAuthenticatedUser();
+        }
         candidateService.deleteFile(candidateId, valueId);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/{candidateId}/files/zip")
-    public ResponseEntity<byte[]> downloadCandidateFilesZip(@PathVariable Long candidateId) {
-        byte[] zip = candidateService.zipCandidateFiles(candidateId);
+    public ResponseEntity<StreamingResponseBody> downloadCandidateFilesZip(@PathVariable Long candidateId) {
+        StreamingResponseBody body = outputStream -> candidateService.zipCandidateFiles(candidateId, outputStream);
 
         return ResponseEntity.ok()
                 .header("Content-Disposition", "attachment; filename=\"arquivos-candidato-" + candidateId + ".zip\"")
                 .contentType(MediaType.parseMediaType("application/zip"))
-                .body(zip);
+                .body(body);
+    }
+
+    @GetMapping("/{candidateId}/files/{valueId}")
+    public ResponseEntity<byte[]> downloadFile(@PathVariable Long candidateId, @PathVariable Long valueId) {
+        var file = candidateService.getFile(candidateId, valueId);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(file.contentType()))
+                .body(file.content());
     }
 
     @GetMapping("/validate")

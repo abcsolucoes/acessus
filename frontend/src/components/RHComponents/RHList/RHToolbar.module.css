@@ -43,6 +43,110 @@
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
 }
 
+.rightGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sortDropdown {
+  position: relative;
+}
+
+.sortBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 500;
+  font-family: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.sortBtn:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-secondary);
+}
+
+.sortBtn svg:first-child {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.chevron {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: transform var(--transition-fast);
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.sortMenu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 190px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: 6px;
+  z-index: 200;
+  animation: sortMenuIn 0.14s ease;
+  transform-origin: top right;
+}
+
+@keyframes sortMenuIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.sortItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.825rem;
+  font-weight: 450;
+  text-align: left;
+  white-space: nowrap;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.sortItem:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.sortItemActive {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.sortItemActive svg {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sortMenu { animation: none; }
+}
+
 .searchWrap {
   position: relative;
   display: flex;
@@ -92,5 +196,26 @@
 
   .searchWrap {
     width: 100%;
+  }
+
+  .rightGroup {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sortDropdown {
+    width: 100%;
+  }
+
+  .sortBtn {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .sortMenu {
+    left: 0;
+    right: 0;
+    min-width: 0;
   }
 }

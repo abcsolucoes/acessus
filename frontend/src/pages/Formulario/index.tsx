@@ -4,9 +4,9 @@ import type { Candidate, Field, FieldValueResponse } from "../../types"
 import styles from './style.module.css'
 import { apiFetch } from "../../services/api"
 
-const STEPS = ['personalData', 'address', 'docs', 'dependentsDocs', 'bankDetails']
-const STEP_LABELS = ['Dados pessoais', 'Endereço', 'Documentos', 'Docs. dependentes', 'Dados bancários']
-const TYPE_MAP: Record<string, string> = { TEXT: 'text', DOC: 'file', DATE: 'date' }
+const STEPS = ['personalData', 'address', 'docs', 'dependentsDocs', 'bankDetails', 'transport', 'emergencyContact']
+const STEP_LABELS = ['Dados pessoais', 'Endereço', 'Documentos', 'Docs. dependentes', 'Dados bancários', 'Transporte', 'Contato de emergência']
+const TYPE_MAP: Record<string, string> = { TEXT: 'text', DOC: 'file', DATE: 'date', SELECT: 'select' }
 const SIZE_MAP: Record<string, string> = { MEDIUM: 'fieldItem', BIG: 'fieldItemFull' }
 const MAX_FILES_PER_FIELD = 5
 
@@ -367,6 +367,44 @@ export function FormularioPage() {
                         </div>
                       ))}
                     </>
+                  ) : f.fieldType === 'SELECT' ? (
+                    (() => {
+                      const options = (f.fieldOptions ?? '').split(',').map(o => o.trim()).filter(Boolean)
+                      const raw = values[f.id] ?? ''
+                      // "Outro" pede uma especificação livre — guardada no mesmo valor como "Outro: <texto>",
+                      // pra continuar sendo 1 valor só (sem precisar de outro Field/coluna no banco).
+                      const hasOutro = options.includes('Outro')
+                      const isOutro = hasOutro && (raw === 'Outro' || raw.startsWith('Outro:'))
+                      const specify = raw.startsWith('Outro:') ? raw.replace(/^Outro:\s*/, '') : ''
+
+                      return (
+                        <>
+                          <label className={styles.fieldLabel}>{f.fieldName}</label>
+                          <select
+                            className={styles.input}
+                            value={isOutro ? 'Outro' : raw}
+                            onChange={e => setValues(prev => ({ ...prev, [f.id]: e.target.value }))}
+                          >
+                            <option value="">Selecione...</option>
+                            {options.map(opt => (
+                              <option key={opt} value={opt}>{opt}</option>
+                            ))}
+                          </select>
+                          {isOutro && (
+                            <input
+                              className={styles.input}
+                              style={{ marginTop: 8 }}
+                              placeholder="Especifique..."
+                              value={specify}
+                              onChange={e => {
+                                const text = e.target.value
+                                setValues(prev => ({ ...prev, [f.id]: text ? `Outro: ${text}` : 'Outro' }))
+                              }}
+                            />
+                          )}
+                        </>
+                      )
+                    })()
                   ) : (
                     <>
                       <label className={styles.fieldLabel}>

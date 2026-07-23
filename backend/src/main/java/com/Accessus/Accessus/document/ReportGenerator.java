@@ -1,6 +1,8 @@
 package com.Accessus.Accessus.document;
 
+import com.Accessus.Accessus.entities.Field;
 import com.Accessus.Accessus.entities.FieldValue;
+import com.Accessus.Accessus.enums.FieldType;
 import com.Accessus.Accessus.enums.Steps;
 import org.apache.poi.xwpf.usermodel.*;
 import org.springframework.stereotype.Component;
@@ -70,6 +72,18 @@ public class ReportGenerator {
     private void addSection(XWPFDocument doc, String sectionTitle, List<FieldValue> values) {
         if (values == null || values.isEmpty()) return;
 
+        // Um campo DOC pode ter várias linhas de FieldValue (até 5 arquivos) — agrupa por
+        // field antes de montar os cards, senão cada arquivo gerava um card duplicado.
+        List<List<FieldValue>> fieldGroups = new ArrayList<>(
+                values.stream()
+                        .collect(Collectors.groupingBy(
+                                fv -> fv.getField().getId(),
+                                LinkedHashMap::new,
+                                Collectors.toList()
+                        ))
+                        .values()
+        );
+
         XWPFParagraph spacer = doc.createParagraph();
         spacer.setSpacingBefore(300);
 
@@ -93,19 +107,19 @@ public class ReportGenerator {
         table.setLeftBorder(XWPFTable.XWPFBorderType.NONE, 0, 0, "FFFFFF");
         table.setRightBorder(XWPFTable.XWPFBorderType.NONE, 0, 0, "FFFFFF");
 
-        for (int i = 0; i < values.size(); i += 2) {
+        for (int i = 0; i < fieldGroups.size(); i += 2) {
             XWPFTableRow row = table.createRow();
 
             XWPFTableCell cell1 = getOrCreateCell(row, 0);
-            addFieldCard(cell1, values.get(i));
+            addFieldCard(cell1, fieldGroups.get(i));
 
             XWPFTableCell spaceCell = row.addNewTableCell();
             spaceCell.setWidth("2%");
 
             XWPFTableCell cell2 = row.addNewTableCell();
 
-            if (i + 1 < values.size()) {
-                addFieldCard(cell2, values.get(i + 1));
+            if (i + 1 < fieldGroups.size()) {
+                addFieldCard(cell2, fieldGroups.get(i + 1));
             } else {
                 cell2.setColor("FFFFFF");
                 cell2.setText("");
@@ -113,18 +127,20 @@ public class ReportGenerator {
         }
     }
 
-    private void addFieldCard(XWPFTableCell cell, FieldValue fieldValue) {
+    private void addFieldCard(XWPFTableCell cell, List<FieldValue> fieldValues) {
         clearCell(cell);
 
         cell.setColor("F9FAFB");
         cell.setWidth("49%");
         cell.setVerticalAlignment(XWPFTableCell.XWPFVertAlign.CENTER);
 
+        Field field = fieldValues.get(0).getField();
+
         XWPFParagraph labelParagraph = cell.addParagraph();
         labelParagraph.setSpacingAfter(40);
 
         XWPFRun label = labelParagraph.createRun();
-        label.setText(fieldValue.getField().getFieldName());
+        label.setText(field.getFieldName());
         label.setBold(true);
         label.setFontSize(9);
         label.setColor("6B7280");
@@ -132,10 +148,16 @@ public class ReportGenerator {
         XWPFParagraph valueParagraph = cell.addParagraph();
         XWPFRun value = valueParagraph.createRun();
 
-        String text = fieldValue.getValue();
+        boolean isDoc = field.getFieldType() == FieldType.DOC;
+        String text = isDoc
+                ? fieldValues.stream()
+                        .map(FieldValue::getFileName)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.joining(", "))
+                : fieldValues.get(0).getValue();
 
         if (text == null || text.isBlank()) {
-            value.setText("Não informado");
+            value.setText(isDoc ? "Nenhum documento enviado" : "Não informado");
             value.setItalic(true);
             value.setColor("9CA3AF");
         } else {
@@ -169,6 +191,8 @@ public class ReportGenerator {
             case docs -> "Documentos";
             case bankDetails -> "Dados Bancários";
             case dependentsDocs -> "Documentos de Dependentes";
+            case transport -> "Transporte";
+            case emergencyContact -> "Contato de Emergência";
             default -> step.name();
         };
     }
@@ -181,6 +205,8 @@ public class ReportGenerator {
             case docs -> 3;
             case bankDetails -> 4;
             case dependentsDocs -> 5;
+            case transport -> 6;
+            case emergencyContact -> 7;
             default -> 99;
         };
     }

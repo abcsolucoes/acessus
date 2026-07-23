@@ -89,6 +89,31 @@
   text-overflow: ellipsis;
 }
 
+/* ── Ações do card ────────────────────────────────────────── */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.editBtn {
+  height: 30px;
+  padding: 0 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-family: inherit;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-primary);
+  background: transparent;
+  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.editBtn:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-secondary);
+  color: var(--text-primary);
+}
+
 /* ── Botão excluir ────────────────────────────────────────── */
 .deleteBtn {
   height: 30px;

@@ -22,6 +22,9 @@ public record CreateFieldDto(
         @NotNull
         Steps step,
 
-        Long candidateId
+        Long candidateId,
+
+        // Só usado quando fieldType == SELECT — lista de opções separada por vírgula.
+        String fieldOptions
 ) {
 }

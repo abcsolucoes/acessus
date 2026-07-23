@@ -9,6 +9,7 @@ import { CandidatoInfo } from "../../../components/RHComponents/Candidato/Candid
 import { CandidatoFields } from "../../../components/RHComponents/Candidato/CandidatoFields"
 import { CandidatoStatus } from "../../../components/RHComponents/Candidato/CandidatoStatus"
 import { CandidatoDownloads } from "../../../components/RHComponents/Candidato/CandidatoDownloads"
+import { CandidatoDocuments } from "../../../components/RHComponents/Candidato/CandidatoDocuments"
 import { CandidatoDeleteModal } from "../../../components/RHComponents/Candidato/CandidatoDeleteModal"
 import { CandidatoChecklistModal } from "../../../components/RHComponents/Candidato/CandidatoChecklistModal"
 import { CandidateModal } from "../../../components/RHComponents/CandidateModal"
@@ -20,6 +21,8 @@ export function RHCandidatoPage() {
     user,
     loading,
     fields, setFields,
+    allFields,
+    documents, handleDeleteDocument,
     toast, setToast,
     showEditModal, setShowEditModal,
     showDeleteModal, setShowDeleteModal,
@@ -43,6 +46,7 @@ export function RHCandidatoPage() {
     handleDysrupConfirm,
     handleDownload,
     downloadingEndpoint,
+    downloadProgress,
   } = useCandidato()
 
   return (
@@ -108,7 +112,19 @@ export function RHCandidatoPage() {
               candidateId={id}
               candidateName={candidate?.name}
               downloadingEndpoint={downloadingEndpoint}
+              downloadProgress={downloadProgress}
               onDownload={handleDownload}
+            />
+
+            <CandidatoDocuments
+              documents={documents}
+              fields={allFields}
+              candidateId={id}
+              candidateName={candidate?.name}
+              downloadingEndpoint={downloadingEndpoint}
+              downloadProgress={downloadProgress}
+              onDownload={handleDownload}
+              onDelete={handleDeleteDocument}
             />
 
           </div>

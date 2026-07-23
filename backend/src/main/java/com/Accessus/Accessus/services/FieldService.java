@@ -1,6 +1,7 @@
 package com.Accessus.Accessus.services;
 
 import com.Accessus.Accessus.dto.field.CreateFieldDto;
+import com.Accessus.Accessus.dto.field.UpdateFieldDto;
 import com.Accessus.Accessus.entities.Candidate;
 import com.Accessus.Accessus.entities.Field;
 import com.Accessus.Accessus.enums.FieldScope;
@@ -61,6 +62,7 @@ public class FieldService {
         field.setFieldSize(dto.fieldSize());
         field.setFieldType(dto.fieldType());
         field.setStep(dto.step());
+        field.setFieldOptions(dto.fieldOptions());
 
         if (dto.candidateId() == null) {
             checkDevOnly();
@@ -115,6 +117,24 @@ public class FieldService {
     }
 
     @Transactional
+    public Field updateField(Long id, UpdateFieldDto dto) {
+        Field field = fieldRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Campo não encontrado"));
+
+        if (field.getScope() == FieldScope.ADMISSION) {
+            checkDevOnly();
+        }
+
+        field.setFieldName(dto.fieldName());
+        field.setEnabled(dto.enabled());
+        field.setFieldSize(dto.fieldSize());
+        field.setStep(dto.step());
+        field.setFieldOptions(dto.fieldOptions());
+
+        return fieldRepository.save(field);
+    }
+
+    @Transactional
     public void delete(Long fieldId, Long candidateId) {
         Field field = fieldRepository.findById(fieldId)
                 .orElseThrow(() -> new RuntimeException("Campo não encontrado"));
@@ -136,8 +156,10 @@ public class FieldService {
         fieldRepository.delete(field);
     }
 
+    // Usado pela tela "Campos padrão" (/rh/campos) — só os campos gerais (ADMISSION),
+    // não os campos personalizados (CANDIDATE) criados num candidato específico.
     @Transactional(readOnly = true)
-    public List<Field> findAll() {
-        return fieldRepository.findAll();
+    public List<Field> findAdmissionFields() {
+        return fieldRepository.findByScope(FieldScope.ADMISSION);
     }
 }

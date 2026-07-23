@@ -10,6 +10,8 @@ import { VinculoSucessoModal } from '../../../components/InventarioComponents/In
 import { useFuncionario } from '../../../hooks/FuncionarioHooks/useFuncionario'
 import { useAparelhos } from '../../../hooks/AparelhoHooks/useAparelhos'
 import { useAlocacao } from '../../../hooks/AlocacaoHooks/useAlocacao'
+import { countFuncionariosSemAparelho } from '../../../services/FuncionarioService/funcionarioApi'
+import type { Device } from '../../../types'
 import styles from './style.module.css'
 
 export function InventarioAlocacaoPage() {
@@ -21,6 +23,8 @@ export function InventarioAlocacaoPage() {
     setPage: setPageFuncionarios,
     search: searchFuncionarios,
     setSearch: setSearchFuncionarios,
+    statusFilter: funcionarioFilter,
+    setStatusFilter: setFuncionarioFilter,
     refetch: refetchFuncionarios,
   } = useFuncionario('SEM_APARELHO')
 
@@ -46,14 +50,17 @@ export function InventarioAlocacaoPage() {
   } = useAlocacao()
 
   const [totalSemAparelho, setTotalSemAparelho] = useState(0)
+  const [totalSemAparelhoGeral, setTotalSemAparelhoGeral] = useState(0)
   const [totalDisponiveis, setTotalDisponiveis] = useState(0)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const [vinculoConcluido, setVinculoConcluido] = useState<{
     funcionarioName: string
+    funcionarioId: number
     departamento: string | null
     aparelhoLabel: string
     pulsusId: number
     deviceId: number
+    aparelhosAnteriores: Device[]
   } | null>(null)
 
   useEffect(() => {
@@ -64,23 +71,34 @@ export function InventarioAlocacaoPage() {
     if (!searchAparelhos.trim()) setTotalDisponiveis(disponiveis)
   }, [disponiveis, searchAparelhos])
 
+  useEffect(() => {
+    countFuncionariosSemAparelho().then(setTotalSemAparelhoGeral).catch(() => {})
+  }, [])
+
+  function handleToggleSomenteSemAparelho(value: boolean) {
+    setFuncionarioFilter(value ? 'SEM_APARELHO' : 'ALL')
+  }
+
   async function handleVincular() {
     if (!selectedFuncionario || !selectedAparelho) return
 
     const funcionarioName = selectedFuncionario.name
+    const funcionarioId = selectedFuncionario.id
     const departamento = selectedFuncionario.department
     const aparelhoLabel = `${selectedAparelho.model ?? 'Aparelho'} · ${selectedAparelho.tagDevice ?? '—'}`
     const pulsusId = selectedAparelho.pulsusId
     const deviceId = selectedAparelho.id
+    const aparelhosAnteriores = selectedFuncionario.devices
 
     try {
       await vincular()
 
-      setVinculoConcluido({ funcionarioName, departamento, aparelhoLabel, pulsusId, deviceId })
+      setVinculoConcluido({ funcionarioName, funcionarioId, departamento, aparelhoLabel, pulsusId, deviceId, aparelhosAnteriores })
 
       limparSelecao()
       refetchFuncionarios()
       refetchAparelhos()
+      countFuncionariosSemAparelho().then(setTotalSemAparelhoGeral).catch(() => {})
     } catch {
       setToast({ message: 'Erro ao vincular aparelho', type: 'error' })
     }
@@ -105,13 +123,15 @@ export function InventarioAlocacaoPage() {
           </button>
         </div>
 
-        <ResumoAlocacao semAparelho={totalSemAparelho} disponiveis={totalDisponiveis} />
+        <ResumoAlocacao semAparelho={totalSemAparelhoGeral} disponiveis={totalDisponiveis} />
 
         <div className={styles.matchPanel}>
           <div className={styles.matchGrid}>
             <PainelFuncionarios
               funcionarios={funcionarios}
               pendentes={totalSemAparelho}
+              somenteSemAparelho={funcionarioFilter === 'SEM_APARELHO'}
+              onToggleSomenteSemAparelho={handleToggleSomenteSemAparelho}
               search={searchFuncionarios}
               setSearch={setSearchFuncionarios}
               page={pageFuncionarios}
@@ -155,10 +175,12 @@ export function InventarioAlocacaoPage() {
       {vinculoConcluido && (
         <VinculoSucessoModal
           funcionarioName={vinculoConcluido.funcionarioName}
+          funcionarioId={vinculoConcluido.funcionarioId}
           departamento={vinculoConcluido.departamento}
           aparelhoLabel={vinculoConcluido.aparelhoLabel}
           pulsusId={vinculoConcluido.pulsusId}
           deviceId={vinculoConcluido.deviceId}
+          aparelhosAnteriores={vinculoConcluido.aparelhosAnteriores}
           onClose={() => setVinculoConcluido(null)}
           onDownloadError={() => setToast({ message: 'Erro ao gerar contrato de comodato', type: 'error' })}
         />

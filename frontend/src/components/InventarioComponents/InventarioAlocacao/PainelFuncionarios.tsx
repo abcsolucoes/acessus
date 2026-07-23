@@ -5,6 +5,8 @@ import { getInitials } from "../../../utils/format"
 type Props = {
     funcionarios: Funcionario[]
     pendentes: number
+    somenteSemAparelho: boolean
+    onToggleSomenteSemAparelho: (value: boolean) => void
     search: string
     setSearch: (value: string) => void
     page: number
@@ -14,17 +16,36 @@ type Props = {
     onSelect: (funcionario: Funcionario) => void
 }
 
-export function PainelFuncionarios({ funcionarios, pendentes, search, setSearch, page, totalPages, setPage, selectedId, onSelect }: Props) {
+function labelAparelho(funcionario: Funcionario) {
+    if (funcionario.devices.length === 0) return null
+    if (funcionario.devices.length === 1) return `Já possui: ${funcionario.devices[0].model ?? 'aparelho'}`
+    return `Já possui ${funcionario.devices.length} aparelhos`
+}
+
+export function PainelFuncionarios({ funcionarios, pendentes, somenteSemAparelho, onToggleSomenteSemAparelho, search, setSearch, page, totalPages, setPage, selectedId, onSelect }: Props) {
     const isFirstPage = page === 0
     const isLastPage = page >= totalPages - 1
-    const semAparelho = funcionarios.filter(f => f.devices.length === 0)
 
     return (
         <div className={styles.column}>
             <div className={styles.columnHead}>
                 <span className={styles.columnTitle}>1. Selecione um funcionário</span>
-                <span className={styles.columnBadge}>{pendentes} pendentes</span>
+                <span className={styles.columnBadge}>{pendentes} {somenteSemAparelho ? 'pendentes' : 'encontrados'}</span>
             </div>
+
+            <label className={styles.toggleRow}>
+                <span className={styles.toggleSwitch}>
+                    <input
+                        type="checkbox"
+                        checked={somenteSemAparelho}
+                        onChange={e => onToggleSomenteSemAparelho(e.target.checked)}
+                    />
+                    <span className={styles.toggleTrack}>
+                        <span className={styles.toggleThumb} />
+                    </span>
+                </span>
+                Somente sem aparelho
+            </label>
 
             <div className={styles.searchWrap}>
                 <span className={styles.searchIcon}>
@@ -39,26 +60,35 @@ export function PainelFuncionarios({ funcionarios, pendentes, search, setSearch,
             </div>
 
             <div className={styles.list}>
-                {semAparelho.length === 0 && (
+                {funcionarios.length === 0 && (
                     <div className={styles.emptyState}>Nenhum funcionário encontrado.</div>
                 )}
 
-                {semAparelho.map(f => (
-                    <button
-                        key={f.id}
-                        type="button"
-                        className={`${styles.listItem} ${selectedId === f.id ? styles.listItemSelected : ''}`}
-                        onClick={() => onSelect(f)}
-                    >
-                        <span className={styles.avatar}>{getInitials(f.name)}</span>
-                        <div className={styles.itemInfo}>
-                            <span className={styles.itemName}>{f.name}</span>
-                            <span className={styles.itemMeta}>{f.department ?? '—'} · {f.position ?? '—'}</span>
-                        </div>
-                        <span className={styles.statusPill}>Sem aparelho</span>
-                        <span className={`${styles.radio} ${selectedId === f.id ? styles.radioChecked : ''}`} />
-                    </button>
-                ))}
+                {funcionarios.map(f => {
+                    const aparelhoLabel = labelAparelho(f)
+                    return (
+                        <button
+                            key={f.id}
+                            type="button"
+                            className={`${styles.listItem} ${selectedId === f.id ? styles.listItemSelected : ''}`}
+                            onClick={() => onSelect(f)}
+                        >
+                            <span className={styles.avatar}>{getInitials(f.name)}</span>
+                            <div className={styles.itemInfo}>
+                                <span className={styles.itemName}>{f.name}</span>
+                                <span className={styles.itemMeta}>{f.department ?? '—'} · {f.position ?? '—'}</span>
+                            </div>
+                            {aparelhoLabel ? (
+                                <span className={styles.statusPillInfo} title={f.devices.map(d => d.model ?? 'Aparelho').join(', ')}>
+                                    {aparelhoLabel}
+                                </span>
+                            ) : (
+                                <span className={styles.statusPill}>Sem aparelho</span>
+                            )}
+                            <span className={`${styles.radio} ${selectedId === f.id ? styles.radioChecked : ''}`} />
+                        </button>
+                    )
+                })}
             </div>
 
             <div className={styles.columnPagination}>

@@ -12,6 +12,7 @@ const FIELD_TYPE_LABEL: Record<string, string> = {
   TEXT: 'Texto',
   DOC: 'Documento',
   DATE: 'Data',
+  SELECT: 'Seleção',
 }
 
 const STEP_LABEL: Record<string, string> = {
@@ -20,6 +21,8 @@ const STEP_LABEL: Record<string, string> = {
   docs: 'Documentos',
   dependentsDocs: 'Docs. dependentes',
   bankDetails: 'Dados bancários',
+  transport: 'Transporte',
+  emergencyContact: 'Contato de emergência',
 }
 
 // Só quem gerencia os campos padrão (ADMISSION) — trava real está no backend,
@@ -35,6 +38,7 @@ export function RHCamposPage() {
   const [fields, setFields] = useState<Field[]>([])
   const [user, setUser] = useState<{ name: string; role: string; sub: string } | null>(null)
   const [showModal, setShowModal] = useState(false)
+  const [editingField, setEditingField] = useState<Field | null>(null)
   const [deleteError, setDeleteError] = useState('')
   const navigate = useNavigate()
 
@@ -82,14 +86,24 @@ export function RHCamposPage() {
                 <div className={styles.cardName}>{f.fieldName}</div>
                 <div className={styles.cardInfo}>{FIELD_TYPE_LABEL[f.fieldType]}</div>
                 <div className={styles.cardInfo}>{STEP_LABEL[f.step]}</div>
-                {(f.scope !== 'ADMISSION' || isDev) && (
-                  <button
-                    className={styles.deleteBtn}
-                    onClick={() => handleDelete(f.id)}
-                  >
-                    Excluir
-                  </button>
-                )}
+                <div className={styles.actions}>
+                  {(f.scope !== 'ADMISSION' || isDev) && (
+                    <>
+                      <button
+                        className={styles.editBtn}
+                        onClick={() => setEditingField(f)}
+                      >
+                        Editar
+                      </button>
+                      <button
+                        className={styles.deleteBtn}
+                        onClick={() => handleDelete(f.id)}
+                      >
+                        Excluir
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
             ))
           )}
@@ -99,6 +113,14 @@ export function RHCamposPage() {
           <FieldModal
             onClose={() => setShowModal(false)}
             onSuccess={field => setFields(prev => [...prev, field])}
+          />
+        )}
+
+        {editingField && (
+          <FieldModal
+            initialField={editingField}
+            onClose={() => setEditingField(null)}
+            onSuccess={field => setFields(prev => prev.map(f => f.id === field.id ? field : f))}
           />
         )}
 

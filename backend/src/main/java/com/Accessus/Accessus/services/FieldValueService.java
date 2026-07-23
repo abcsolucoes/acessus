@@ -133,4 +133,26 @@ public class FieldValueService {
                 ))
                 .toList();
     }
+
+    // ── Rota autenticada (RH/ADMIN) — só os documentos, pra listar na tela do
+    // candidato com download individual, sem precisar do ZIP completo. Diferente de
+    // findValuesByCandidate/findValues acima, que são a rota pública com token, usada
+    // pelo próprio formulário do candidato.
+    @Transactional(readOnly = true)
+    public List<FieldValueResponseDto> findDocumentsByCandidate(Long candidateId) {
+        if (!candidateRepository.existsById(candidateId)) {
+            throw new RuntimeException("Candidato não encontrado");
+        }
+
+        return fieldValueRepository.findByCandidateId(candidateId)
+                .stream()
+                .filter(fv -> fv.getField().getFieldType() == FieldType.DOC)
+                .map(fv -> new FieldValueResponseDto(
+                        fv.getId(),
+                        fv.getField().getId(),
+                        fv.getValue(),
+                        fv.getFileName()
+                ))
+                .toList();
+    }
 }

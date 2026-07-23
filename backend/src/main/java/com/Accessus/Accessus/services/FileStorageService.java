@@ -7,19 +7,32 @@ import com.Accessus.Accessus.enums.FieldType;
 import com.Accessus.Accessus.repositories.CandidateRepository;
 import com.Accessus.Accessus.repositories.FieldRepository;
 import com.Accessus.Accessus.repositories.FieldValueRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.IIOImage;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.MemoryCacheImageOutputStream;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -29,10 +42,20 @@ import java.util.zip.ZipOutputStream;
 @Service
 public class FileStorageService {
 
+    private static final Logger log = LoggerFactory.getLogger(FileStorageService.class);
+
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
     private static final int MAX_FILES_PER_FIELD = 5;
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of(".pdf", ".jpg", ".jpeg", ".png", ".heic", ".heif", ".webp");
     private static final Set<String> ALLOWED_MIME_TYPES = Set.of("application/pdf", "image/jpeg", "image/png", "image/heic", "image/heif", "image/webp");
+
+    // Fotos de documento tiradas direto da câmera do celular costumam vir com vários MB
+    // (câmeras de 12-48MP), sem necessidade real — dificultava o download do ZIP completo
+    // (README/análise de performance). javax.imageio já suporta JPG/PNG nativamente (sem
+    // dependência nova); HEIC/WEBP ficam de fora (Java não decodifica sem plugin externo).
+    private static final int MAX_IMAGE_DIMENSION = 1600;
+    private static final float JPEG_QUALITY = 0.82f;
+    private static final Set<String> RESIZABLE_EXTENSIONS = Set.of(".jpg", ".jpeg", ".png");
 
     @Value("${app.upload-dir:uploads}")
     private String uploadBaseDir;
@@ -145,13 +168,83 @@ public class FileStorageService {
         }
 
         try {
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+            byte[] originalBytes = file.getBytes();
+            byte[] toStore = resizeIfLarge(originalBytes, extension);
+            Files.write(filePath, toStore);
         } catch (IOException e) {
             throw new RuntimeException("Erro ao salvar arquivo: " + e.getMessage(), e);
         }
 
         fv.setFilePath(filePath.toString());
         fieldValueRepository.save(fv);
+    }
+
+    // Só reduz se a imagem for de fato grande — evita reprocessar (e reduzir qualidade
+    // à toa) uma foto que já veio pequena. Qualquer falha na leitura/decodificação cai
+    // no catch e mantém o arquivo original — resize é otimização, nunca deve bloquear
+    // o upload em si.
+    private byte[] resizeIfLarge(byte[] original, String extension) {
+        if (!RESIZABLE_EXTENSIONS.contains(extension)) {
+            return original;
+        }
+
+        try {
+            BufferedImage image = ImageIO.read(new ByteArrayInputStream(original));
+            if (image == null) {
+                return original;
+            }
+
+            int width = image.getWidth();
+            int height = image.getHeight();
+            if (Math.max(width, height) <= MAX_IMAGE_DIMENSION) {
+                return original;
+            }
+
+            double scale = (double) MAX_IMAGE_DIMENSION / Math.max(width, height);
+            int newWidth = Math.max(1, Math.round((float) (width * scale)));
+            int newHeight = Math.max(1, Math.round((float) (height * scale)));
+
+            boolean isPng = extension.equals(".png");
+            BufferedImage resized = new BufferedImage(
+                    newWidth, newHeight, isPng ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB
+            );
+
+            Graphics2D g = resized.createGraphics();
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+            g.drawImage(image, 0, 0, newWidth, newHeight, null);
+            g.dispose();
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+            if (isPng) {
+                ImageIO.write(resized, "png", out);
+            } else {
+                Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("jpg");
+                if (!writers.hasNext()) {
+                    return original;
+                }
+                ImageWriter writer = writers.next();
+                ImageWriteParam param = writer.getDefaultWriteParam();
+                param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+                param.setCompressionQuality(JPEG_QUALITY);
+
+                try (MemoryCacheImageOutputStream imageOut = new MemoryCacheImageOutputStream(out)) {
+                    writer.setOutput(imageOut);
+                    writer.write(null, new IIOImage(resized, null, null), param);
+                } finally {
+                    writer.dispose();
+                }
+            }
+
+            byte[] result = out.toByteArray();
+            log.info("Imagem redimensionada: {}x{} -> {}x{} ({} KB -> {} KB)",
+                    width, height, newWidth, newHeight, original.length / 1024, result.length / 1024);
+            return result;
+        } catch (Exception e) {
+            log.warn("Falha ao redimensionar imagem, mantendo arquivo original: {}", e.getMessage());
+            return original;
+        }
     }
 
     @Transactional
@@ -257,37 +350,61 @@ public class FileStorageService {
         }
     }
 
-    public byte[] zipCandidateFiles(Long candidateId) {
+    // Escreve direto na resposta HTTP (ver StreamingResponseBody no CandidateController) em vez
+    // de montar o ZIP inteiro num ByteArrayOutputStream primeiro — o navegador começa a receber
+    // bytes assim que o primeiro arquivo é lido, em vez de esperar tudo pronto pra começar.
+    public void zipCandidateFiles(Long candidateId, OutputStream outputStream) {
         Path candidateDir = Paths.get(uploadBaseDir, "candidates", candidateId.toString());
 
         if (!Files.exists(candidateDir) || !Files.isDirectory(candidateDir)) {
             throw new RuntimeException("Pasta do candidato não encontrada");
         }
 
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
-
-        try (Stream<Path> files = Files.walk(candidateDir)) {
-            files.filter(Files::isRegularFile).forEach(file -> {
-                try {
-                    String zipEntryName = candidateDir.relativize(file).toString();
-                    zipOutputStream.putNextEntry(new ZipEntry(zipEntryName));
-                    Files.copy(file, zipOutputStream);
-                    zipOutputStream.closeEntry();
-                } catch (IOException e) {
-                    throw new RuntimeException("Erro ao adicionar arquivo ao ZIP", e);
-                }
-            });
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
+            try (Stream<Path> files = Files.walk(candidateDir)) {
+                files.filter(Files::isRegularFile).forEach(file -> {
+                    try {
+                        String zipEntryName = candidateDir.relativize(file).toString();
+                        zipOutputStream.putNextEntry(new ZipEntry(zipEntryName));
+                        Files.copy(file, zipOutputStream);
+                        zipOutputStream.closeEntry();
+                    } catch (IOException e) {
+                        throw new RuntimeException("Erro ao adicionar arquivo ao ZIP", e);
+                    }
+                });
+            } catch (IOException e) {
+                throw new RuntimeException("Erro ao percorrer arquivos", e);
+            }
         } catch (IOException e) {
-            throw new RuntimeException("Erro ao percorrer arquivos", e);
+            throw new RuntimeException("Erro ao gerar ZIP", e);
+        }
+    }
+
+    // Download individual de um documento — pra RH não precisar do ZIP completo só pra
+    // conferir/baixar 1 arquivo específico.
+    public StoredFile readFieldValueFile(Long candidateId, Long valueId) {
+        FieldValue fv = fieldValueRepository.findById(valueId)
+                .orElseThrow(() -> new RuntimeException("Arquivo não encontrado"));
+
+        if (!fv.getCandidate().getId().equals(candidateId)) {
+            throw new RuntimeException("Arquivo não pertence a este candidato");
+        }
+
+        if (fv.getFilePath() == null) {
+            throw new RuntimeException("Arquivo não encontrado");
+        }
+
+        Path filePath = Paths.get(fv.getFilePath());
+        if (!Files.exists(filePath)) {
+            throw new RuntimeException("Arquivo não encontrado em disco");
         }
 
         try {
-            zipOutputStream.close();
+            byte[] bytes = Files.readAllBytes(filePath);
+            String contentType = fv.getContentType() != null ? fv.getContentType() : "application/octet-stream";
+            return new StoredFile(bytes, contentType);
         } catch (IOException e) {
-            throw new RuntimeException("Erro ao fechar ZIP", e);
+            throw new RuntimeException("Erro ao ler arquivo: " + e.getMessage(), e);
         }
-
-        return byteArrayOutputStream.toByteArray();
     }
 }

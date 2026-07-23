@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.OutputStream;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -37,9 +38,9 @@ public class CandidateService {
     // E-mails fixos notificados quando o candidato finaliza o envio do formulário público
     private static final List<String> FORM_SUBMITTED_EMAILS = List.of(
             "maria.carvalho@solucoesabc.com.br",
-            "alessandra.barbosa@solucoesabc.com.br",
+            "andreza.resende@solucoesabc.com.br",
             "carla.araujo@solucoesabc.com.br",
-            "felipe.barbosa@solucoesabc.com.br"
+            "gabriela.brasil@solucoesabc.com.br"
     );
 
     @Autowired
@@ -148,7 +149,7 @@ public class CandidateService {
             log.error("Erro ao enviar WhatsApp de boas-vindas para candidato {}: {}", candidate.getName(), e.getMessage(), e);
         }
 
-        logsService.createLog("criou o registro do candidato" + dto.name() + ", cpf " + dto.cpf());
+        logsService.createLog("criou o registro do candidato " + dto.name() + ", cpf " + dto.cpf());
 
         return toDto(candidate);
     }
@@ -269,7 +270,7 @@ public class CandidateService {
 
         candidateRepository.deleteById(id);
 
-        logsService.createLog("deletou o candidato" + candidate.getName() + ", cpf " + candidate.getCpf());
+        logsService.createLog("deletou o candidato " + candidate.getName() + ", cpf " + candidate.getCpf());
     }
 
     @Transactional
@@ -398,8 +399,12 @@ public class CandidateService {
         fileStorageService.deleteFieldValueFile(candidateId, valueId);
     }
 
-    public byte[] zipCandidateFiles(Long candidateId) {
-        return fileStorageService.zipCandidateFiles(candidateId);
+    public void zipCandidateFiles(Long candidateId, OutputStream outputStream) {
+        fileStorageService.zipCandidateFiles(candidateId, outputStream);
+    }
+
+    public FileStorageService.StoredFile getFile(Long candidateId, Long valueId) {
+        return fileStorageService.readFieldValueFile(candidateId, valueId);
     }
 
     @Transactional(readOnly = true)

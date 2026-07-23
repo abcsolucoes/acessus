@@ -1,9 +1,11 @@
 import styles from './CandidatoDownloads.module.css'
+import { formatDownloadProgress, type DownloadProgress } from '../../../utils/format'
 
 type Props = {
   candidateId: string | undefined
   candidateName: string | undefined
   downloadingEndpoint: string | null
+  downloadProgress: DownloadProgress | null
   onDownload: (endpoint: string, filename: string) => void
 }
 
@@ -16,7 +18,7 @@ function SpinnerIcon() {
   )
 }
 
-export function CandidatoDownloads({ candidateId, candidateName, downloadingEndpoint, onDownload }: Props) {
+export function CandidatoDownloads({ candidateId, candidateName, downloadingEndpoint, downloadProgress, onDownload }: Props) {
   const reportEndpoint = `/candidates/${candidateId}/report`
   const zipEndpoint = `/candidates/${candidateId}/files/zip`
   const baixandoRelatorio = downloadingEndpoint === reportEndpoint
@@ -41,7 +43,7 @@ export function CandidatoDownloads({ candidateId, candidateName, downloadingEndp
           </span>
           <span className={styles.downloadInfo}>
             <strong>Relatório</strong>
-            <small>{baixandoRelatorio ? 'Gerando…' : '.docx'}</small>
+            <small>{baixandoRelatorio ? formatDownloadProgress(downloadProgress) : '.docx'}</small>
           </span>
           {baixandoRelatorio ? <SpinnerIcon /> : (
             <svg className={styles.downloadArrow} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -63,7 +65,7 @@ export function CandidatoDownloads({ candidateId, candidateName, downloadingEndp
           </span>
           <span className={styles.downloadInfo}>
             <strong>Documentos</strong>
-            <small>{baixandoDocumentos ? 'Gerando…' : '.zip'}</small>
+            <small>{baixandoDocumentos ? formatDownloadProgress(downloadProgress) : '.zip'}</small>
           </span>
           {baixandoDocumentos ? <SpinnerIcon /> : (
             <svg className={styles.downloadArrow} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

@@ -1,0 +1,74 @@
+.main {
+  padding: 28px clamp(16px, 3vw, 40px) 64px;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+/* ── Breadcrumb ───────────────────────────────────────────── */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
+  animation: pageEnter 340ms ease-out both;
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: color var(--transition-fast);
+}
+
+.backBtn:hover {
+  color: var(--primary);
+}
+
+.backBtn svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.backBtn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.breadcrumbSep {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.breadcrumbCurrent {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+
+/* ── Coluna ───────────────────────────────────────────────── */
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .breadcrumb {
+    animation: none;
+  }
+}

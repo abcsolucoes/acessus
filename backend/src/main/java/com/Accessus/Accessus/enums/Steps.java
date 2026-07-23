@@ -5,5 +5,7 @@ public enum Steps {
     address,
     docs,
     dependentsDocs,
-    bankDetails
+    bankDetails,
+    transport,
+    emergencyContact
 }

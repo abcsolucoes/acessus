@@ -39,4 +39,11 @@ public class FieldValueController {
         fieldService.validateCandidateToken(candidateId, token);
         return ResponseEntity.ok(fieldValueService.findValuesByCandidate(candidateId));
     }
+
+    // Autenticado (ADMIN/RH) — usado pela tela do candidato pra listar os documentos
+    // enviados com download individual. Sem token, diferente da rota pública acima.
+    @GetMapping("/{candidateId}/documents")
+    public ResponseEntity<List<FieldValueResponseDto>> findDocuments(@PathVariable Long candidateId) {
+        return ResponseEntity.ok(fieldValueService.findDocumentsByCandidate(candidateId));
+    }
 }
