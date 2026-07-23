@@ -77,7 +77,7 @@ export function useCandidato() {
 
       let blob: Blob
       if (reader) {
-        const chunks: Uint8Array[] = []
+        const chunks: BlobPart[] = []
         let received = 0
         for (; ;) {
           const { done, value } = await reader.read()
